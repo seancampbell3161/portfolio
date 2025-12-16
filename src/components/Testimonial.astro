@@ -1,0 +1,123 @@
+---
+interface Props {
+  quote?: string;
+  authorName?: string;
+  authorTitle?: string;
+  authorInitials?: string;
+  authorImage?: string;
+}
+
+const {
+  quote = "Sean doesn't just write code—he understands the why behind every decision. His ability to break down complex problems and communicate technical tradeoffs to non-technical stakeholders is rare and invaluable.",
+  authorName = "Jane Doe",
+  authorTitle = "Engineering Manager at TechCorp",
+  authorInitials = "JD",
+  authorImage,
+} = Astro.props;
+---
+
+<section id="testimonial" class="testimonial">
+  <div class="testimonial-content">
+    <span class="quote-icon" aria-hidden="true">"</span>
+    
+    <blockquote class="quote">
+      {quote}
+    </blockquote>
+    
+    <div class="author">
+      {authorImage ? (
+        <img src={authorImage} alt={authorName} class="author-avatar" />
+      ) : (
+        <div class="author-avatar-fallback">{authorInitials}</div>
+      )}
+      <div class="author-info">
+        <p class="author-name">{authorName}</p>
+        <p class="author-title">{authorTitle}</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<style>
+  .testimonial {
+    padding: var(--space-5xl) var(--space-xl);
+    position: relative;
+    z-index: 1;
+    text-align: center;
+  }
+  
+  .testimonial-content {
+    max-width: 700px;
+    margin: 0 auto;
+  }
+  
+  .quote-icon {
+    font-size: 80px;
+    color: var(--color-accent);
+    opacity: 0.3;
+    font-family: Georgia, serif;
+    line-height: 0.5;
+    display: block;
+    margin-bottom: var(--space-lg);
+  }
+  
+  .quote {
+    font-size: clamp(20px, 3vw, 24px);
+    line-height: 1.6;
+    font-style: italic;
+    color: var(--color-text-primary);
+    margin-bottom: var(--space-xl);
+  }
+  
+  .author {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-md);
+  }
+  
+  .author-avatar,
+  .author-avatar-fallback {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+  }
+  
+  .author-avatar {
+    object-fit: cover;
+  }
+  
+  .author-avatar-fallback {
+    background-color: var(--color-accent-bg);
+    color: var(--color-accent);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    font-size: 16px;
+  }
+  
+  .author-info {
+    text-align: left;
+  }
+  
+  .author-name {
+    font-weight: 600;
+    margin-bottom: 2px;
+  }
+  
+  .author-title {
+    font-size: 14px;
+    color: var(--color-text-muted);
+  }
+  
+  @media (max-width: 640px) {
+    .testimonial {
+      padding: var(--space-4xl) var(--space-md);
+    }
+    
+    .quote-icon {
+      font-size: 60px;
+    }
+  }
+</style>

@@ -1,0 +1,74 @@
+---
+const currentYear = new Date().getFullYear();
+
+const socialLinks = [
+  { href: 'https://github.com/seancampbell', label: 'GitHub' },
+  { href: 'https://linkedin.com/in/seancampbell', label: 'LinkedIn' },
+  { href: 'https://twitter.com/seancampbell', label: 'Twitter' },
+];
+---
+
+<footer class="footer">
+  <div class="footer-content">
+    <p class="footer-text">
+      Built with Astro • Deployed on Netlify • © {currentYear} Sean Campbell
+    </p>
+    <div class="social-links">
+      {socialLinks.map((link) => (
+        <a href={link.href} class="social-link" target="_blank" rel="noopener noreferrer">
+          {link.label}
+        </a>
+      ))}
+    </div>
+  </div>
+</footer>
+
+<style>
+  .footer {
+    border-top: 1px solid var(--color-border);
+    padding: 40px;
+    position: relative;
+    z-index: 1;
+  }
+  
+  .footer-content {
+    max-width: var(--max-width);
+    margin: 0 auto;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 16px;
+  }
+  
+  .footer-text {
+    font-size: 14px;
+    color: var(--color-text-faint);
+  }
+  
+  .social-links {
+    display: flex;
+    gap: 24px;
+  }
+  
+  .social-link {
+    font-size: 14px;
+    color: var(--color-text-muted);
+    transition: color var(--transition-base);
+  }
+  
+  .social-link:hover {
+    color: var(--color-accent);
+  }
+  
+  @media (max-width: 640px) {
+    .footer {
+      padding: 32px 20px;
+    }
+    
+    .footer-content {
+      flex-direction: column;
+      text-align: center;
+    }
+  }
+</style>

@@ -1,0 +1,85 @@
+---
+title: "Composition Over Inheritance in Angular: A Practical Guide"
+description: "How switching from class-based inheritance to composition patterns improved our dashboard framework's reusability and maintainability."
+pubDate: 2024-12-15
+tags: ["Angular", "TypeScript", "Architecture", "Best Practices"]
+draft: true
+---
+
+When we first built our enterprise dashboard framework, we reached for the familiar tool of class-based inheritance. It seemed natural—dashboards share common functionality like data fetching, filtering, and layout management. What could go wrong?
+
+Everything, as it turns out.
+
+## The Inheritance Trap
+
+Our initial architecture looked something like this:
+
+```typescript
+abstract class BaseDashboard {
+  abstract getData(): Observable<DashboardData>;
+  
+  protected filterData(criteria: FilterCriteria) { /* ... */ }
+  protected handleError(error: Error) { /* ... */ }
+  protected trackAnalytics(event: string) { /* ... */ }
+}
+
+class SalesDashboard extends BaseDashboard {
+  getData(): Observable<DashboardData> {
+    // Implementation
+  }
+}
+```
+
+This worked fine—until requirements changed. As they always do.
+
+## When Inheritance Breaks Down
+
+Problems emerged when teams needed dashboards that:
+
+- Shared *some* but not *all* base functionality
+- Combined features from multiple dashboard "types"  
+- Had different data fetching strategies
+
+We were stuck with the classic inheritance problems: the fragile base class, the diamond problem of needing multiple inheritance, and constantly fighting the rigid hierarchy.
+
+## The Composition Alternative
+
+Instead of inheriting behavior, we inject it. Here's the refactored approach:
+
+```typescript
+// Feature-specific services
+@Injectable()
+class DashboardDataService {
+  fetch<T>(config: DataConfig): Observable<T> { /* ... */ }
+}
+
+@Injectable()
+class DashboardFilterService {
+  apply(data: any[], criteria: FilterCriteria): any[] { /* ... */ }
+}
+
+// Compose what you need
+@Component({
+  providers: [DashboardDataService, DashboardFilterService]
+})
+class SalesDashboard {
+  constructor(
+    private data: DashboardDataService,
+    private filters: DashboardFilterService
+  ) {}
+}
+```
+
+## The Impact
+
+After the refactor:
+
+- **60% faster** new dashboard development
+- **Zero** "base class" coordination meetings
+- Teams could innovate independently
+
+The lesson? Start with composition. Inheritance should be the exception, not the rule.
+
+---
+
+*This post is part of my series on Angular architecture patterns. Have questions? [Reach out](/contact).*

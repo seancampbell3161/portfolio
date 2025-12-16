@@ -1,0 +1,335 @@
+---
+interface Project {
+  id: string;
+  title: string;
+  tags: string[];
+  problem: string;
+  solution: string;
+  tradeoffs: string;
+  impact: string;
+  icon: string;
+  links?: {
+    demo?: string;
+    github?: string;
+    caseStudy?: string;
+  };
+}
+
+interface Props {
+  projects?: Project[];
+}
+
+const { projects = [
+  {
+    id: "audio-stem-separator",
+    title: "Audio Stem Separator",
+    tags: [".NET 10", "Python", "yt_dlp", "Spleeter", "Docker"],
+    problem: "Musicians and content creators needed an affordable way to isolate vocals and instruments from audio tracks without expensive software or technical expertise.",
+    solution: "Built a containerized .NET Web API that orchestrates Python audio processing libraries, exposing a simple REST interface for uploading audio or providing YouTube URLs.",
+    tradeoffs: "Chose to use Python libraries via subprocess calls rather than porting to .NET. While this added deployment complexity (Docker multi-stage builds), it leveraged battle-tested ML models that would have taken months to reimplement.",
+    impact: "Reduced processing time from manual DAW work (30+ min) to under 2 minutes. The containerized approach enabled horizontal scaling on DigitalOcean.",
+    icon: "🎵",
+  },
+  {
+    id: "enterprise-dashboard",
+    title: "Enterprise Dashboard Platform",
+    tags: ["Angular", "TypeScript", "RxJS", "NgRx", "REST APIs"],
+    problem: "A growing SaaS company had fragmented dashboards across teams, leading to inconsistent UX and duplicated development effort.",
+    solution: "Architected a composable dashboard framework using Angular's composition patterns, enabling teams to build consistent dashboards from shared, configurable components.",
+    tradeoffs: "Opted for composition over inheritance after the initial class-based approach created tight coupling. This required refactoring existing components but dramatically improved reusability.",
+    impact: "Reduced new dashboard development time by 60%. The pattern library now powers 12 different team dashboards with consistent UX.",
+    icon: "📊",
+  },
+  {
+    id: "campbell-creative",
+    title: "Campbell Creative Platform",
+    tags: ["Next.js", "Stripe", "PostgreSQL", "Vercel"],
+    problem: "Running a creative business meant juggling invoices, client communication, and project tracking across multiple disconnected tools.",
+    solution: "Built a unified platform handling client portals, automated invoicing, and project status tracking—eating my own dogfood as both developer and user.",
+    tradeoffs: "Chose a monolithic Next.js app over microservices. For a single-user business tool, the operational simplicity outweighed the architectural purity of distributed services.",
+    impact: "Eliminated 5+ hours/week of administrative overhead. Automated invoice reminders improved payment collection by 40%.",
+    icon: "💼",
+  },
+]} = Astro.props;
+---
+
+<section id="work" class="work">
+  <div class="container">
+    <header class="section-header">
+      <span class="section-number">02</span>
+      <h2 class="section-title">Featured Work</h2>
+      <p class="section-subtitle">
+        Every project tells a story. Here's the thinking behind the code.
+      </p>
+    </header>
+    
+    <div class="projects">
+      {projects.map((project) => (
+        <article class="project-card" data-project={project.id}>
+          <button class="project-toggle" aria-expanded="false" aria-controls={`details-${project.id}`}>
+            <div class="project-header">
+              <span class="project-icon">{project.icon}</span>
+              <div class="project-info">
+                <h3 class="project-title">{project.title}</h3>
+                <div class="tags">
+                  {project.tags.map((tag) => (
+                    <span class="tag">{tag}</span>
+                  ))}
+                </div>
+              </div>
+            </div>
+            <span class="expand-hint">Click to explore →</span>
+          </button>
+          
+          <div id={`details-${project.id}`} class="project-details" aria-hidden="true">
+            <div class="detail-block">
+              <h4 class="detail-label">🎯 The Problem</h4>
+              <p class="detail-text">{project.problem}</p>
+            </div>
+            <div class="detail-block">
+              <h4 class="detail-label">💡 The Solution</h4>
+              <p class="detail-text">{project.solution}</p>
+            </div>
+            <div class="detail-block">
+              <h4 class="detail-label">⚖️ Tradeoffs & Decisions</h4>
+              <p class="detail-text">{project.tradeoffs}</p>
+            </div>
+            <div class="detail-block">
+              <h4 class="detail-label">📈 Impact</h4>
+              <p class="detail-text">{project.impact}</p>
+            </div>
+            
+            {project.links && (
+              <div class="project-links">
+                {project.links.demo && (
+                  <a href={project.links.demo} class="project-link" target="_blank" rel="noopener">
+                    Live Demo ↗
+                  </a>
+                )}
+                {project.links.github && (
+                  <a href={project.links.github} class="project-link" target="_blank" rel="noopener">
+                    GitHub ↗
+                  </a>
+                )}
+                {project.links.caseStudy && (
+                  <a href={project.links.caseStudy} class="project-link">
+                    Full Case Study →
+                  </a>
+                )}
+              </div>
+            )}
+          </div>
+        </article>
+      ))}
+    </div>
+  </div>
+</section>
+
+<script>
+  document.querySelectorAll('.project-toggle').forEach(toggle => {
+    toggle.addEventListener('click', () => {
+      const card = toggle.closest('.project-card');
+      const details = card?.querySelector('.project-details');
+      const hint = toggle.querySelector('.expand-hint');
+      const isExpanded = toggle.getAttribute('aria-expanded') === 'true';
+      
+      // Close all other cards
+      document.querySelectorAll('.project-card').forEach(otherCard => {
+        if (otherCard !== card) {
+          const otherToggle = otherCard.querySelector('.project-toggle');
+          const otherDetails = otherCard.querySelector('.project-details');
+          const otherHint = otherCard.querySelector('.expand-hint');
+          otherToggle?.setAttribute('aria-expanded', 'false');
+          otherDetails?.setAttribute('aria-hidden', 'true');
+          otherCard.classList.remove('active');
+          if (otherHint) otherHint.textContent = 'Click to explore →';
+        }
+      });
+      
+      // Toggle current card
+      toggle.setAttribute('aria-expanded', (!isExpanded).toString());
+      details?.setAttribute('aria-hidden', isExpanded.toString());
+      card?.classList.toggle('active', !isExpanded);
+      
+      if (hint) {
+        hint.textContent = isExpanded ? 'Click to explore →' : 'Click to collapse';
+      }
+    });
+  });
+</script>
+
+<style>
+  .work {
+    padding: var(--space-5xl) 0;
+    background: rgba(255, 255, 255, 0.01);
+    position: relative;
+    z-index: 1;
+  }
+  
+  .section-header {
+    margin-bottom: var(--space-3xl);
+  }
+  
+  .section-number {
+    font-size: 14px;
+    color: var(--color-accent);
+    font-weight: 600;
+    font-family: var(--font-mono);
+  }
+  
+  .section-title {
+    margin-top: var(--space-sm);
+    margin-bottom: var(--space-md);
+  }
+  
+  .section-subtitle {
+    font-size: 18px;
+    color: var(--color-text-muted);
+    max-width: 500px;
+    line-height: 1.6;
+  }
+  
+  .projects {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-lg);
+  }
+  
+  .project-card {
+    background-color: var(--color-bg-elevated);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-xl);
+    transition: all var(--transition-slow);
+    overflow: hidden;
+  }
+  
+  .project-card:hover {
+    border-color: var(--color-border-hover);
+  }
+  
+  .project-card.active {
+    border-color: var(--color-accent-border);
+    background-color: rgba(96, 165, 250, 0.05);
+  }
+  
+  .project-toggle {
+    width: 100%;
+    padding: var(--space-xl);
+    background: none;
+    border: none;
+    cursor: pointer;
+    text-align: left;
+    color: inherit;
+  }
+  
+  .project-header {
+    display: flex;
+    align-items: flex-start;
+    gap: 20px;
+  }
+  
+  .project-icon {
+    font-size: 40px;
+    line-height: 1;
+  }
+  
+  .project-info {
+    flex: 1;
+  }
+  
+  .project-title {
+    font-size: 24px;
+    font-weight: 600;
+    margin-bottom: var(--space-md);
+  }
+  
+  .tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-sm);
+  }
+  
+  .tag {
+    font-size: 12px;
+    padding: 4px 12px;
+    background: var(--color-accent-bg);
+    color: var(--color-accent);
+    border-radius: var(--radius-full);
+    font-weight: 500;
+  }
+  
+  .expand-hint {
+    display: block;
+    margin-top: var(--space-md);
+    font-size: 13px;
+    color: var(--color-accent);
+    font-weight: 500;
+  }
+  
+  .project-details {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height var(--transition-slower), padding var(--transition-slower);
+    padding: 0 var(--space-xl);
+  }
+  
+  .project-card.active .project-details {
+    max-height: 800px;
+    padding: 0 var(--space-xl) var(--space-xl);
+  }
+  
+  .detail-block {
+    margin-bottom: var(--space-lg);
+  }
+  
+  .detail-block:last-of-type {
+    margin-bottom: 0;
+  }
+  
+  .detail-label {
+    font-size: 14px;
+    font-weight: 600;
+    margin-bottom: var(--space-sm);
+    color: var(--color-text-primary);
+  }
+  
+  .detail-text {
+    font-size: 15px;
+    color: var(--color-text-secondary);
+    line-height: 1.7;
+  }
+  
+  .project-links {
+    display: flex;
+    gap: var(--space-md);
+    margin-top: var(--space-xl);
+    padding-top: var(--space-lg);
+    border-top: 1px solid var(--color-border);
+  }
+  
+  .project-link {
+    font-size: 14px;
+    color: var(--color-accent);
+    font-weight: 500;
+    transition: color var(--transition-base);
+  }
+  
+  .project-link:hover {
+    color: var(--color-text-primary);
+  }
+  
+  @media (max-width: 640px) {
+    .work {
+      padding: var(--space-4xl) 0;
+    }
+    
+    .project-header {
+      flex-direction: column;
+      gap: var(--space-md);
+    }
+    
+    .project-title {
+      font-size: 20px;
+    }
+  }
+</style>

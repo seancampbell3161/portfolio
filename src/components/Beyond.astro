@@ -1,0 +1,160 @@
+---
+interface BeyondItem {
+  icon: string;
+  title: string;
+  org: string;
+  description: string;
+  link?: string;
+}
+
+interface Props {
+  items?: BeyondItem[];
+}
+
+const { items = [
+  {
+    icon: "🎤",
+    title: "Conference Speaker",
+    org: "Dallas Software Developers",
+    description: "Regular speaker sharing insights on .NET, Angular architecture patterns, and developer productivity.",
+  },
+  {
+    icon: "👥",
+    title: "Cohort Team Lead",
+    org: "Coding Bootcamp",
+    description: "Mentored aspiring developers through their learning journey, conducting code reviews and pair programming sessions.",
+  },
+  {
+    icon: "🌐",
+    title: "Open Source Contributor",
+    org: "Various Projects",
+    description: "Contributing to tools I use daily, from bug fixes to documentation improvements and feature development.",
+  },
+]} = Astro.props;
+---
+
+<section id="beyond" class="beyond">
+  <div class="container">
+    <header class="section-header">
+      <span class="section-number">01</span>
+      <h2 class="section-title">Beyond the Code</h2>
+      <p class="section-subtitle">
+        Building software is just part of the picture. I believe in giving back 
+        to the community that helped me grow.
+      </p>
+    </header>
+    
+    <div class="grid">
+      {items.map((item) => (
+        <article class="card">
+          <span class="card-icon">{item.icon}</span>
+          <h3 class="card-title">{item.title}</h3>
+          <p class="card-org">{item.org}</p>
+          <p class="card-desc">{item.description}</p>
+          {item.link && (
+            <a href={item.link} class="card-link">
+              Learn more →
+            </a>
+          )}
+        </article>
+      ))}
+    </div>
+  </div>
+</section>
+
+<style>
+  .beyond {
+    padding: var(--space-5xl) 0;
+    position: relative;
+    z-index: 1;
+  }
+  
+  .section-header {
+    margin-bottom: var(--space-3xl);
+  }
+  
+  .section-number {
+    font-size: 14px;
+    color: var(--color-accent);
+    font-weight: 600;
+    font-family: var(--font-mono);
+  }
+  
+  .section-title {
+    margin-top: var(--space-sm);
+    margin-bottom: var(--space-md);
+  }
+  
+  .section-subtitle {
+    font-size: 18px;
+    color: var(--color-text-muted);
+    max-width: 500px;
+    line-height: 1.6;
+  }
+  
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: var(--space-lg);
+  }
+  
+  .card {
+    background-color: var(--color-bg-elevated);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-xl);
+    padding: var(--space-xl);
+    transition: all var(--transition-slow);
+  }
+  
+  .card:hover {
+    border-color: var(--color-border-hover);
+    transform: translateY(-4px);
+  }
+  
+  .card-icon {
+    font-size: 32px;
+    display: block;
+    margin-bottom: var(--space-md);
+  }
+  
+  .card-title {
+    font-size: 20px;
+    font-weight: 600;
+    margin-bottom: 4px;
+  }
+  
+  .card-org {
+    font-size: 14px;
+    color: var(--color-accent);
+    margin-bottom: var(--space-md);
+  }
+  
+  .card-desc {
+    font-size: 15px;
+    color: var(--color-text-secondary);
+    line-height: 1.6;
+  }
+  
+  .card-link {
+    display: inline-block;
+    margin-top: var(--space-md);
+    font-size: 14px;
+    color: var(--color-accent);
+    font-weight: 500;
+    transition: color var(--transition-base);
+  }
+  
+  .card-link:hover {
+    color: var(--color-text-primary);
+  }
+  
+  @media (max-width: 640px) {
+    .beyond {
+      padding: var(--space-4xl) 0;
+    }
+    
+    .grid {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>

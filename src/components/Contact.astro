@@ -1,0 +1,93 @@
+---
+interface Props {
+  email?: string;
+  headline?: string;
+  description?: string;
+}
+
+const {
+  email = "sean@campbellcreative.dev",
+  headline = "Let's Build Something",
+  description = "Whether you're looking for a software engineer who can hit the ground running, or you just want to talk shop about architecture patterns—I'd love to hear from you.",
+} = Astro.props;
+---
+
+<section id="contact" class="contact">
+  <div class="contact-content">
+    <h2 class="contact-title">{headline}</h2>
+    <p class="contact-text">{description}</p>
+    
+    <a href={`mailto:${email}`} class="contact-button">
+      <span>Get in Touch</span>
+      <span class="button-arrow">→</span>
+    </a>
+    
+    <p class="contact-email">{email}</p>
+  </div>
+</section>
+
+<style>
+  .contact {
+    padding: var(--space-5xl) var(--space-xl);
+    position: relative;
+    z-index: 1;
+    text-align: center;
+  }
+  
+  .contact-content {
+    max-width: 600px;
+    margin: 0 auto;
+  }
+  
+  .contact-title {
+    font-size: clamp(36px, 5vw, 48px);
+    letter-spacing: -1px;
+    margin-bottom: var(--space-lg);
+  }
+  
+  .contact-text {
+    font-size: 18px;
+    color: var(--color-text-secondary);
+    line-height: 1.7;
+    margin-bottom: var(--space-2xl);
+  }
+  
+  .contact-button {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-md);
+    padding: 16px 32px;
+    background-color: var(--color-accent);
+    color: var(--color-bg);
+    font-weight: 600;
+    font-size: 16px;
+    border-radius: var(--radius-md);
+    transition: all var(--transition-base);
+  }
+  
+  .contact-button:hover {
+    background-color: #7ab8fc;
+    transform: translateY(-2px);
+  }
+  
+  .contact-button:hover .button-arrow {
+    transform: translateX(4px);
+  }
+  
+  .button-arrow {
+    transition: transform var(--transition-base);
+  }
+  
+  .contact-email {
+    margin-top: var(--space-lg);
+    font-size: 14px;
+    color: var(--color-text-muted);
+    font-family: var(--font-mono);
+  }
+  
+  @media (max-width: 640px) {
+    .contact {
+      padding: var(--space-4xl) var(--space-md);
+    }
+  }
+</style>

@@ -1,0 +1,228 @@
+---
+import Layout from './Layout.astro';
+import Nav from '../components/Nav.astro';
+import Footer from '../components/Footer.astro';
+
+interface Props {
+  title: string;
+  description: string;
+  pubDate: Date;
+  updatedDate?: Date;
+  heroImage?: string;
+  tags?: string[];
+}
+
+const { title, description, pubDate, updatedDate, heroImage, tags = [] } = Astro.props;
+
+const formattedDate = pubDate.toLocaleDateString('en-US', {
+  year: 'numeric',
+  month: 'long',
+  day: 'numeric',
+});
+
+const formattedUpdatedDate = updatedDate?.toLocaleDateString('en-US', {
+  year: 'numeric',
+  month: 'long',
+  day: 'numeric',
+});
+---
+
+<Layout title={`${title} | Sean Campbell`} description={description} image={heroImage}>
+  <Nav />
+  
+  <main class="blog-post">
+    <article>
+      <header class="post-header">
+        <div class="post-meta">
+          <time datetime={pubDate.toISOString()}>{formattedDate}</time>
+          {updatedDate && (
+            <span class="updated">
+              (Updated: <time datetime={updatedDate.toISOString()}>{formattedUpdatedDate}</time>)
+            </span>
+          )}
+        </div>
+        
+        <h1>{title}</h1>
+        <p class="post-description">{description}</p>
+        
+        {tags.length > 0 && (
+          <div class="tags">
+            {tags.map((tag) => (
+              <span class="tag">{tag}</span>
+            ))}
+          </div>
+        )}
+      </header>
+      
+      {heroImage && (
+        <img src={heroImage} alt="" class="hero-image" />
+      )}
+      
+      <div class="post-content">
+        <slot />
+      </div>
+    </article>
+    
+    <aside class="post-footer">
+      <a href="/blog" class="back-link">← Back to all posts</a>
+    </aside>
+  </main>
+  
+  <Footer />
+</Layout>
+
+<style>
+  .blog-post {
+    padding-top: 120px;
+    padding-bottom: var(--space-4xl);
+    position: relative;
+    z-index: 1;
+  }
+  
+  article {
+    max-width: var(--content-width);
+    margin: 0 auto;
+    padding: 0 var(--space-xl);
+  }
+  
+  .post-header {
+    margin-bottom: var(--space-3xl);
+  }
+  
+  .post-meta {
+    font-family: var(--font-mono);
+    font-size: 14px;
+    color: var(--color-accent);
+    margin-bottom: var(--space-md);
+  }
+  
+  .updated {
+    color: var(--color-text-muted);
+    margin-left: var(--space-sm);
+  }
+  
+  h1 {
+    margin-bottom: var(--space-md);
+  }
+  
+  .post-description {
+    font-size: 1.25rem;
+    color: var(--color-text-secondary);
+    line-height: 1.6;
+  }
+  
+  .tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-sm);
+    margin-top: var(--space-lg);
+  }
+  
+  .tag {
+    font-size: 12px;
+    padding: var(--space-xs) var(--space-md);
+    background: var(--color-accent-bg);
+    color: var(--color-accent);
+    border-radius: var(--radius-full);
+    font-weight: 500;
+  }
+  
+  .hero-image {
+    width: 100%;
+    border-radius: var(--radius-lg);
+    margin-bottom: var(--space-3xl);
+  }
+  
+  .post-content {
+    font-size: 1.125rem;
+    line-height: 1.8;
+    color: var(--color-text-secondary);
+  }
+  
+  .post-content :global(h2) {
+    color: var(--color-text-primary);
+    margin-top: var(--space-3xl);
+    margin-bottom: var(--space-lg);
+  }
+  
+  .post-content :global(h3) {
+    color: var(--color-text-primary);
+    margin-top: var(--space-2xl);
+    margin-bottom: var(--space-md);
+  }
+  
+  .post-content :global(p) {
+    margin-bottom: var(--space-lg);
+  }
+  
+  .post-content :global(a) {
+    color: var(--color-accent);
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
+  
+  .post-content :global(a:hover) {
+    color: var(--color-text-primary);
+  }
+  
+  .post-content :global(code) {
+    font-family: var(--font-mono);
+    font-size: 0.9em;
+    background: var(--color-bg-elevated);
+    padding: 2px 6px;
+    border-radius: var(--radius-sm);
+  }
+  
+  .post-content :global(pre) {
+    background: var(--color-bg-elevated);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    padding: var(--space-lg);
+    overflow-x: auto;
+    margin: var(--space-xl) 0;
+  }
+  
+  .post-content :global(pre code) {
+    background: none;
+    padding: 0;
+  }
+  
+  .post-content :global(blockquote) {
+    border-left: 3px solid var(--color-accent);
+    padding-left: var(--space-lg);
+    margin: var(--space-xl) 0;
+    color: var(--color-text-secondary);
+    font-style: italic;
+  }
+  
+  .post-content :global(ul), .post-content :global(ol) {
+    margin: var(--space-lg) 0;
+    padding-left: var(--space-xl);
+  }
+  
+  .post-content :global(li) {
+    margin-bottom: var(--space-sm);
+  }
+  
+  .post-content :global(img) {
+    border-radius: var(--radius-lg);
+    margin: var(--space-xl) 0;
+  }
+  
+  .post-footer {
+    max-width: var(--content-width);
+    margin: var(--space-3xl) auto 0;
+    padding: var(--space-xl);
+    border-top: 1px solid var(--color-border);
+  }
+  
+  .back-link {
+    color: var(--color-text-muted);
+    font-size: 14px;
+    transition: color var(--transition-base);
+  }
+  
+  .back-link:hover {
+    color: var(--color-accent);
+  }
+</style>
