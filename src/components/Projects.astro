@@ -1,4 +1,6 @@
 ---
+import Icon from './Icon.astro';
+
 interface Project {
   id: string;
   title: string;
@@ -7,7 +9,7 @@ interface Project {
   solution: string;
   tradeoffs: string;
   impact: string;
-  icon: string;
+  icon: 'music' | 'layout-dashboard' | 'briefcase' | 'code' | 'rocket' | 'bar-chart-3';
   links?: {
     demo?: string;
     github?: string;
@@ -23,12 +25,12 @@ const { projects = [
   {
     id: "audio-stem-separator",
     title: "Audio Stem Separator",
-    tags: [".NET 10", "Python", "yt_dlp", "Spleeter", "Docker"],
+    tags: [".NET", "Python", "PostgreSQL", "React", "Docker"],
     problem: "Musicians and content creators needed an affordable way to isolate vocals and instruments from audio tracks without expensive software or technical expertise.",
     solution: "Built a containerized .NET Web API that orchestrates Python audio processing libraries, exposing a simple REST interface for uploading audio or providing YouTube URLs.",
     tradeoffs: "Chose to use Python libraries via subprocess calls rather than porting to .NET. While this added deployment complexity (Docker multi-stage builds), it leveraged battle-tested ML models that would have taken months to reimplement.",
     impact: "Reduced processing time from manual DAW work (30+ min) to under 2 minutes. The containerized approach enabled horizontal scaling on DigitalOcean.",
-    icon: "🎵",
+    icon: "music",
   },
   {
     id: "enterprise-dashboard",
@@ -38,7 +40,7 @@ const { projects = [
     solution: "Architected a composable dashboard framework using Angular's composition patterns, enabling teams to build consistent dashboards from shared, configurable components.",
     tradeoffs: "Opted for composition over inheritance after the initial class-based approach created tight coupling. This required refactoring existing components but dramatically improved reusability.",
     impact: "Reduced new dashboard development time by 60%. The pattern library now powers 12 different team dashboards with consistent UX.",
-    icon: "📊",
+    icon: "layout-dashboard",
   },
   {
     id: "campbell-creative",
@@ -48,7 +50,7 @@ const { projects = [
     solution: "Built a unified platform handling client portals, automated invoicing, and project status tracking—eating my own dogfood as both developer and user.",
     tradeoffs: "Chose a monolithic Next.js app over microservices. For a single-user business tool, the operational simplicity outweighed the architectural purity of distributed services.",
     impact: "Eliminated 5+ hours/week of administrative overhead. Automated invoice reminders improved payment collection by 40%.",
-    icon: "💼",
+    icon: "briefcase",
   },
 ]} = Astro.props;
 ---
@@ -68,7 +70,9 @@ const { projects = [
         <article class="project-card" data-project={project.id}>
           <button class="project-toggle" aria-expanded="false" aria-controls={`details-${project.id}`}>
             <div class="project-header">
-              <span class="project-icon">{project.icon}</span>
+              <div class="project-icon-wrapper">
+                <Icon name={project.icon} size={28} />
+              </div>
               <div class="project-info">
                 <h3 class="project-title">{project.title}</h3>
                 <div class="tags">
@@ -78,24 +82,39 @@ const { projects = [
                 </div>
               </div>
             </div>
-            <span class="expand-hint">Click to explore →</span>
+            <span class="expand-hint">
+              <span class="expand-text">Click to explore</span>
+              <Icon name="arrow-right" size={16} class="expand-arrow" />
+            </span>
           </button>
           
           <div id={`details-${project.id}`} class="project-details" aria-hidden="true">
             <div class="detail-block">
-              <h4 class="detail-label">🎯 The Problem</h4>
+              <h4 class="detail-label">
+                <Icon name="target" size={16} />
+                <span>The Problem</span>
+              </h4>
               <p class="detail-text">{project.problem}</p>
             </div>
             <div class="detail-block">
-              <h4 class="detail-label">💡 The Solution</h4>
+              <h4 class="detail-label">
+                <Icon name="lightbulb" size={16} />
+                <span>The Solution</span>
+              </h4>
               <p class="detail-text">{project.solution}</p>
             </div>
             <div class="detail-block">
-              <h4 class="detail-label">⚖️ Tradeoffs & Decisions</h4>
+              <h4 class="detail-label">
+                <Icon name="scale" size={16} />
+                <span>Tradeoffs & Decisions</span>
+              </h4>
               <p class="detail-text">{project.tradeoffs}</p>
             </div>
             <div class="detail-block">
-              <h4 class="detail-label">📈 Impact</h4>
+              <h4 class="detail-label">
+                <Icon name="trending-up" size={16} />
+                <span>Impact</span>
+              </h4>
               <p class="detail-text">{project.impact}</p>
             </div>
             
@@ -103,17 +122,20 @@ const { projects = [
               <div class="project-links">
                 {project.links.demo && (
                   <a href={project.links.demo} class="project-link" target="_blank" rel="noopener">
-                    Live Demo ↗
+                    <span>Live Demo</span>
+                    <Icon name="external-link" size={14} />
                   </a>
                 )}
                 {project.links.github && (
                   <a href={project.links.github} class="project-link" target="_blank" rel="noopener">
-                    GitHub ↗
+                    <Icon name="github" size={14} />
+                    <span>GitHub</span>
                   </a>
                 )}
                 {project.links.caseStudy && (
                   <a href={project.links.caseStudy} class="project-link">
-                    Full Case Study →
+                    <span>Full Case Study</span>
+                    <Icon name="arrow-right" size={14} />
                   </a>
                 )}
               </div>
@@ -130,7 +152,7 @@ const { projects = [
     toggle.addEventListener('click', () => {
       const card = toggle.closest('.project-card');
       const details = card?.querySelector('.project-details');
-      const hint = toggle.querySelector('.expand-hint');
+      const expandText = toggle.querySelector('.expand-text');
       const isExpanded = toggle.getAttribute('aria-expanded') === 'true';
       
       // Close all other cards
@@ -138,11 +160,11 @@ const { projects = [
         if (otherCard !== card) {
           const otherToggle = otherCard.querySelector('.project-toggle');
           const otherDetails = otherCard.querySelector('.project-details');
-          const otherHint = otherCard.querySelector('.expand-hint');
+          const otherExpandText = otherCard.querySelector('.expand-text');
           otherToggle?.setAttribute('aria-expanded', 'false');
           otherDetails?.setAttribute('aria-hidden', 'true');
           otherCard.classList.remove('active');
-          if (otherHint) otherHint.textContent = 'Click to explore →';
+          if (otherExpandText) otherExpandText.textContent = 'Click to explore';
         }
       });
       
@@ -151,8 +173,8 @@ const { projects = [
       details?.setAttribute('aria-hidden', isExpanded.toString());
       card?.classList.toggle('active', !isExpanded);
       
-      if (hint) {
-        hint.textContent = isExpanded ? 'Click to explore →' : 'Click to collapse';
+      if (expandText) {
+        expandText.textContent = isExpanded ? 'Click to explore' : 'Click to collapse';
       }
     });
   });
@@ -228,9 +250,16 @@ const { projects = [
     gap: 20px;
   }
   
-  .project-icon {
-    font-size: 40px;
-    line-height: 1;
+  .project-icon-wrapper {
+    width: 56px;
+    height: 56px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--color-accent-bg);
+    border-radius: var(--radius-lg);
+    color: var(--color-accent);
+    flex-shrink: 0;
   }
   
   .project-info {
@@ -259,11 +288,21 @@ const { projects = [
   }
   
   .expand-hint {
-    display: block;
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
     margin-top: var(--space-md);
     font-size: 13px;
     color: var(--color-accent);
     font-weight: 500;
+  }
+  
+  .expand-arrow {
+    transition: transform var(--transition-base);
+  }
+  
+  .project-card.active .expand-arrow {
+    transform: rotate(90deg);
   }
   
   .project-details {
@@ -287,20 +326,29 @@ const { projects = [
   }
   
   .detail-label {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
     font-size: 14px;
     font-weight: 600;
     margin-bottom: var(--space-sm);
     color: var(--color-text-primary);
   }
   
+  .detail-label :global(.icon) {
+    color: var(--color-accent);
+  }
+  
   .detail-text {
     font-size: 15px;
     color: var(--color-text-secondary);
     line-height: 1.7;
+    padding-left: 24px;
   }
   
   .project-links {
     display: flex;
+    flex-wrap: wrap;
     gap: var(--space-md);
     margin-top: var(--space-xl);
     padding-top: var(--space-lg);
@@ -308,6 +356,9 @@ const { projects = [
   }
   
   .project-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
     font-size: 14px;
     color: var(--color-accent);
     font-weight: 500;
@@ -330,6 +381,10 @@ const { projects = [
     
     .project-title {
       font-size: 20px;
+    }
+    
+    .detail-text {
+      padding-left: 0;
     }
   }
 </style>

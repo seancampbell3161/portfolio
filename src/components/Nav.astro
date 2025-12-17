@@ -1,4 +1,6 @@
 ---
+import Icon from './Icon.astro';
+
 const pathname = Astro.url.pathname;
 
 const navLinks = [
@@ -7,24 +9,75 @@ const navLinks = [
   { href: '/blog', label: 'Blog' },
   { href: '/#contact', label: 'Contact' },
 ];
+
+const socialLinks = [
+  { href: 'https://github.com/seancampbell3161', icon: 'github' as const, label: 'GitHub' },
+  { href: 'https://linkedin.com/in/seancampbelldev', icon: 'linkedin' as const, label: 'LinkedIn' },
+  { href: 'https://seancampbell3161.substack.com/', icon: 'substack' as const, label: 'Substack' },
+];
 ---
 
 <nav class="nav">
   <div class="nav-content">
     <a href="/" class="logo">SC</a>
     
-    <button class="mobile-toggle" aria-label="Toggle menu" aria-expanded="false">
-      <span class="bar"></span>
-      <span class="bar"></span>
-    </button>
+    <div class="nav-center">
+      <div class="nav-links">
+        {navLinks.map((link) => (
+          <a 
+            href={link.href} 
+            class:list={['nav-link', { active: pathname === link.href || pathname.startsWith(link.href.replace('#', '')) }]}
+          >
+            {link.label}
+          </a>
+        ))}
+      </div>
+    </div>
     
-    <div class="nav-links">
+    <div class="nav-right">
+      <div class="social-links">
+        {socialLinks.map((link) => (
+          <a 
+            href={link.href} 
+            class="social-link" 
+            target="_blank" 
+            rel="noopener noreferrer"
+            aria-label={link.label}
+          >
+            <Icon name={link.icon} size={18} />
+          </a>
+        ))}
+      </div>
+      
+      <button class="mobile-toggle" aria-label="Toggle menu" aria-expanded="false">
+        <span class="bar"></span>
+        <span class="bar"></span>
+      </button>
+    </div>
+  </div>
+  
+  <!-- Mobile Menu -->
+  <div class="mobile-menu">
+    <div class="mobile-nav-links">
       {navLinks.map((link) => (
         <a 
           href={link.href} 
-          class:list={['nav-link', { active: pathname === link.href || pathname.startsWith(link.href.replace('#', '')) }]}
+          class:list={['mobile-nav-link', { active: pathname === link.href }]}
         >
           {link.label}
+        </a>
+      ))}
+    </div>
+    <div class="mobile-social-links">
+      {socialLinks.map((link) => (
+        <a 
+          href={link.href} 
+          class="mobile-social-link" 
+          target="_blank" 
+          rel="noopener noreferrer"
+        >
+          <Icon name={link.icon} size={20} />
+          <span>{link.label}</span>
         </a>
       ))}
     </div>
@@ -33,20 +86,29 @@ const navLinks = [
 
 <script>
   const toggle = document.querySelector('.mobile-toggle');
-  const navLinks = document.querySelector('.nav-links');
+  const nav = document.querySelector('.nav');
+  const mobileMenu = document.querySelector('.mobile-menu');
   
   toggle?.addEventListener('click', () => {
     const isExpanded = toggle.getAttribute('aria-expanded') === 'true';
     toggle.setAttribute('aria-expanded', (!isExpanded).toString());
-    navLinks?.classList.toggle('open');
+    nav?.classList.toggle('menu-open');
   });
   
   // Close menu when clicking a link
-  document.querySelectorAll('.nav-link').forEach(link => {
+  document.querySelectorAll('.mobile-nav-link, .mobile-social-link').forEach(link => {
     link.addEventListener('click', () => {
       toggle?.setAttribute('aria-expanded', 'false');
-      navLinks?.classList.remove('open');
+      nav?.classList.remove('menu-open');
     });
+  });
+  
+  // Close menu on escape
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && nav?.classList.contains('menu-open')) {
+      toggle?.setAttribute('aria-expanded', 'false');
+      nav?.classList.remove('menu-open');
+    }
   });
 </script>
 
@@ -56,10 +118,10 @@ const navLinks = [
     top: 0;
     left: 0;
     right: 0;
-    padding: 20px 40px;
-    background-color: rgba(10, 10, 11, 0.8);
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
+    padding: 16px 40px;
+    background-color: rgba(10, 10, 11, 0.85);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
     z-index: 100;
     border-bottom: 1px solid var(--color-border);
   }
@@ -80,6 +142,12 @@ const navLinks = [
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
+  }
+  
+  .nav-center {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
   }
   
   .nav-links {
@@ -111,6 +179,34 @@ const navLinks = [
     border-radius: 1px;
   }
   
+  .nav-right {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+  
+  .social-links {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  
+  .social-link {
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--color-text-muted);
+    border-radius: var(--radius-md);
+    transition: all var(--transition-base);
+  }
+  
+  .social-link:hover {
+    color: var(--color-text-primary);
+    background: var(--color-bg-elevated);
+  }
+  
   .mobile-toggle {
     display: none;
     flex-direction: column;
@@ -129,33 +225,45 @@ const navLinks = [
     transition: transform var(--transition-base), opacity var(--transition-base);
   }
   
-  .mobile-toggle[aria-expanded="true"] .bar:first-child {
+  .nav.menu-open .mobile-toggle .bar:first-child {
     transform: translateY(3.5px) rotate(45deg);
   }
   
-  .mobile-toggle[aria-expanded="true"] .bar:last-child {
+  .nav.menu-open .mobile-toggle .bar:last-child {
     transform: translateY(-3.5px) rotate(-45deg);
   }
   
-  @media (max-width: 640px) {
+  .mobile-menu {
+    display: none;
+  }
+  
+  @media (max-width: 768px) {
     .nav {
       padding: 16px 20px;
+    }
+    
+    .nav-center {
+      display: none;
+    }
+    
+    .social-links {
+      display: none;
     }
     
     .mobile-toggle {
       display: flex;
     }
     
-    .nav-links {
+    .mobile-menu {
       position: absolute;
       top: 100%;
       left: 0;
       right: 0;
+      display: flex;
       flex-direction: column;
-      gap: 0;
-      background: rgba(10, 10, 11, 0.95);
-      backdrop-filter: blur(10px);
-      -webkit-backdrop-filter: blur(10px);
+      background: rgba(10, 10, 11, 0.98);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
       border-bottom: 1px solid var(--color-border);
       padding: 0;
       max-height: 0;
@@ -163,18 +271,50 @@ const navLinks = [
       transition: max-height var(--transition-slow), padding var(--transition-slow);
     }
     
-    .nav-links.open {
-      max-height: 300px;
+    .nav.menu-open .mobile-menu {
+      max-height: 400px;
       padding: 16px 0;
     }
     
-    .nav-link {
-      padding: 12px 20px;
-      display: block;
+    .mobile-nav-links {
+      display: flex;
+      flex-direction: column;
+      border-bottom: 1px solid var(--color-border);
+      padding-bottom: 16px;
+      margin-bottom: 16px;
     }
     
-    .nav-link.active::after {
-      display: none;
+    .mobile-nav-link {
+      padding: 12px 20px;
+      color: var(--color-text-secondary);
+      font-size: 15px;
+      font-weight: 500;
+      transition: color var(--transition-base);
+    }
+    
+    .mobile-nav-link:hover,
+    .mobile-nav-link.active {
+      color: var(--color-text-primary);
+    }
+    
+    .mobile-social-links {
+      display: flex;
+      flex-direction: column;
+      padding: 0 20px;
+    }
+    
+    .mobile-social-link {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 0;
+      color: var(--color-text-muted);
+      font-size: 14px;
+      transition: color var(--transition-base);
+    }
+    
+    .mobile-social-link:hover {
+      color: var(--color-accent);
     }
   }
 </style>

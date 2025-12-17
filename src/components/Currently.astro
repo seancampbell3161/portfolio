@@ -1,6 +1,8 @@
 ---
+import Icon from './Icon.astro';
+
 interface CurrentItem {
-  emoji: string;
+  icon: 'wrench' | 'book-open' | 'pen-tool' | 'code' | 'rocket';
   title: string;
   description: string;
 }
@@ -11,17 +13,17 @@ interface Props {
 
 const { items = [
   {
-    emoji: "🔧",
+    icon: "wrench",
     title: "Audio Processing Pipeline",
     description: "Containerizing a .NET + Python audio service for cloud deployment, exploring the intersection of web APIs and ML-powered audio tools.",
   },
   {
-    emoji: "📚",
+    icon: "book-open",
     title: "Deep Dive: System Design",
     description: "Studying distributed systems patterns and how they apply to real-world scaling challenges.",
   },
   {
-    emoji: "✍️",
+    icon: "pen-tool",
     title: "Technical Writing",
     description: "Documenting lessons learned from production systems—blog coming soon.",
   },
@@ -41,7 +43,9 @@ const { items = [
     <div class="grid">
       {items.map((item) => (
         <article class="card">
-          <span class="card-emoji">{item.emoji}</span>
+          <div class="card-icon">
+            <Icon name={item.icon} size={24} />
+          </div>
           <h4 class="card-title">{item.title}</h4>
           <p class="card-desc">{item.description}</p>
         </article>
@@ -99,10 +103,22 @@ const { items = [
     transform: translateY(-2px);
   }
   
-  .card-emoji {
-    font-size: 28px;
+  .card:hover .card-icon {
+    background: var(--color-accent);
+    color: var(--color-bg);
+  }
+  
+  .card-icon {
+    width: 48px;
+    height: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--color-accent-bg);
+    color: var(--color-accent);
+    border-radius: var(--radius-md);
     margin-bottom: var(--space-md);
-    display: block;
+    transition: all var(--transition-base);
   }
   
   .card-title {

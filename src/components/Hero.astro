@@ -5,55 +5,74 @@ interface Props {
   tagline?: string;
   techStack?: string[];
   stats?: Array<{ number: string; label: string }>;
+  profileImage?: string;
 }
 
 const {
   name = "Sean Campbell",
   title = "Software Engineer & Problem Solver",
   tagline = "I build systems that bridge complex technical challenges with real human needs.",
-  techStack = ["Golang", ".NET", "React", "Angular", "Python"],
+  techStack = ["Golang", "Python", ".NET", "React", "Angular"],
   stats = [
     { number: "5+", label: "Years Building Software" },
     { number: "15+", label: "Projects Shipped" },
     { number: "∞", label: "Cups of Coffee" },
   ],
+  profileImage = "/images/profile.jpg",
 } = Astro.props;
 ---
 
 <section class="hero">
   <div class="hero-content">
-    <div class="hero-accent" aria-hidden="true"></div>
-    
-    <p class="greeting animate-fade-in-up">Hi, I'm</p>
-    <h1 class="name animate-fade-in-up delay-100">{name}</h1>
-    <p class="title animate-fade-in-up delay-200">{title}</p>
-    
-    <p class="tagline animate-fade-in-up delay-300">
-      {tagline} Currently crafting solutions with {' '}
-      {techStack.map((tech, i) => (
-        <>
-          <span class="highlight">{tech}</span>
-          {i < techStack.length - 2 && ', '}
-          {i === techStack.length - 2 && ', and '}
-        </>
-      ))}.
-    </p>
-    
-    <div class="stats animate-fade-in-up delay-400">
-      {stats.map((stat, i) => (
-        <>
-          <div class="stat">
-            <span class="stat-number">{stat.number}</span>
-            <span class="stat-label">{stat.label}</span>
-          </div>
-          {i < stats.length - 1 && <div class="stat-divider" aria-hidden="true"></div>}
-        </>
-      ))}
-    </div>
-    
-    <div class="cta-group animate-fade-in-up delay-500">
-      <a href="#work" class="cta-primary">View My Work</a>
-      <a href="#contact" class="cta-secondary">Get in Touch</a>
+    <div class="hero-grid">
+      <div class="hero-text">
+        <div class="hero-accent" aria-hidden="true"></div>
+        
+        <p class="greeting animate-fade-in-up">Hi, I'm</p>
+        <h1 class="name animate-fade-in-up delay-100">{name}</h1>
+        <p class="title animate-fade-in-up delay-200">{title}</p>
+        
+        <p class="tagline animate-fade-in-up delay-300">
+          {tagline} Currently crafting solutions with {' '}
+          {techStack.map((tech, i) => (
+            <>
+              <span class="highlight">{tech}</span>
+              {i < techStack.length - 2 && ', '}
+              {i === techStack.length - 2 && ', and '}
+            </>
+          ))}.
+        </p>
+        
+        <div class="stats animate-fade-in-up delay-400">
+          {stats.map((stat, i) => (
+            <>
+              <div class="stat">
+                <span class="stat-number">{stat.number}</span>
+                <span class="stat-label">{stat.label}</span>
+              </div>
+              {i < stats.length - 1 && <div class="stat-divider" aria-hidden="true"></div>}
+            </>
+          ))}
+        </div>
+        
+        <div class="cta-group animate-fade-in-up delay-500">
+          <a href="#work" class="cta-primary">View My Work</a>
+          <a href="#contact" class="cta-secondary">Get in Touch</a>
+        </div>
+      </div>
+      
+      <div class="hero-image-container animate-fade-in delay-200">
+        <div class="image-wrapper">
+          <img 
+            src={profileImage} 
+            alt={`Photo of ${name}`}
+            class="profile-image"
+            loading="eager"
+          />
+          <div class="image-border" aria-hidden="true"></div>
+          <div class="image-glow" aria-hidden="true"></div>
+        </div>
+      </div>
     </div>
   </div>
 </section>
@@ -70,7 +89,18 @@ const {
   }
   
   .hero-content {
-    max-width: var(--content-width);
+    max-width: var(--max-width);
+    width: 100%;
+  }
+  
+  .hero-grid {
+    display: grid;
+    grid-template-columns: 1fr 380px;
+    gap: 80px;
+    align-items: center;
+  }
+  
+  .hero-text {
     position: relative;
   }
   
@@ -93,7 +123,7 @@ const {
   }
   
   .name {
-    font-size: clamp(48px, 8vw, 72px);
+    font-size: clamp(40px, 6vw, 64px);
     font-weight: 700;
     letter-spacing: -2px;
     margin-bottom: 8px;
@@ -106,7 +136,7 @@ const {
   }
   
   .title {
-    font-size: clamp(20px, 3vw, 24px);
+    font-size: clamp(18px, 2.5vw, 24px);
     color: var(--color-accent);
     font-weight: 500;
     margin-bottom: 24px;
@@ -114,10 +144,10 @@ const {
   }
   
   .tagline {
-    font-size: 18px;
+    font-size: 17px;
     line-height: 1.7;
     color: var(--color-text-secondary);
-    max-width: 600px;
+    max-width: 520px;
     opacity: 0;
   }
   
@@ -129,9 +159,9 @@ const {
   .stats {
     display: flex;
     align-items: center;
-    gap: 32px;
-    margin-top: 48px;
-    padding-top: 32px;
+    gap: 28px;
+    margin-top: 40px;
+    padding-top: 28px;
     border-top: 1px solid var(--color-border);
     opacity: 0;
   }
@@ -143,27 +173,27 @@ const {
   }
   
   .stat-number {
-    font-size: 32px;
+    font-size: 28px;
     font-weight: 700;
     color: var(--color-text-primary);
   }
   
   .stat-label {
-    font-size: 13px;
+    font-size: 12px;
     color: var(--color-text-muted);
     font-weight: 500;
   }
   
   .stat-divider {
     width: 1px;
-    height: 40px;
+    height: 36px;
     background-color: var(--color-border);
   }
   
   .cta-group {
     display: flex;
     gap: 16px;
-    margin-top: 40px;
+    margin-top: 36px;
     opacity: 0;
   }
   
@@ -197,18 +227,104 @@ const {
     color: var(--color-text-primary);
   }
   
+  /* Profile Image */
+  .hero-image-container {
+    display: flex;
+    justify-content: center;
+    opacity: 0;
+  }
+  
+  .image-wrapper {
+    position: relative;
+    width: 320px;
+    height: 380px;
+  }
+  
+  .profile-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: var(--radius-xl);
+    position: relative;
+    z-index: 2;
+    filter: grayscale(20%);
+    transition: filter var(--transition-slow);
+  }
+  
+  .profile-image:hover {
+    filter: grayscale(0%);
+  }
+  
+  .image-border {
+    position: absolute;
+    top: 16px;
+    left: 16px;
+    right: -16px;
+    bottom: -16px;
+    border: 2px solid var(--color-accent);
+    border-radius: var(--radius-xl);
+    z-index: 1;
+    opacity: 0.5;
+  }
+  
+  .image-glow {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 80%;
+    height: 80%;
+    background: radial-gradient(circle, var(--color-accent) 0%, transparent 70%);
+    opacity: 0.15;
+    filter: blur(40px);
+    z-index: 0;
+  }
+  
+  @media (max-width: 1024px) {
+    .hero-grid {
+      grid-template-columns: 1fr;
+      gap: 60px;
+    }
+    
+    .hero-image-container {
+      order: -1;
+    }
+    
+    .image-wrapper {
+      width: 280px;
+      height: 340px;
+    }
+    
+    .hero-text {
+      text-align: center;
+    }
+    
+    .hero-accent {
+      left: 50%;
+      transform: translateX(-50%);
+    }
+    
+    .tagline {
+      margin: 0 auto;
+    }
+    
+    .stats {
+      justify-content: center;
+    }
+    
+    .cta-group {
+      justify-content: center;
+    }
+  }
+  
   @media (max-width: 768px) {
     .hero {
       padding: 100px 20px 60px;
     }
     
-    .hero-accent {
-      left: -10px;
-    }
-    
     .stats {
       flex-wrap: wrap;
-      gap: 24px;
+      gap: 20px;
     }
     
     .stat-divider {
@@ -217,11 +333,20 @@ const {
     
     .cta-group {
       flex-direction: column;
+      width: 100%;
+      max-width: 300px;
+      margin-left: auto;
+      margin-right: auto;
     }
     
     .cta-primary,
     .cta-secondary {
       text-align: center;
+    }
+    
+    .image-wrapper {
+      width: 240px;
+      height: 300px;
     }
   }
 </style>

@@ -5,11 +5,12 @@ A modern, fast, and content-driven portfolio site built with [Astro](https://ast
 ## Features
 
 - ⚡ **Lightning fast** - Ships zero JS by default
-- 📝 **Blog ready** - MDX support with content collections
+- 📝 **Blog ready** - MDX support with content collections  
 - 🎨 **Sleek design** - Dark theme with subtle animations
 - 📱 **Fully responsive** - Mobile-first approach
 - 🔍 **SEO optimized** - Meta tags, sitemap, and semantic HTML
 - 🚀 **Deploy anywhere** - Configured for Netlify
+- 🎯 **Lucide icons** - Clean, consistent iconography (zero dependencies)
 
 ## Quick Start
 
@@ -32,19 +33,27 @@ npm run preview
 ```
 /
 ├── public/
-│   └── favicon.svg
+│   ├── favicon.svg
+│   └── images/
+│       ├── profile.jpg          # Your profile photo
+│       ├── README.md            # Image requirements guide
+│       └── beyond/
+│           ├── speaking.jpg     # Conference/meetup photo
+│           ├── mentoring.jpg    # Teaching/collaboration photo
+│           └── opensource.jpg   # Open source contribution image
 ├── src/
 │   ├── components/
-│   │   ├── Beyond.astro        # Community involvement section
-│   │   ├── Contact.astro       # Contact CTA
-│   │   ├── Currently.astro     # What I'm building now
-│   │   ├── Footer.astro
-│   │   ├── Hero.astro          # Homepage hero
-│   │   ├── Nav.astro           # Navigation
-│   │   ├── Projects.astro      # Case study cards
+│   │   ├── Beyond.astro         # Community involvement (with images)
+│   │   ├── Contact.astro        # Contact CTA
+│   │   ├── Currently.astro      # What I'm building (with icons)
+│   │   ├── Footer.astro         # Footer with social icons
+│   │   ├── Hero.astro           # Hero with profile photo
+│   │   ├── Icon.astro           # Lucide icon component
+│   │   ├── Nav.astro            # Navigation with social icons
+│   │   ├── Projects.astro       # Case study cards (with icons)
 │   │   └── Testimonial.astro
 │   ├── content/
-│   │   └── blog/               # Blog posts (MDX)
+│   │   └── blog/                # Blog posts (MDX)
 │   ├── layouts/
 │   │   ├── BlogPost.astro
 │   │   └── Layout.astro
@@ -62,18 +71,34 @@ npm run preview
 └── tsconfig.json
 ```
 
+## Adding Your Images
+
+Before deploying, add your images to the `/public/images/` folder:
+
+### Required Images
+
+| Image | Location | Size | Description |
+|-------|----------|------|-------------|
+| Profile | `/public/images/profile.jpg` | 640x760px | Your headshot/photo |
+| Speaking | `/public/images/beyond/speaking.jpg` | 800x500px | Conference/meetup photo |
+| Mentoring | `/public/images/beyond/mentoring.jpg` | 800x500px | Teaching/collaboration |
+| Open Source | `/public/images/beyond/opensource.jpg` | 800x500px | Contributions visual |
+
+See `/public/images/README.md` for detailed guidance on image selection.
+
 ## Customization
 
 ### Personal Information
 
 Edit the component files in `src/components/` to update:
 
-- **Hero.astro** - Name, title, tagline, tech stack, stats
-- **Beyond.astro** - Speaking, teaching, open source contributions
+- **Hero.astro** - Name, title, tagline, tech stack, stats, profile image
+- **Beyond.astro** - Speaking, teaching, open source (with images)
 - **Projects.astro** - Case studies with problem/solution/tradeoffs/impact
 - **Testimonial.astro** - Quote, author name, title
 - **Currently.astro** - What you're learning/building
 - **Contact.astro** - Email address, headline
+- **Nav.astro** - Social links (GitHub, LinkedIn, Twitter)
 - **Footer.astro** - Social links
 
 ### Site Config
@@ -87,17 +112,37 @@ export default defineConfig({
 });
 ```
 
+### Social Links
+
+Update social links in both `Nav.astro` and `Footer.astro`:
+
+```javascript
+const socialLinks = [
+  { href: 'https://github.com/yourusername', icon: 'github', label: 'GitHub' },
+  { href: 'https://linkedin.com/in/yourusername', icon: 'linkedin', label: 'LinkedIn' },
+  { href: 'https://twitter.com/yourusername', icon: 'twitter', label: 'Twitter' },
+];
+```
+
 ### Colors & Typography
 
 Edit CSS variables in `src/styles/global.css`:
 
 ```css
 :root {
-  --color-accent: #60a5fa;        /* Primary accent */
-  --color-accent-secondary: #a78bfa; /* Secondary accent */
+  --color-accent: #60a5fa;           /* Primary accent (blue) */
+  --color-accent-secondary: #a78bfa;  /* Secondary accent (purple) */
   /* ... */
 }
 ```
+
+### Adding Icons
+
+The `Icon.astro` component includes common Lucide icons. To add more:
+
+1. Find the icon on [lucide.dev](https://lucide.dev)
+2. Copy the SVG path data
+3. Add to the `icons` object in `src/components/Icon.astro`
 
 ## Adding Blog Posts
 
@@ -109,8 +154,8 @@ title: "Your Post Title"
 description: "A brief description"
 pubDate: 2024-12-15
 tags: ["Tag1", "Tag2"]
-heroImage: "/images/post-hero.jpg" # Optional
-draft: false # Set to true to hide
+heroImage: "/images/blog/post-hero.jpg"  # Optional
+draft: false  # Set to true to hide
 ---
 
 Your content here with full MDX support.
@@ -118,7 +163,16 @@ Your content here with full MDX support.
 
 ## Deployment to Netlify
 
-### Option 1: Netlify CLI
+### Option 1: Git Integration (Recommended)
+
+1. Push your code to GitHub/GitLab/Bitbucket
+2. Log in to [Netlify](https://app.netlify.com)
+3. Click "New site from Git"
+4. Select your repository
+5. Build settings are auto-detected from `netlify.toml`
+6. Click "Deploy site"
+
+### Option 2: Netlify CLI
 
 ```bash
 # Install Netlify CLI
@@ -130,15 +184,6 @@ netlify login
 # Deploy (creates new site)
 netlify deploy --prod
 ```
-
-### Option 2: Git Integration
-
-1. Push your code to GitHub/GitLab/Bitbucket
-2. Log in to [Netlify](https://app.netlify.com)
-3. Click "New site from Git"
-4. Select your repository
-5. Build settings are auto-detected from `netlify.toml`
-6. Click "Deploy site"
 
 ### Option 3: Drag & Drop
 
@@ -156,9 +201,9 @@ Then drag the `dist/` folder to [Netlify Drop](https://app.netlify.com/drop).
 
 ## Performance Tips
 
-- Images: Use `.webp` format and specify dimensions
-- Fonts: Already using `display=swap` for Google Fonts
-- Assets in `public/` are served as-is (good for images)
+- **Images**: Use `.webp` format and specify dimensions
+- **Optimization**: Run images through [squoosh.app](https://squoosh.app) before adding
+- **Fonts**: Already using `display=swap` for Google Fonts
 - Blog post images should go in `public/images/blog/`
 
 ## Adding More Pages
@@ -175,7 +220,7 @@ import Footer from '../components/Footer.astro';
 
 <Layout title="Uses | Sean Campbell">
   <Nav />
-  <main>
+  <main class="container" style="padding-top: 120px;">
     <!-- Your content -->
   </main>
   <Footer />
@@ -186,7 +231,8 @@ import Footer from '../components/Footer.astro';
 
 - [Astro](https://astro.build) - Static site generator
 - [MDX](https://mdxjs.com) - Markdown with components
-- CSS - Custom properties, no frameworks needed
+- [Lucide Icons](https://lucide.dev) - Icon library (inlined SVGs)
+- CSS - Custom properties, no frameworks
 - [Netlify](https://netlify.com) - Hosting & deployment
 
 ## License
