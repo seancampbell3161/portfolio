@@ -1,60 +1,91 @@
 ---
 title: "Composition Over Inheritance in Angular: A Practical Guide"
-description: "How switching from class-based inheritance to composition patterns improved our dashboard framework's reusability and maintainability."
-pubDate: 2025-12-15
+description: "How switching from class-based inheritance to composition patterns improves reusability and maintainability."
+pubDate: 2025-12-30
 tags: ["Angular", "TypeScript", "Architecture", "Best Practices"]
-draft: true
+draft: false
 ---
 
-When we first built our enterprise dashboard framework, we reached for the familiar tool of class-based inheritance. It seemed natural—dashboards share common functionality like data fetching, filtering, and layout management. What could go wrong?
+I'm sure you've heard this debate before: people arguing over whether to ditch inheritance in favor of composotion. Well, I'm here to give you the definitive answer... 
 
-Everything, as it turns out.
+It depends. 
 
-## The Inheritance Trap
+Okay, case closed, let's pack it up and go home.
 
-Our initial architecture looked something like this:
+Obviously, I'm kidding. The answer most of the time really is 'it depends.' But in Angular, the structure and implementation of the framework overwhelmingly lends itself to composition rather than inheritance in most use-cases. But in order to explore *why* this is the case, we should first take a look at the problems inheritance tries to solve.
 
-```typescript
-abstract class BaseDashboard {
-  abstract getData(): Observable<DashboardData>;
+## Why Inheritance?
+
+There's a lot of [resources to learn about inheritance](https://www.codecademy.com/resources/blog/what-is-inheritance), so I won't be going into detail about what Inheritance is, but these are the main reasons to use Inheritance as well as the problems it solves:
+
+1. Code reusability
+    ```typescript
+    abstract class BaseDashboard {
+      abstract getData(): Observable<DashboardData>;
+      
+      protected filterData(criteria: FilterCriteria) { /* ... */ }
+      protected handleError(error: Error) { /* ... */ }
+      protected trackAnalytics(event: string) { /* ... */ }
+    }
+
+    @Component({...})
+    export class SalesDashboardComponent extends BaseDashboard {
+      getData(): Observable<DashboardData> {
+        // Implementation
+      }
+    }
+    ```
+    Inheritance can drastically reduce the amount of code you write by encapsulating data and behavior. In this example, the SalesDashboard inherits the 3 methods (filterData, handleError, and trackAnalytics) from the base class so that you don't need to rewrite that code in the class.
+
+2. Consistency
   
-  protected filterData(criteria: FilterCriteria) { /* ... */ }
-  protected handleError(error: Error) { /* ... */ }
-  protected trackAnalytics(event: string) { /* ... */ }
-}
+    If you've worked on a team with several developers, you know how important enforcing expected behavior and patterns is. Having 15 different ways of implementing similar methods is a nightmare scenario, so creating a base class that enforces the use of methods and maintains data consitency via inherited fields can really clean things up.
+    
+    Going back to the previous example, you can see that the SalesDashboard contains an implementation of the *getData()* method. This is enforced because the BaseDashboard declares the abstract *getData()*, so any class or component inheriting from the BaseDashboard must implement that method, enforcing uniformity within the "dashboards."
 
-class SalesDashboard extends BaseDashboard {
-  getData(): Observable<DashboardData> {
-    // Implementation
-  }
-}
-```
+3. Polymorphism
 
-This worked fine—until requirements changed. As they always do.
+    You can treat different subclasses as the same type (e.g. Animal -> Dog, Cat). So, for example you could have an array that contains Animal objects, and therefore you can add both a Dog object and a Cat object into the array.
 
 ## When Inheritance Breaks Down
 
-Problems emerged when teams needed dashboards that:
+Let's continue with our Dashboard example. Some problems emerge when teams need dashboards that:
 
-- Shared *some* but not *all* base functionality
-- Combined features from multiple dashboard "types"  
-- Had different data fetching strategies
+- Share *some* but not *all* base functionality
+- Combine features from multiple dashboard "types"  
+- Have different data fetching strategies
 
-We were stuck with the classic inheritance problems: the fragile base class, the diamond problem of needing multiple inheritance, and constantly fighting the rigid hierarchy.
+I've found that these scenarios actually happen quite a bit in the frontend. In these cases we're kind of stuck with the classic inheritance problems: a fragile base class, the diamond problem of needing multiple inheritance, and constantly fighting the rigid hierarchy.
 
 ## The Composition Alternative
 
-Instead of inheriting behavior, we inject it. Here's the refactored approach:
+Okay, so there's some issues with Inheritance - surely there's issues with Composition as well, right?
+
+Correct.
+
+There's likely tradeoffs to every decision in programming, with very few silver bullets. The thing is, composition is inherently (pun intended) more Angular-centric than Inheritance *in most cases*. First, let's briefly touch on Composition before we dive into why that is.
+
+ > Composition is fairly easy to understand - we can see composition in everyday life: a chair has legs, a wall is composed of bricks and mortar, and so on. While the definition of inheritance is simple, it can become a complicated, tangled thing when used unwisely. Inheritance is more of an abstraction that we can only talk about, not touch directly. Though it is possible to mimic inheritance using composition in many situations, it is often unwieldy to do so. The purpose of composition is obvious: make wholes out of parts.
+     
+     *- Steven Lowe* [Composition vs. Inheritance: How to Choose?](https://www.thoughtworks.com/en-es/insights/blog/composition-vs-inheritance-how-choose)
+
+So now that we better understand *what* Composition is, we can address *why* this approach is better suited within Angular.
+
+Angular is designed around components, services, and directives - each of which are all about composition. You have a web page with a dashboard, and that dashboard is composed of multiple components. You can kinda see where I'm going with this, right?
+
+Services can be injected into any component that needs it's logic. Directives can add behavior to existing components/elements, so this naturally pushes you towards a *"has-a"* relationship (which is representative of what Composition is).
+
+Let's get back to our dashboard. Instead of inheriting behavior, we inject it. Here's a refactored approach:
 
 ```typescript
 // Feature-specific services
 @Injectable()
-class DashboardDataService {
+export class DashboardDataService {
   fetch<T>(config: DataConfig): Observable<T> { /* ... */ }
 }
 
 @Injectable()
-class DashboardFilterService {
+export class DashboardFilterService {
   apply(data: any[], criteria: FilterCriteria): any[] { /* ... */ }
 }
 
@@ -62,24 +93,90 @@ class DashboardFilterService {
 @Component({
   providers: [DashboardDataService, DashboardFilterService]
 })
-class SalesDashboard {
-  constructor(
-    private data: DashboardDataService,
-    private filters: DashboardFilterService
-  ) {}
+export class SalesDashboardComponent {
+  private data = inject(DashboardDataService);
+  private filters = inject(DashboardFilterService);
 }
 ```
 
-## The Impact
+You can see here that we've transformed the SalesDashboard from a *"is-a"* BaseDashboard into *"has-a"* data and filter functionality. There's a number of benefits we receive from this approach:
+ - We use exactly what we need without the bloat and overhead of stuff we might not use with inheriting from a base class.
+ - The component is now *much* easier to test in isolation, since you can test the component without instantiating an entire component tree.
+ - Any changes within the services are not likely to break the component using them, whereas a breaking change is much more likely in an inhereted base component.
+ - No hidden behavior (this is a big one for me and one that has bit me a few times at work). All of the behavior of the component is clearly laid out: which services it's using, it's methods, and class properties. With inheritance, you are forced to go to the base class to see all of the behavior and data your subclass has inherited, but is not explicitly within your subclass.
 
-After the refactor:
 
-- **60% faster** new dashboard development
-- **Zero** "base class" coordination meetings
-- Teams could innovate independently
+OK bro that's great, but there's still one big problem.
 
-The lesson? Start with composition. Inheritance should be the exception, not the rule.
+Inheritance helped us stay consistent and not wander off into the land of a million different almost-the-same-thing-but-not-quite components. How does composition help us there, eh? *eeeehhhh????*
 
----
+We have our abstract base class that we can inheret from, so that we have our expected shape of our child component:
+```typescript
+    abstract class BaseDashboard {
+      abstract getData(): Observable<DashboardData>;
+      
+      protected filterData(criteria: FilterCriteria) { /* ... */ }
+      protected handleError(error: Error) { /* ... */ }
+      protected trackAnalytics(event: string) { /* ... */ }
+    }
+```
 
-*This post is part of my series on Angular architecture patterns. Have questions? [Reach out](/contact).*
+But we can accomplish the same thing with an interface that describes what a dashboard can expose, and then write a helper/service that only works with that interface.
+```typescript
+    export interface Dashboard<T> {
+      getData(): Observable<DashboardData>;
+      filterData(criteria: FilterCriteria);
+      handleError(error: Error);
+      trackAnalytics(event: string);
+    }
+```
+
+```typescript
+    @Injectable()
+    export class DashboardService<T> {
+      handleGetData(): Observable<DashBoardData> { ... }
+    }
+```
+
+```typescript
+    @Component({
+      selector: 'app-user-dashboard',
+      template: `...`,
+      providers: [DashboardService<User>],
+    })
+    export class UserDashboardComponent implements Dashboard<User> {
+      private dashboardService = inject(DashboardService);
+      private userService = inject(UserService);
+
+      getData() {
+        return this.dashboardService.handleGetData();
+      }
+
+      filterData(criteria: FilterCriteria) { ... }
+      trackAnalytics(event: string) { ... }
+    }
+```
+
+## The Result
+
+Cool, so let's recap the main takeaways as to why we prefer Composition over Inheritance in Angular:
+
+### Visibility & clarity
+	- Inheritance: behavior lives in BaseDashboard. You must open another file to see what the base methods do.
+	- Composition: behavior lives in the components, but the component explicitly calls dashboardService.handleGetData(...), so the flow is obvious at the call site.
+
+### Flexibility
+	-	One component can:
+        -	Use the behavior of injected Services as-is.
+        -	Or wrap it (e.g., add custom analytics around getData).
+        -	Or skip it entirely and implement its own flow.
+        -	You can mix-and-match different helpers for different components without inheriting down long chains.
+
+### Testing
+	-	You can unit test the components in isolation.
+	-	No need to deal with base class logic or protected members.
+
+### Avoiding brittle base classes
+	-	With inheritance, it’s tempting to keep adding “just one more thing” to the base class (logging, analytics, special flags…) until it becomes a god object.
+
+All this to say that Inheritance *can* be used in Angular, and there is definitely a spectrum (albeit narrow) of use-cases for it - but it should be the exception, not the rule.
