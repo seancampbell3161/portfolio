@@ -161,9 +161,9 @@ But we can accomplish the same thing with an interface that describes what a das
 
 Cool, so let's recap the main takeaways as to why we prefer Composition over Inheritance in Angular:
 
-### Visibility & clarity
-	- Inheritance: behavior lives in BaseDashboard. You must open another file to see what the base methods do.
-	- Composition: behavior lives in the components, but the component explicitly calls dashboardService.handleGetData(...), so the flow is obvious at the call site.
+### Visibility & Clarity
+	- Inheritance: behavior lives in the Base component. When you're inside your component, you must open another file to see what the base methods do.
+	- Composition: behavior lives in the components themselves - the component explicitly calls the service for it's behavior, so the flow is obvious at the call site.
 
 ### Flexibility
 	-	One component can:
