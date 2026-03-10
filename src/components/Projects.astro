@@ -4,17 +4,13 @@ import Icon from './Icon.astro';
 interface Project {
   id: string;
   title: string;
+  description: string;
   tags: string[];
   problem: string;
   solution: string;
   tradeoffs: string;
   impact: string;
-  icon: 'music' | 'layout-dashboard' | 'briefcase' | 'code' | 'rocket' | 'bar-chart-3';
-  links?: {
-    demo?: string;
-    github?: string;
-    caseStudy?: string;
-  };
+  url: string;
 }
 
 interface Props {
@@ -23,34 +19,26 @@ interface Props {
 
 const { projects = [
   {
-    id: "audio-stem-separator",
-    title: "Audio Stem Separator",
-    tags: [".NET", "Python", "PostgreSQL", "React", "Docker"],
-    problem: "Musicians and content creators needed an affordable way to isolate vocals and instruments from audio tracks without expensive software or technical expertise.",
-    solution: "Built a containerized .NET Web API that orchestrates Python audio processing libraries, exposing a simple REST interface for uploading audio or providing YouTube URLs.",
-    tradeoffs: "Chose to use Python libraries via subprocess calls rather than porting to .NET. While this added deployment complexity (Docker multi-stage builds), it leveraged battle-tested ML models that would have taken months to reimplement.",
-    impact: "Reduced processing time from manual DAW work (30+ min) to under 2 minutes. The containerized approach enabled horizontal scaling on DigitalOcean.",
-    icon: "music",
+    id: "roaming-camp",
+    title: "Roaming.Camp",
+    description: "A geospatial campsite discovery platform that unifies NPS, weather, cell coverage, and reservation data into a single interactive map.",
+    tags: ["Next.js", "Go", "PostGIS", "Mapbox", "Docker"],
+    problem: "Planning outdoor trips requires juggling multiple disconnected sources — NPS, Recreation.gov, weather services, cell coverage maps — with no unified way to discover and evaluate campsites.",
+    solution: "Built a full-stack geospatial platform with a Next.js frontend backed by 4 Go microservices that aggregate NPS, RIDB, NWS, and FCC data into an interactive Mapbox map with site details, weather, and cell coverage.",
+    tradeoffs: "Chose microservices over a monolith — each service (places, weather, coverage, reservations) scales and deploys independently, but adds orchestration complexity. PostGIS handles spatial queries correctly (Earth curvature) at the cost of a heavier database dependency.",
+    impact: "Consolidates 4+ data sources into a single map-based interface. Background sync keeps data fresh without blocking users, and the BFF pattern keeps internal services unexposed.",
+    url: "https://roaming.camp",
   },
   {
-    id: "enterprise-dashboard",
-    title: "Enterprise Dashboard Platform",
-    tags: ["Angular", "TypeScript", "RxJS", "NgRx", "REST APIs"],
-    problem: "A growing SaaS company had fragmented dashboards across teams, leading to inconsistent UX and duplicated development effort.",
-    solution: "Architected a composable dashboard framework using Angular's composition patterns, enabling teams to build consistent dashboards from shared, configurable components.",
-    tradeoffs: "Opted for composition over inheritance after the initial class-based approach created tight coupling. This required refactoring existing components but dramatically improved reusability.",
-    impact: "Reduced new dashboard development time by 60%. The pattern library now powers 12 different team dashboards with consistent UX.",
-    icon: "layout-dashboard",
-  },
-  {
-    id: "campbell-creative",
-    title: "Campbell Creative Platform",
-    tags: ["Next.js", "Stripe", "PostgreSQL", "Vercel"],
-    problem: "Running a creative business meant juggling invoices, client communication, and project tracking across multiple disconnected tools.",
-    solution: "Built a unified platform handling client portals, automated invoicing, and project status tracking—eating my own dogfood as both developer and user.",
-    tradeoffs: "Chose a monolithic Next.js app over microservices. For a single-user business tool, the operational simplicity outweighed the architectural purity of distributed services.",
-    impact: "Eliminated 5+ hours/week of administrative overhead. Automated invoice reminders improved payment collection by 40%.",
-    icon: "briefcase",
+    id: "songle",
+    title: "Songle",
+    description: "A daily music guessing game where players identify songs from isolated audio stems — vocals, drums, bass, or instrumentation.",
+    tags: ["Angular", ".NET", "Python", "PostgreSQL", "Docker"],
+    problem: "Music trivia games rely on playing full tracks, making it too easy to identify songs. There's no game that challenges players with isolated stems — just vocals, drums, or bass — for a genuinely difficult guessing experience.",
+    solution: "Built a daily Wordle-style music guessing game where players identify songs from isolated audio stems. A .NET API orchestrates Python ML models (Spleeter/Demucs) to separate uploaded tracks into vocals, drums, bass, and instrumentation.",
+    tradeoffs: "Audio separation runs Python ML models invoked via subprocess from .NET rather than porting to native code. This adds deployment complexity (multi-container Docker setup) but leverages battle-tested models that would take months to reimplement.",
+    impact: "Players get 4 attempts with scoring based on speed (100/75/50/25 points). A daily background job auto-selects the Song of the Day, and the hybrid .NET/Python pipeline processes tracks end-to-end from YouTube URL to separated stems stored in cloud storage.",
+    url: "https://songle.lol",
   },
 ]} = Astro.props;
 ---
@@ -70,18 +58,20 @@ const { projects = [
         <article class="project-card" data-project={project.id}>
           <button class="project-toggle" aria-expanded="false" aria-controls={`details-${project.id}`}>
             <div class="project-header">
-              <div class="project-icon-wrapper">
-                <Icon name={project.icon} size={28} />
-              </div>
-              <div class="project-info">
-                <h3 class="project-title">{project.title}</h3>
-                <div class="tags">
-                  {project.tags.map((tag) => (
-                    <span class="tag">{tag}</span>
-                  ))}
-                </div>
-              </div>
+              <h3 class="project-title">{project.title}</h3>
+              {project.url && (
+                <a href={project.url} class="project-visit" target="_blank" rel="noopener" onclick="event.stopPropagation()">
+                  <span>Visit</span>
+                  <Icon name="arrow-up-right" size={14} />
+                </a>
+              )}
             </div>
+            <div class="tags">
+              {project.tags.map((tag) => (
+                <span class="tag">{tag}</span>
+              ))}
+            </div>
+            <p class="project-description">{project.description}</p>
             <span class="expand-hint">
               <span class="expand-text">Click to explore</span>
               <Icon name="arrow-right" size={16} class="expand-arrow" />
@@ -117,29 +107,6 @@ const { projects = [
               </h4>
               <p class="detail-text">{project.impact}</p>
             </div>
-            
-            {project.links && (
-              <div class="project-links">
-                {project.links.demo && (
-                  <a href={project.links.demo} class="project-link" target="_blank" rel="noopener">
-                    <span>Live Demo</span>
-                    <Icon name="external-link" size={14} />
-                  </a>
-                )}
-                {project.links.github && (
-                  <a href={project.links.github} class="project-link" target="_blank" rel="noopener">
-                    <Icon name="github" size={14} />
-                    <span>GitHub</span>
-                  </a>
-                )}
-                {project.links.caseStudy && (
-                  <a href={project.links.caseStudy} class="project-link">
-                    <span>Full Case Study</span>
-                    <Icon name="arrow-right" size={14} />
-                  </a>
-                )}
-              </div>
-            )}
           </div>
         </article>
       ))}
@@ -236,46 +203,51 @@ const { projects = [
   
   .project-toggle {
     width: 100%;
-    padding: var(--space-xl);
+    padding: var(--space-lg) var(--space-xl);
     background: none;
     border: none;
     cursor: pointer;
     text-align: left;
     color: inherit;
   }
-  
+
   .project-header {
     display: flex;
-    align-items: flex-start;
-    gap: 20px;
-  }
-  
-  .project-icon-wrapper {
-    width: 56px;
-    height: 56px;
-    display: flex;
     align-items: center;
-    justify-content: center;
-    background: var(--color-accent-bg);
-    border-radius: var(--radius-lg);
-    color: var(--color-accent);
-    flex-shrink: 0;
+    justify-content: space-between;
+    gap: var(--space-md);
   }
-  
-  .project-info {
-    flex: 1;
-  }
-  
+
   .project-title {
     font-size: 24px;
     font-weight: 600;
-    margin-bottom: var(--space-md);
+  }
+
+  .project-visit {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 13px;
+    color: var(--color-accent);
+    font-weight: 500;
+    padding: 4px 12px;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-full);
+    transition: all var(--transition-base);
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+
+  .project-visit:hover {
+    border-color: var(--color-accent);
+    background: var(--color-accent-bg);
   }
   
   .tags {
     display: flex;
     flex-wrap: wrap;
     gap: var(--space-sm);
+    margin-top: var(--space-sm);
   }
   
   .tag {
@@ -287,6 +259,13 @@ const { projects = [
     font-weight: 500;
   }
   
+  .project-description {
+    font-size: 15px;
+    color: var(--color-text-muted);
+    line-height: 1.6;
+    margin-top: var(--space-sm);
+  }
+
   .expand-hint {
     display: flex;
     align-items: center;
@@ -311,11 +290,12 @@ const { projects = [
     transition: max-height var(--transition-slower), padding var(--transition-slower);
     padding: 0 var(--space-xl);
   }
-  
+
   .project-card.active .project-details {
-    max-height: 800px;
-    padding: 0 var(--space-xl) var(--space-xl);
+    max-height: 1200px;
+    padding: 0 var(--space-xl) var(--space-lg);
   }
+
   
   .detail-block {
     margin-bottom: var(--space-lg);
@@ -346,43 +326,16 @@ const { projects = [
     padding-left: 24px;
   }
   
-  .project-links {
-    display: flex;
-    flex-wrap: wrap;
-    gap: var(--space-md);
-    margin-top: var(--space-xl);
-    padding-top: var(--space-lg);
-    border-top: 1px solid var(--color-border);
-  }
-  
-  .project-link {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    font-size: 14px;
-    color: var(--color-accent);
-    font-weight: 500;
-    transition: color var(--transition-base);
-  }
-  
-  .project-link:hover {
-    color: var(--color-text-primary);
-  }
   
   @media (max-width: 640px) {
     .work {
       padding: var(--space-4xl) 0;
     }
-    
-    .project-header {
-      flex-direction: column;
-      gap: var(--space-md);
-    }
-    
+
     .project-title {
       font-size: 20px;
     }
-    
+
     .detail-text {
       padding-left: 0;
     }
