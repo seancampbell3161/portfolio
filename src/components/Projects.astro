@@ -10,7 +10,7 @@ interface Project {
   solution: string;
   tradeoffs: string;
   impact: string;
-  url: string;
+  url?: string;
 }
 
 interface Props {
@@ -39,6 +39,17 @@ const { projects = [
     tradeoffs: "Audio separation runs Python ML models invoked via subprocess from .NET rather than porting to native code. This adds deployment complexity (multi-container Docker setup) but leverages battle-tested models that would take months to reimplement.",
     impact: "Players get 4 attempts with scoring based on speed (100/75/50/25 points). A daily background job auto-selects the Song of the Day, and the hybrid .NET/Python pipeline processes tracks end-to-end from YouTube URL to separated stems stored in cloud storage.",
     url: "https://songle.lol",
+  },
+  {
+    id: "rswebtwain",
+    title: "RSWebTWAIN",
+    description: "A headless Rust/Tauri desktop agent that bridges web browsers to TWAIN document scanners, replacing expensive proprietary libraries.",
+    tags: ["Rust", "Tauri v2", "WebSocket", "Angular", "FFI"],
+    problem: "Enterprise web apps need browser-based document scanning, but the go-to commercial library is expensive and can't handle legacy 32-bit-only scanner drivers on modern 64-bit systems.",
+    solution: "Built a headless Tauri v2 system-tray agent that exposes a WebSocket API on localhost for browser-to-scanner communication. Uses a typestate pattern for the TWAIN state machine — seven state transitions verified at compile time — and spawns a 32-bit sidecar process to bridge the architecture gap for legacy drivers.",
+    tradeoffs: "Chose Rust's typestate pattern to make invalid TWAIN state transitions compile-time errors instead of runtime bugs. This added upfront design complexity but eliminated an entire class of scanner communication failures. A 32-bit sidecar over JSON-line IPC was simpler than forcing the whole app to 32-bit, at the cost of cross-process coordination.",
+    impact: "Eliminates per-seat licensing costs for commercial scanning SDKs. Supports both modern 64-bit and legacy 32-bit TWAIN drivers in a single install — critical for enterprise deployments with mixed hardware. DPAPI-encrypted auth and origin validation secure the localhost WebSocket without TLS certificate complexity.",
+    url: "https://github.com/seancampbell3161/WebTWAIN",
   },
 ]} = Astro.props;
 ---
