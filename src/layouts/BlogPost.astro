@@ -2,6 +2,7 @@
 import Layout from './Layout.astro';
 import Nav from '../components/Nav.astro';
 import Footer from '../components/Footer.astro';
+import Newsletter from '../components/Newsletter.astro';
 
 interface Props {
   title: string;
@@ -62,7 +63,12 @@ const formattedUpdatedDate = updatedDate?.toLocaleDateString('en-US', {
         <slot />
       </div>
     </article>
-    
+
+    <Newsletter
+      heading="Like this? Subscribe."
+      blurb="Get new posts in your inbox. No spam, unsubscribe anytime."
+    />
+
     <aside class="post-footer">
       <a href="/blog" class="back-link">← Back to all posts</a>
     </aside>
