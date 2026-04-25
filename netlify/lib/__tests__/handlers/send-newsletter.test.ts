@@ -197,4 +197,31 @@ describe("handleSendNewsletter", () => {
 
     expect((d.email as any).sent).toHaveLength(0);
   });
+
+  it("releases the lock even when listSubscribers throws mid-broadcast", async () => {
+    const items = rss(["A", "a", "2026-02-01T00:00:00.000Z"]);
+    const d = deps(items);
+    await d.storage.putState({
+      lastSentPubDate: "2026-01-01T00:00:00.000Z",
+      sendingLockUntil: null,
+    });
+    d.storage.listSubscribers = async () => {
+      throw new Error("blobs unreachable");
+    };
+
+    await handleSendNewsletter(d);
+
+    const state = await d.storage.getState();
+    expect(state!.sendingLockUntil).toBeNull();
+  });
+
+  it("does not throw when RSS fetch fails", async () => {
+    const d = deps([], {
+      fetchItems: async () => {
+        throw new Error("rss 500");
+      },
+    });
+
+    await expect(handleSendNewsletter(d)).resolves.toBeUndefined();
+  });
 });
