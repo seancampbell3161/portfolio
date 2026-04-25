@@ -11,23 +11,23 @@ function deps(): Deps {
     storage: memoryStorage(),
     email: fakeEmail(),
     clock: () => fixedNow,
-    siteUrl: "https://seancampbell.dev",
+    siteUrl: "https://seanthedeveloper.com",
   };
 }
 
 const tokenReq = (token: string) =>
-  new Request(`https://seancampbell.dev/api/confirm?token=${token}`);
+  new Request(`https://seanthedeveloper.com/api/confirm?token=${token}`);
 
 describe("handleConfirm", () => {
   it("redirects to /newsletter/error on missing token", async () => {
-    const res = await handleConfirm(new Request("https://seancampbell.dev/api/confirm"), deps());
+    const res = await handleConfirm(new Request("https://seanthedeveloper.com/api/confirm"), deps());
     expect(res.status).toBe(302);
-    expect(res.headers.get("location")).toBe("https://seancampbell.dev/newsletter/error");
+    expect(res.headers.get("location")).toBe("https://seanthedeveloper.com/newsletter/error");
   });
 
   it("redirects to /newsletter/error on unknown token", async () => {
     const res = await handleConfirm(tokenReq("nope"), deps());
-    expect(res.headers.get("location")).toBe("https://seancampbell.dev/newsletter/error");
+    expect(res.headers.get("location")).toBe("https://seanthedeveloper.com/newsletter/error");
   });
 
   it("flips a pending subscriber to confirmed and clears the token", async () => {
@@ -43,7 +43,7 @@ describe("handleConfirm", () => {
     });
     const res = await handleConfirm(tokenReq("c".repeat(64)), d);
     expect(res.status).toBe(302);
-    expect(res.headers.get("location")).toBe("https://seancampbell.dev/newsletter/confirmed");
+    expect(res.headers.get("location")).toBe("https://seanthedeveloper.com/newsletter/confirmed");
 
     const sub = await d.storage.getSubscriber("sean@example.com");
     expect(sub!.status).toBe("confirmed");
@@ -63,6 +63,6 @@ describe("handleConfirm", () => {
       unsubscribeToken: "u".repeat(64),
     });
     const res = await handleConfirm(tokenReq("c".repeat(64)), d);
-    expect(res.headers.get("location")).toBe("https://seancampbell.dev/newsletter/error");
+    expect(res.headers.get("location")).toBe("https://seanthedeveloper.com/newsletter/error");
   });
 });

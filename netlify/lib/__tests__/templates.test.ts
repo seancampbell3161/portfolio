@@ -6,7 +6,7 @@ import {
 
 describe("confirmationEmail", () => {
   it("includes the confirm URL in both html and text bodies", () => {
-    const url = "https://seancampbell.dev/api/confirm?token=abc";
+    const url = "https://seanthedeveloper.com/api/confirm?token=abc";
     const out = confirmationEmail({ confirmUrl: url });
     expect(out.subject).toMatch(/confirm/i);
     expect(out.html).toContain(url);
@@ -19,16 +19,16 @@ describe("postNotificationEmail", () => {
     const out = postNotificationEmail({
       postTitle: "Hello",
       postDescription: "A blog post.",
-      postUrl: "https://seancampbell.dev/blog/hello/",
-      unsubscribeUrl: "https://seancampbell.dev/api/unsubscribe?token=xyz",
+      postUrl: "https://seanthedeveloper.com/blog/hello/",
+      unsubscribeUrl: "https://seanthedeveloper.com/api/unsubscribe?token=xyz",
     });
     expect(out.subject).toBe("Hello");
     expect(out.html).toContain("Hello");
     expect(out.html).toContain("A blog post.");
-    expect(out.html).toContain("https://seancampbell.dev/blog/hello/");
-    expect(out.html).toContain("https://seancampbell.dev/api/unsubscribe?token=xyz");
-    expect(out.text).toContain("https://seancampbell.dev/blog/hello/");
-    expect(out.text).toContain("https://seancampbell.dev/api/unsubscribe?token=xyz");
+    expect(out.html).toContain("https://seanthedeveloper.com/blog/hello/");
+    expect(out.html).toContain("https://seanthedeveloper.com/api/unsubscribe?token=xyz");
+    expect(out.text).toContain("https://seanthedeveloper.com/blog/hello/");
+    expect(out.text).toContain("https://seanthedeveloper.com/api/unsubscribe?token=xyz");
   });
 
   it("html-escapes the post title to prevent injection", () => {

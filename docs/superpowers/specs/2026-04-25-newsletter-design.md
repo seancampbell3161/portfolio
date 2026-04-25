@@ -177,7 +177,7 @@ Netlify environment variables (set via the Netlify dashboard):
 |---|---|
 | `RESEND_API_KEY` | `re_…` |
 | `RESEND_FROM` | `Sean Campbell <newsletter@seanthedeveloper.com>` |
-| `SITE_URL` | `https://seancampbell.dev` |
+| `SITE_URL` | `https://seanthedeveloper.com` |
 
 One-time manual setup:
 

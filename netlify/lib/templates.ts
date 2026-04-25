@@ -48,7 +48,7 @@ export function postNotificationEmail(args: {
   <p style="font-size:16px;color:#444;">${escape(postDescription)}</p>
   <p><a href="${escape(postUrl)}" style="display:inline-block;padding:12px 20px;background:#5fa8fc;color:#fff;text-decoration:none;border-radius:6px;font-weight:600;">Read on the site →</a></p>
   <hr style="border:none;border-top:1px solid #eee;margin:32px 0;"/>
-  <p style="color:#999;font-size:12px;">You're getting this because you subscribed at seancampbell.dev. <a href="${escape(unsubscribeUrl)}" style="color:#999;">Unsubscribe</a>.</p>
+  <p style="color:#999;font-size:12px;">You're getting this because you subscribed at seanthedeveloper.com. <a href="${escape(unsubscribeUrl)}" style="color:#999;">Unsubscribe</a>.</p>
 </body></html>`;
   const text = `${postTitle}
 

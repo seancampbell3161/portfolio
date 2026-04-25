@@ -11,13 +11,13 @@ function deps(overrides: Partial<Deps> = {}): Deps {
     storage: memoryStorage(),
     email: fakeEmail(),
     clock: () => fixedNow,
-    siteUrl: "https://seancampbell.dev",
+    siteUrl: "https://seanthedeveloper.com",
     ...overrides,
   };
 }
 
 function req(body: unknown, ip = "1.1.1.1"): Request {
-  return new Request("https://seancampbell.dev/api/subscribe", {
+  return new Request("https://seanthedeveloper.com/api/subscribe", {
     method: "POST",
     headers: { "content-type": "application/json", "x-nf-client-connection-ip": ip },
     body: JSON.stringify(body),
@@ -109,7 +109,7 @@ describe("handleSubscribe", () => {
 
   it("returns 400 on malformed JSON body", async () => {
     const d = deps();
-    const r = new Request("https://seancampbell.dev/api/subscribe", {
+    const r = new Request("https://seanthedeveloper.com/api/subscribe", {
       method: "POST",
       headers: { "content-type": "application/json", "x-nf-client-connection-ip": "1.1.1.1" },
       body: "{not json",

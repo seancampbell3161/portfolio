@@ -11,22 +11,22 @@ function deps(): Deps {
     storage: memoryStorage(),
     email: fakeEmail(),
     clock: () => fixedNow,
-    siteUrl: "https://seancampbell.dev",
+    siteUrl: "https://seanthedeveloper.com",
   };
 }
 
 const tokenReq = (token: string) =>
-  new Request(`https://seancampbell.dev/api/unsubscribe?token=${token}`);
+  new Request(`https://seanthedeveloper.com/api/unsubscribe?token=${token}`);
 
 describe("handleUnsubscribe", () => {
   it("redirects to /newsletter/error on missing token", async () => {
-    const res = await handleUnsubscribe(new Request("https://seancampbell.dev/api/unsubscribe"), deps());
-    expect(res.headers.get("location")).toBe("https://seancampbell.dev/newsletter/error");
+    const res = await handleUnsubscribe(new Request("https://seanthedeveloper.com/api/unsubscribe"), deps());
+    expect(res.headers.get("location")).toBe("https://seanthedeveloper.com/newsletter/error");
   });
 
   it("redirects to /newsletter/error on unknown token", async () => {
     const res = await handleUnsubscribe(tokenReq("nope"), deps());
-    expect(res.headers.get("location")).toBe("https://seancampbell.dev/newsletter/error");
+    expect(res.headers.get("location")).toBe("https://seanthedeveloper.com/newsletter/error");
   });
 
   it("flips confirmed → unsubscribed and redirects", async () => {
@@ -42,7 +42,7 @@ describe("handleUnsubscribe", () => {
     });
     const res = await handleUnsubscribe(tokenReq("u".repeat(64)), d);
     expect(res.status).toBe(302);
-    expect(res.headers.get("location")).toBe("https://seancampbell.dev/newsletter/unsubscribed");
+    expect(res.headers.get("location")).toBe("https://seanthedeveloper.com/newsletter/unsubscribed");
 
     const sub = await d.storage.getSubscriber("sean@example.com");
     expect(sub!.status).toBe("unsubscribed");
@@ -61,6 +61,6 @@ describe("handleUnsubscribe", () => {
       unsubscribeToken: "u".repeat(64),
     });
     const res = await handleUnsubscribe(tokenReq("u".repeat(64)), d);
-    expect(res.headers.get("location")).toBe("https://seancampbell.dev/newsletter/unsubscribed");
+    expect(res.headers.get("location")).toBe("https://seanthedeveloper.com/newsletter/unsubscribed");
   });
 });

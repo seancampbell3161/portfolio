@@ -5,7 +5,7 @@ import { resendSender } from "../lib/email.js";
 
 const apiKey = process.env.RESEND_API_KEY!;
 const from = process.env.RESEND_FROM!;
-const siteUrl = process.env.SITE_URL ?? "https://seancampbell.dev";
+const siteUrl = process.env.SITE_URL ?? "https://seanthedeveloper.com";
 
 export default async () => {
   await handleSendNewsletter({

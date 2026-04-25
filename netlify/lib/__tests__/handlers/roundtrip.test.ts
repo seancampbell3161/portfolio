@@ -14,11 +14,11 @@ describe("subscribe → confirm → unsubscribe round trip", () => {
       storage: memoryStorage(),
       email: fakeEmail(),
       clock: () => fixedNow,
-      siteUrl: "https://seancampbell.dev",
+      siteUrl: "https://seanthedeveloper.com",
     };
 
     const subRes = await handleSubscribe(
-      new Request("https://seancampbell.dev/api/subscribe", {
+      new Request("https://seanthedeveloper.com/api/subscribe", {
         method: "POST",
         headers: {
           "content-type": "application/json",
@@ -36,16 +36,16 @@ describe("subscribe → confirm → unsubscribe round trip", () => {
 
     const confirmRes = await handleConfirm(new Request(confirmUrl), deps);
     expect(confirmRes.headers.get("location")).toBe(
-      "https://seancampbell.dev/newsletter/confirmed",
+      "https://seanthedeveloper.com/newsletter/confirmed",
     );
 
     const sub = await deps.storage.getSubscriber("sean@example.com");
     expect(sub!.status).toBe("confirmed");
 
-    const unsubUrl = `https://seancampbell.dev/api/unsubscribe?token=${sub!.unsubscribeToken}`;
+    const unsubUrl = `https://seanthedeveloper.com/api/unsubscribe?token=${sub!.unsubscribeToken}`;
     const unsubRes = await handleUnsubscribe(new Request(unsubUrl), deps);
     expect(unsubRes.headers.get("location")).toBe(
-      "https://seancampbell.dev/newsletter/unsubscribed",
+      "https://seanthedeveloper.com/newsletter/unsubscribed",
     );
 
     const final = await deps.storage.getSubscriber("sean@example.com");

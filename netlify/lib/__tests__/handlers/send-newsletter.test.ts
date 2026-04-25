@@ -11,7 +11,7 @@ function rss(...items: Array<[string, string, string]>): RssItem[] {
   return items.map(([title, slug, pubDate]) => ({
     title,
     description: `${title} desc`,
-    link: `https://seancampbell.dev/blog/${slug}/`,
+    link: `https://seanthedeveloper.com/blog/${slug}/`,
     pubDate,
   }));
 }
@@ -33,7 +33,7 @@ function deps(items: RssItem[], overrides: Partial<Deps> = {}): Deps {
     storage: memoryStorage(),
     email: fakeEmail(),
     clock: () => fixedNow,
-    siteUrl: "https://seancampbell.dev",
+    siteUrl: "https://seanthedeveloper.com",
     fetchItems: async () => items,
     ...overrides,
   };

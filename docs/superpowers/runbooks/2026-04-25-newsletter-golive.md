@@ -22,7 +22,7 @@ In the Netlify dashboard for the portfolio site → Site configuration → Envir
 
 - `RESEND_API_KEY` = the Resend key
 - `RESEND_FROM` = `Sean Campbell <newsletter@seanthedeveloper.com>`
-- `SITE_URL` = `https://seancampbell.dev`
+- `SITE_URL` = `https://seanthedeveloper.com`
 
 ## 4. Deploy
 

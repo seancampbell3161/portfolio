@@ -30,7 +30,7 @@ Global CSS with design tokens in `src/styles/global.css`. Dark theme using CSS c
 
 ## Deployment
 
-Deployed to **Netlify** (configured in `netlify.toml`). Site URL: `https://seancampbell.dev`. Node 20.
+Deployed to **Netlify** (configured in `netlify.toml`). Site URL: `https://seanthedeveloper.com`. Node 20.
 
 ## Blog Posts
 

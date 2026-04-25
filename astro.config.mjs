@@ -4,7 +4,7 @@ import sitemap from '@astrojs/sitemap';
 
 // https://astro.build/config
 export default defineConfig({
-  site: 'https://seancampbell.dev', // Update this to your domain
+  site: 'https://seanthedeveloper.com',
   integrations: [mdx(), sitemap()],
   markdown: {
     shikiConfig: {

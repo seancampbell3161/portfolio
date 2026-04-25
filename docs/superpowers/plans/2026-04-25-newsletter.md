@@ -732,7 +732,7 @@ import {
 
 describe("confirmationEmail", () => {
   it("includes the confirm URL in both html and text bodies", () => {
-    const url = "https://seancampbell.dev/api/confirm?token=abc";
+    const url = "https://seanthedeveloper.com/api/confirm?token=abc";
     const out = confirmationEmail({ confirmUrl: url });
     expect(out.subject).toMatch(/confirm/i);
     expect(out.html).toContain(url);
@@ -745,16 +745,16 @@ describe("postNotificationEmail", () => {
     const out = postNotificationEmail({
       postTitle: "Hello",
       postDescription: "A blog post.",
-      postUrl: "https://seancampbell.dev/blog/hello/",
-      unsubscribeUrl: "https://seancampbell.dev/api/unsubscribe?token=xyz",
+      postUrl: "https://seanthedeveloper.com/blog/hello/",
+      unsubscribeUrl: "https://seanthedeveloper.com/api/unsubscribe?token=xyz",
     });
     expect(out.subject).toBe("Hello");
     expect(out.html).toContain("Hello");
     expect(out.html).toContain("A blog post.");
-    expect(out.html).toContain("https://seancampbell.dev/blog/hello/");
-    expect(out.html).toContain("https://seancampbell.dev/api/unsubscribe?token=xyz");
-    expect(out.text).toContain("https://seancampbell.dev/blog/hello/");
-    expect(out.text).toContain("https://seancampbell.dev/api/unsubscribe?token=xyz");
+    expect(out.html).toContain("https://seanthedeveloper.com/blog/hello/");
+    expect(out.html).toContain("https://seanthedeveloper.com/api/unsubscribe?token=xyz");
+    expect(out.text).toContain("https://seanthedeveloper.com/blog/hello/");
+    expect(out.text).toContain("https://seanthedeveloper.com/api/unsubscribe?token=xyz");
   });
 
   it("html-escapes the post title to prevent injection", () => {
@@ -829,7 +829,7 @@ export function postNotificationEmail(args: {
   <p style="font-size:16px;color:#444;">${escape(postDescription)}</p>
   <p><a href="${escape(postUrl)}" style="display:inline-block;padding:12px 20px;background:#5fa8fc;color:#fff;text-decoration:none;border-radius:6px;font-weight:600;">Read on the site →</a></p>
   <hr style="border:none;border-top:1px solid #eee;margin:32px 0;"/>
-  <p style="color:#999;font-size:12px;">You're getting this because you subscribed at seancampbell.dev. <a href="${escape(unsubscribeUrl)}" style="color:#999;">Unsubscribe</a>.</p>
+  <p style="color:#999;font-size:12px;">You're getting this because you subscribed at seanthedeveloper.com. <a href="${escape(unsubscribeUrl)}" style="color:#999;">Unsubscribe</a>.</p>
 </body></html>`;
   const text = `${postTitle}
 
@@ -1062,13 +1062,13 @@ function deps(overrides: Partial<Deps> = {}): Deps {
     storage: memoryStorage(),
     email: fakeEmail(),
     clock: () => fixedNow,
-    siteUrl: "https://seancampbell.dev",
+    siteUrl: "https://seanthedeveloper.com",
     ...overrides,
   };
 }
 
 function req(body: unknown, ip = "1.1.1.1"): Request {
-  return new Request("https://seancampbell.dev/api/subscribe", {
+  return new Request("https://seanthedeveloper.com/api/subscribe", {
     method: "POST",
     headers: { "content-type": "application/json", "x-nf-client-connection-ip": ip },
     body: JSON.stringify(body),
@@ -1160,7 +1160,7 @@ describe("handleSubscribe", () => {
 
   it("returns 400 on malformed JSON body", async () => {
     const d = deps();
-    const r = new Request("https://seancampbell.dev/api/subscribe", {
+    const r = new Request("https://seanthedeveloper.com/api/subscribe", {
       method: "POST",
       headers: { "content-type": "application/json", "x-nf-client-connection-ip": "1.1.1.1" },
       body: "{not json",
@@ -1262,7 +1262,7 @@ import { resendSender } from "../lib/email.js";
 
 const apiKey = process.env.RESEND_API_KEY!;
 const from = process.env.RESEND_FROM!;
-const siteUrl = process.env.SITE_URL ?? "https://seancampbell.dev";
+const siteUrl = process.env.SITE_URL ?? "https://seanthedeveloper.com";
 
 export default async (req: Request) =>
   handleSubscribe(req, {
@@ -1311,23 +1311,23 @@ function deps(): Deps {
     storage: memoryStorage(),
     email: fakeEmail(),
     clock: () => fixedNow,
-    siteUrl: "https://seancampbell.dev",
+    siteUrl: "https://seanthedeveloper.com",
   };
 }
 
 const tokenReq = (token: string) =>
-  new Request(`https://seancampbell.dev/api/confirm?token=${token}`);
+  new Request(`https://seanthedeveloper.com/api/confirm?token=${token}`);
 
 describe("handleConfirm", () => {
   it("redirects to /newsletter/error on missing token", async () => {
-    const res = await handleConfirm(new Request("https://seancampbell.dev/api/confirm"), deps());
+    const res = await handleConfirm(new Request("https://seanthedeveloper.com/api/confirm"), deps());
     expect(res.status).toBe(302);
-    expect(res.headers.get("location")).toBe("https://seancampbell.dev/newsletter/error");
+    expect(res.headers.get("location")).toBe("https://seanthedeveloper.com/newsletter/error");
   });
 
   it("redirects to /newsletter/error on unknown token", async () => {
     const res = await handleConfirm(tokenReq("nope"), deps());
-    expect(res.headers.get("location")).toBe("https://seancampbell.dev/newsletter/error");
+    expect(res.headers.get("location")).toBe("https://seanthedeveloper.com/newsletter/error");
   });
 
   it("flips a pending subscriber to confirmed and clears the token", async () => {
@@ -1343,7 +1343,7 @@ describe("handleConfirm", () => {
     });
     const res = await handleConfirm(tokenReq("c".repeat(64)), d);
     expect(res.status).toBe(302);
-    expect(res.headers.get("location")).toBe("https://seancampbell.dev/newsletter/confirmed");
+    expect(res.headers.get("location")).toBe("https://seanthedeveloper.com/newsletter/confirmed");
 
     const sub = await d.storage.getSubscriber("sean@example.com");
     expect(sub!.status).toBe("confirmed");
@@ -1363,7 +1363,7 @@ describe("handleConfirm", () => {
       unsubscribeToken: "u".repeat(64),
     });
     const res = await handleConfirm(tokenReq("c".repeat(64)), d);
-    expect(res.headers.get("location")).toBe("https://seancampbell.dev/newsletter/error");
+    expect(res.headers.get("location")).toBe("https://seanthedeveloper.com/newsletter/error");
   });
 });
 ```
@@ -1416,7 +1416,7 @@ import { resendSender } from "../lib/email.js";
 
 const apiKey = process.env.RESEND_API_KEY!;
 const from = process.env.RESEND_FROM!;
-const siteUrl = process.env.SITE_URL ?? "https://seancampbell.dev";
+const siteUrl = process.env.SITE_URL ?? "https://seanthedeveloper.com";
 
 export default async (req: Request) =>
   handleConfirm(req, {
@@ -1461,22 +1461,22 @@ function deps(): Deps {
     storage: memoryStorage(),
     email: fakeEmail(),
     clock: () => fixedNow,
-    siteUrl: "https://seancampbell.dev",
+    siteUrl: "https://seanthedeveloper.com",
   };
 }
 
 const tokenReq = (token: string) =>
-  new Request(`https://seancampbell.dev/api/unsubscribe?token=${token}`);
+  new Request(`https://seanthedeveloper.com/api/unsubscribe?token=${token}`);
 
 describe("handleUnsubscribe", () => {
   it("redirects to /newsletter/error on missing token", async () => {
-    const res = await handleUnsubscribe(new Request("https://seancampbell.dev/api/unsubscribe"), deps());
-    expect(res.headers.get("location")).toBe("https://seancampbell.dev/newsletter/error");
+    const res = await handleUnsubscribe(new Request("https://seanthedeveloper.com/api/unsubscribe"), deps());
+    expect(res.headers.get("location")).toBe("https://seanthedeveloper.com/newsletter/error");
   });
 
   it("redirects to /newsletter/error on unknown token", async () => {
     const res = await handleUnsubscribe(tokenReq("nope"), deps());
-    expect(res.headers.get("location")).toBe("https://seancampbell.dev/newsletter/error");
+    expect(res.headers.get("location")).toBe("https://seanthedeveloper.com/newsletter/error");
   });
 
   it("flips confirmed → unsubscribed and redirects", async () => {
@@ -1492,7 +1492,7 @@ describe("handleUnsubscribe", () => {
     });
     const res = await handleUnsubscribe(tokenReq("u".repeat(64)), d);
     expect(res.status).toBe(302);
-    expect(res.headers.get("location")).toBe("https://seancampbell.dev/newsletter/unsubscribed");
+    expect(res.headers.get("location")).toBe("https://seanthedeveloper.com/newsletter/unsubscribed");
 
     const sub = await d.storage.getSubscriber("sean@example.com");
     expect(sub!.status).toBe("unsubscribed");
@@ -1511,7 +1511,7 @@ describe("handleUnsubscribe", () => {
       unsubscribeToken: "u".repeat(64),
     });
     const res = await handleUnsubscribe(tokenReq("u".repeat(64)), d);
-    expect(res.headers.get("location")).toBe("https://seancampbell.dev/newsletter/unsubscribed");
+    expect(res.headers.get("location")).toBe("https://seanthedeveloper.com/newsletter/unsubscribed");
   });
 });
 ```
@@ -1575,11 +1575,11 @@ describe("subscribe → confirm → unsubscribe round trip", () => {
       storage: memoryStorage(),
       email: fakeEmail(),
       clock: () => fixedNow,
-      siteUrl: "https://seancampbell.dev",
+      siteUrl: "https://seanthedeveloper.com",
     };
 
     const subRes = await handleSubscribe(
-      new Request("https://seancampbell.dev/api/subscribe", {
+      new Request("https://seanthedeveloper.com/api/subscribe", {
         method: "POST",
         headers: {
           "content-type": "application/json",
@@ -1597,16 +1597,16 @@ describe("subscribe → confirm → unsubscribe round trip", () => {
 
     const confirmRes = await handleConfirm(new Request(confirmUrl), deps);
     expect(confirmRes.headers.get("location")).toBe(
-      "https://seancampbell.dev/newsletter/confirmed",
+      "https://seanthedeveloper.com/newsletter/confirmed",
     );
 
     const sub = await deps.storage.getSubscriber("sean@example.com");
     expect(sub!.status).toBe("confirmed");
 
-    const unsubUrl = `https://seancampbell.dev/api/unsubscribe?token=${sub!.unsubscribeToken}`;
+    const unsubUrl = `https://seanthedeveloper.com/api/unsubscribe?token=${sub!.unsubscribeToken}`;
     const unsubRes = await handleUnsubscribe(new Request(unsubUrl), deps);
     expect(unsubRes.headers.get("location")).toBe(
-      "https://seancampbell.dev/newsletter/unsubscribed",
+      "https://seanthedeveloper.com/newsletter/unsubscribed",
     );
 
     const final = await deps.storage.getSubscriber("sean@example.com");
@@ -1630,7 +1630,7 @@ import { resendSender } from "../lib/email.js";
 
 const apiKey = process.env.RESEND_API_KEY!;
 const from = process.env.RESEND_FROM!;
-const siteUrl = process.env.SITE_URL ?? "https://seancampbell.dev";
+const siteUrl = process.env.SITE_URL ?? "https://seanthedeveloper.com";
 
 export default async (req: Request) =>
   handleUnsubscribe(req, {
@@ -1699,7 +1699,7 @@ function rss(...items: Array<[string, string, string]>): RssItem[] {
   return items.map(([title, slug, pubDate]) => ({
     title,
     description: `${title} desc`,
-    link: `https://seancampbell.dev/blog/${slug}/`,
+    link: `https://seanthedeveloper.com/blog/${slug}/`,
     pubDate,
   }));
 }
@@ -1721,7 +1721,7 @@ function deps(items: RssItem[], overrides: Partial<Deps> = {}): Deps {
     storage: memoryStorage(),
     email: fakeEmail(),
     clock: () => fixedNow,
-    siteUrl: "https://seancampbell.dev",
+    siteUrl: "https://seanthedeveloper.com",
     fetchItems: async () => items,
     ...overrides,
   };
@@ -1986,7 +1986,7 @@ import { resendSender } from "../lib/email.js";
 
 const apiKey = process.env.RESEND_API_KEY!;
 const from = process.env.RESEND_FROM!;
-const siteUrl = process.env.SITE_URL ?? "https://seancampbell.dev";
+const siteUrl = process.env.SITE_URL ?? "https://seanthedeveloper.com";
 
 export default async () => {
   await handleSendNewsletter({
@@ -2661,7 +2661,7 @@ In the Netlify dashboard for the portfolio site → Site configuration → Envir
 
 - `RESEND_API_KEY` = the Resend key
 - `RESEND_FROM` = `Sean Campbell <newsletter@seanthedeveloper.com>`
-- `SITE_URL` = `https://seancampbell.dev`
+- `SITE_URL` = `https://seanthedeveloper.com`
 
 ## 4. Deploy
 
