@@ -53,4 +53,5 @@ export type Deps = {
   email: EmailSender;
   clock: Clock;
   siteUrl: string;
+  fetchItems?: (siteUrl: string) => Promise<import("./rss.js").RssItem[]>;
 };
