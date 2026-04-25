@@ -7,12 +7,23 @@
     "start": "astro dev",
     "build": "astro build",
     "preview": "astro preview",
-    "astro": "astro"
+    "astro": "astro",
+    "test": "vitest run",
+    "test:watch": "vitest"
   },
   "dependencies": {
     "@astrojs/mdx": "^4.3.13",
     "@astrojs/rss": "^4.0.0",
     "@astrojs/sitemap": "^3.2.0",
-    "astro": "^5.16.6"
+    "@netlify/blobs": "^10.7.4",
+    "astro": "^5.16.6",
+    "fast-xml-parser": "^5.7.2",
+    "resend": "^6.12.2"
+  },
+  "devDependencies": {
+    "@netlify/functions": "^5.2.0",
+    "@types/node": "^25.6.0",
+    "typescript": "^5.9.3",
+    "vitest": "^4.1.5"
   }
 }
