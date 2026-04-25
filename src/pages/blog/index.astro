@@ -41,7 +41,6 @@ const posts = (
         </div>
       ) : (
         <>
-          <Newsletter />
           <div class="posts-grid">
             {posts.map((post) => (
               <article class="post-card">
@@ -73,6 +72,12 @@ const posts = (
                 </a>
               </article>
             ))}
+          </div>
+          <div class="newsletter-trailer">
+            <Newsletter
+              heading="Stay in the loop"
+              blurb="Get new posts in your inbox. No spam, unsubscribe anytime."
+            />
           </div>
         </>
       )
