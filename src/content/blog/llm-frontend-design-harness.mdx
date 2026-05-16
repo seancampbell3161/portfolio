@@ -51,7 +51,7 @@ The approach I took involves a long-running, multi-agent process centered around
 </table>
 <br />
 
-The planner would create a design spec based on isolated sprints, with each sprint comprised of generator/evaluator loops with a max iteration set beforehand.  
+The planner would create a design spec broken into isolated sprints, with each sprint comprised of generator/evaluator loops with a max iteration set beforehand.  
 The evaluator was given a weighted rubric that would result in a pass/fail threshold that I manually set (7.5/10 weighted) and looked like this:
 ```
 weighted = 0.35 * design_quality
