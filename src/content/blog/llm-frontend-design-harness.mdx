@@ -1,0 +1,270 @@
+---
+title: "How to Improve Your Agentic Frontend Design"
+description: "Harness design to give you better frontends with agentic workflows"
+pubDate: 2026-05-16
+tags: ["AI", "Frontend Design", "Harness", "LLM"]
+draft: false
+---
+
+In the vast hellscape of AI-generated web apps, there exists endless gradients, bulleted emojis, "Modern, minimal, clean looks", and oceans of pill buttons with drop-shadows. There's nothing wrong with this look — in fact it's very clean and readable. Just like our favorite dining establishments, each one built is becoming a boxy, modern, minimalistic copy paste of the previous.
+
+I'll be diving into the harness I created and used to inject creativity, originality, and a coherent theme into my website that will be used to sell my custom sample packs to musicians, composers, and sound designers — and I'll go over some interesting takeaways from the process and how you can use this in your agentic workflow.
+
+<br />
+
+### Why most workflows produce generic results
+LLM's are primed to be efficient, which also means they will take the least amount of steps/work to produce the desired result. If you're trying to make an entire website or design system, it will default to a lot of proven and effective design decisions (so every AI generated app looks the same). If you try to prompt your LLM to be creative and take liberties in those decisions — and as the context window grows — the LLM will often lose focus and result in an incoherent and lobotomized design system that just doesn't look good.  
+Another issue is that the AI has no fundamental understanding of what is 'creative' or 'original' — LLMs are pretty good at evaluation, yet how does one strictly evaluate verifiable creativity? There needs to be an explicit system that defines the criteria for creativity, and without that, LLMs will struggle to produce solid, usable, creative results.
+
+<br />
+Methods like Anthropic's [frontend design skill](https://github.com/anthropics/skills/blob/main/skills/frontend-design/SKILL.md) attempt to aid the issue of generic-looking AI frontends, but even though it explicity states to _NEVER use generic AI-generated aesthetics_, anyone that has used it knows their LLM still outputs very generic-looking designs.  
+So if regular prompting and skills like this exist and we still get generic AI slop output, how can we really improve our frontend's design with AI?
+<br />
+
+### Harnessing the power of a design harness
+The approach I took involves a long-running, multi-agent process centered around (mostly) autonomous workflows. The specific implementation utilizes a [Generative Adversarial Network](https://en.wikipedia.org/wiki/Generative_adversarial_network) loop with 3 separate agents: a planner, generator, and evaluator.
+
+<table class="agent-table">
+  <thead>
+    <tr>
+      <th>Agent</th>
+      <th>Role</th>
+      <th>Tools</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code>design-planner</code></td>
+      <td>Senior product designer. Audits the codebase, walks the live app with Playwright, picks ONE bold aesthetic direction, writes <code>design-state/spec.md</code>.</td>
+      <td>Read, Glob, Grep, Bash, Write, playwright</td>
+    </tr>
+    <tr>
+      <td><code>design-generator</code></td>
+      <td>Senior frontend engineer. Reads spec + prior critique. Opens with "refine" or "pivot" declaration. Stays in scope. Commits per iteration.</td>
+    </tr>
+    <tr>
+      <td><code>design-evaluator</code></td>
+      <td>Skeptical senior reviewer. Bias toward criticism. Walks the live route on desktop + mobile, scores 1–10 on four criteria, writes machine-readable JSON.</td>
+      <td>Read, Write, Glob, Grep, Bash, playwright</td>
+    </tr>
+  </tbody>
+</table>
+<br />
+
+The planner would create a design spec based on isolated sprints, with each sprint comprised of generator/evaluator loops with a max iteration set beforehand.  
+The evaluator was given a weighted rubric that would result in a pass/fail threshold that I manually set (7.5/10 weighted) and looked like this:
+```
+weighted = 0.35 * design_quality
+         + 0.35 * originality
+         + 0.15 * craft
+         + 0.15 * functionality
+
+PASS: weighted >= 7.5 AND every criterion >= 6
+```
+
+Emphasizing the design quality and originality was extremely important because AI generally attempts to play it safe most of the time, and most LLM's are already very capable of producing UI's with decent craft and functionality. Also note that the evaluator was specifically told to be skeptical and have a bias toward criticism — this will be important for later.  
+I used few-shot examples with scores in order for the LLM to gauge design quality and creativity against verifiable criteria to enhance the scoring stability and align it closer to my preferences.
+
+### Implementing it
+
+Going back to my soundpack app — the design was decent for an initial build, and had a light thematic element with a typical clean look and solid functionality.
+
+<div class="figure-grid">
+    <figure>
+      <a href="/images/blog/llm-frontend-design/original/home-desktop.png" target="_blank" rel="noopener">
+        <img src="/images/blog/llm-frontend-design/original/home-desktop.png" alt="Original homepage" />
+      </a>
+      <figcaption>Original landing page.</figcaption>
+    </figure>
+    <figure>
+      <a href="/images/blog/llm-frontend-design/original/pack-detail-desktop.png" target="_blank" rel="noopener">
+        <img src="/images/blog/llm-frontend-design/original/pack-detail-desktop.png" alt="Original pack detail" />
+      </a>
+      <figcaption>Original pack detail page.</figcaption>
+    </figure>
+    <figure>
+      <a href="/images/blog/llm-frontend-design/original/shop-desktop.png" target="_blank" rel="noopener">
+        <img src="/images/blog/llm-frontend-design/original/shop-desktop.png" alt="Original shop" />
+      </a>
+      <figcaption>Original shop page.</figcaption>
+    </figure>
+    <figure>
+      <a href="/images/blog/llm-frontend-design/original/about-desktop.png" target="_blank" rel="noopener">
+        <img src="/images/blog/llm-frontend-design/original/about-desktop.png" alt="Original about" />
+      </a>
+      <figcaption>Original about page.</figcaption>
+    </figure>
+</div>
+
+I wanted something that would look like it belongs in the world of _The Last of Us_ (play the games if you haven't). The prompt I gave the harness planner was _"haunting, futuristic, post-apocalyptic PNW, with organic overgrowth eating the equipment"._ It ended up breaking up the design into 10 sprints with these results:
+
+<table class="sprint-table">
+  <thead>
+    <tr>
+      <th>#</th>
+      <th>Sprint</th>
+      <th>Iters</th>
+      <th>Score</th>
+      <th>Notable</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>1</td>
+      <td>Install Overgrowth Protocol foundation</td>
+      <td><strong>5</strong></td>
+      <td>8.30</td>
+      <td>The most iterations — installing the world</td>
+    </tr>
+    <tr>
+      <td>2</td>
+      <td>Shell: nav + footer as field-station chrome</td>
+      <td>2</td>
+      <td>7.78</td>
+      <td>Left vertical status rail with live timestamp</td>
+    </tr>
+    <tr>
+      <td>3</td>
+      <td>Home: broadcast hero + transmission grid</td>
+      <td><strong>4</strong></td>
+      <td>7.85</td>
+      <td>Wildest swings — see drama bit below</td>
+    </tr>
+    <tr>
+      <td>4</td>
+      <td>Shop: the archive index</td>
+      <td>2</td>
+      <td>8.15</td>
+      <td>Herbarium where specimens have started growing</td>
+    </tr>
+    <tr>
+      <td>5</td>
+      <td>Pack detail: the specimen page</td>
+      <td>3</td>
+      <td>8.15</td>
+      <td>Sodium-amber price as 2nd visual anchor</td>
+    </tr>
+    <tr>
+      <td>6</td>
+      <td>Cart + checkout: staging payload</td>
+      <td>2</td>
+      <td>7.70</td>
+      <td>DROP / RELEASE / RETRIEVE language</td>
+    </tr>
+    <tr>
+      <td>7</td>
+      <td>About: operations log</td>
+      <td>2</td>
+      <td>8.00</td>
+      <td>Required to feel <em>colder</em> than every other page</td>
+    </tr>
+    <tr>
+      <td>8</td>
+      <td>Auth: terminal access</td>
+      <td>2</td>
+      <td>8.00</td>
+      <td>Where dark themes usually snap back to Stripe</td>
+    </tr>
+    <tr>
+      <td>9</td>
+      <td>Admin surfaces</td>
+      <td>2</td>
+      <td>7.85</td>
+      <td>"Built into the wall" — most worn vocabulary</td>
+    </tr>
+    <tr>
+      <td>10</td>
+      <td>Residue sweep — 404 / 500 / terms / privacy</td>
+      <td>1</td>
+      <td>7.85</td>
+      <td>Single pass to close</td>
+    </tr>
+  </tbody>
+</table>
+
+<figure>
+  <a href="/images/blog/llm-frontend-design/redesign/home-desktop-live-engaged.png" target="_blank" rel="noopener">
+    <img src="/images/blog/llm-frontend-design/redesign/home-desktop-live-engaged.png" alt="Final landing page" />
+  </a>
+  <figcaption>The resulting landing page after the full harness runthrough</figcaption>
+</figure>
+<br />
+
+A couple of the sprints stuck out more than the rest: in sprint 3 iteration 3, the result was disastrous — it scored 3.55 / 10 (down from 7.20 on iter-2). What happened was the generator pivoted hard on iteration 3 — three-layer card stages, procedural drone pad, atmospheric carrier hairline, mono `STILL BROADCASTING` footer. Looked great in the changes.md narrative, but the hero was invisible in the running build.  
+The evaluator's critique opens like this:
+> The hero is invisible. `.broadcast-hero-slate`, `.broadcast-hero-h1`,
+> and `.broadcast-hero-foot` all carry `class="… reveal"` but never
+> receive `.revealed`. Computed `clip-path` is stuck at
+> `inset(0px 100% 0px 0px)` at 500ms / 1500ms / 2500ms / 3500ms / 8000ms
+> after load, AND after a hard reload + 5s wait, AND after a
+> 1px-up-1px-down scroll jiggle.
+
+This is what the harness exists for. A person reviewing and eyeballing the generator's PR description probably would have approved it. The evaluator was required to verify by computed style, found the regression in seconds, flagged it, and forced iteration 4 — which recovered to 7.85.
+
+<div class="figure-grid">
+    <figure>
+      <a href="/images/blog/llm-frontend-design/redesign/home-desktop-above-fold-missing.png" target="_blank" rel="noopener">
+        <img src="/images/blog/llm-frontend-design/redesign/home-desktop-above-fold-missing.png" alt="Iteration 3: hero invisible above the fold" />
+      </a>
+      <figcaption>Iteration 3: the hero never reveals — clip-path stuck.</figcaption>
+    </figure>
+    <figure>
+      <a href="/images/blog/llm-frontend-design/redesign/home-desktop-above-fold-recoverd.png" target="_blank" rel="noopener">
+        <img src="/images/blog/llm-frontend-design/redesign/home-desktop-above-fold-recoverd.png" alt="Iteration 4: hero recovered above the fold" />
+      </a>
+      <figcaption>Iteration 4: recovered after the evaluator's critique.</figcaption>
+    </figure>
+</div>
+
+<br />
+Sprint 9 iteration 1 scored an abysmal 3.45 / 10. This time, the generator wrote ~1,200 lines of admin page CSS (`.maint-shell`, `.maint-spine`, `.maint-stat-spark`, etc.) and shipped the iteration. The Tailwind v4 / Lightning CSS / Turbopack pipeline silently truncated the entire block at a parser bailout. Every admin page rendered in raw block layout. Sparklines inherited full tile width and
+appeared as huge angular polylines. Form inputs had no visible borders.  
+
+The evaluator caught it via direct `curl` of the served chunk:
+
+> Verified by direct `curl` of the chunk (`grep -c "maint-shell"` → 0) and
+> by DOM probe — at 1440px viewport, `.maint-shell` computed
+> `display: block`, `grid-template-columns: none`; `.maint-spine` computed
+> `display: block`, width 1376px (it should be 240px sticky).
+
+The fix in iteration 2 was a stylesheet quarantine: split the maint
+vocabulary into a sibling stylesheet imported separately so a parse error
+in one file can't truncate the cascade. Plus a CI guard
+(`scripts/blacklist-scan.mjs`) that `curl`s the served chunk and greps
+for `.maint-shell`.
+
+<div class="figure-grid">
+    <figure>
+      <a href="/images/blog/llm-frontend-design/redesign/eval-admin-overview-desktop.png" target="_blank" rel="noopener">
+        <img src="/images/blog/llm-frontend-design/redesign/eval-admin-overview-desktop.png" alt="Iteration 1: broken/truncated css" />
+      </a>
+      <figcaption>Iteration 1: CSS was truncated at a parser bailout.</figcaption>
+    </figure>
+    <figure>
+      <a href="/images/blog/llm-frontend-design/redesign/admin-dashboard-desktop.png" target="_blank" rel="noopener">
+        <img src="/images/blog/llm-frontend-design/redesign/admin-dashboard-desktop.png" alt="Iteration 4: admin recovered" />
+      </a>
+      <figcaption>Iteration 2: recovered after the evaluator's critique.</figcaption>
+    </figure>
+</div>
+
+This issue was an interesting anecdote because the bug was *invisible to the generator* — the source CSS was correct; only the served chunk was broken, so it's something only the evaluator could have caught.
+
+<br />
+
+### Takeaways
+
+The goal of this harness was to create a frontend design that was unique, built a cohesive and thematic world, pushed the limits of creativity that current gen AI offers, yet still offered usability and craft.  
+From a practical perspective, there are things the AI took too far thematically that would be confusing to users of the site — but those things are easily fixable, like the verbiage and terminology used ("Stage Payload" vs "Add to Cart"). I think it achieved far more than what's capable with just manual prompting. Here's some of the final stats:
+
+- **10 sprints, all passing** the 7.5 weighted threshold
+- **23 iterations total** (avg 2.3/sprint)
+- **2 spectacular regressions caught** by the evaluator (sprint 3 iter 3 at 3.55; sprint 9 iter 1 at 3.45)
+- **1,134 sprint screenshots + 14 audit screenshots** (Playwright, both viewports, every route)
+- **Highest score**: 8.30 (sprint 1, iter 5 — the foundation lock-in)
+- **Branch**: `redesign/overgrowth-protocol`, ~50 commits
+- **Total runtime**: roughly 30–90 minutes per sprint of subagent work
+
+<video src="/videos/blog/llm-frontend-design/homepage.mp4" autoplay loop muted playsinline />
+
+You can [check out the live site here](https://loamaudio.com). As of the date of this publication, the site is still a demo with no real sample packs available. Thanks for reading!

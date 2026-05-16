@@ -210,9 +210,14 @@ const formattedUpdatedDate = updatedDate?.toLocaleDateString('en-US', {
     margin-bottom: var(--space-sm);
   }
   
-  .post-content :global(img) {
+  .post-content :global(img),
+  .post-content :global(video) {
     border-radius: var(--radius-lg);
     margin: var(--space-xl) 0;
+  }
+
+  .post-content :global(video) {
+    width: 100%;
   }
   
   .post-footer {
