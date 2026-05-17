@@ -1,145 +1,152 @@
 ---
-import Icon from './Icon.astro';
+import Icon from "./Icon.astro";
 
 interface CurrentItem {
-  icon: 'wrench' | 'book-open' | 'pen-tool' | 'code' | 'rocket';
-  title: string;
-  description: string;
+    icon: "wrench" | "book-open" | "pen-tool" | "code" | "rocket" | "audio-waveform";
+    title: string;
+    description: string;
 }
 
 interface Props {
-  items?: CurrentItem[];
+    items?: CurrentItem[];
 }
 
-const { items = [
-  {
-    icon: "wrench",
-    title: "Audio Processing Pipeline",
-    description: "Containerizing a .NET + Python audio service for cloud deployment, exploring the intersection of web APIs and ML-powered audio tools.",
-  },
-  {
-    icon: "book-open",
-    title: "Deep Dive: System Design",
-    description: "Studying distributed systems patterns and how they apply to real-world scaling challenges.",
-  },
-  {
-    icon: "pen-tool",
-    title: "Technical Writing",
-    description: "Documenting lessons learned from production systems—blog coming soon.",
-  },
-]} = Astro.props;
+const {
+    items = [
+        {
+            icon: "audio-waveform",
+            title: "Browser DAW Engine",
+            description:
+                "Exploring low-latency audio in the browser — Rust compiled to WASM, running inside an AudioWorklet with sample-accurate scheduling.",
+        },
+        {
+            icon: "book-open",
+            title: "Deep Dive: System Design",
+            description:
+                "Studying and thinking in terms of systems and how they apply to real-world scaling challenges.",
+        },
+        {
+            icon: "pen-tool",
+            title: "Technical Writing",
+            description:
+                "Documenting lessons learned from production systems - check out my technical blog!",
+        },
+    ],
+} = Astro.props;
 ---
 
 <section id="currently" class="currently">
-  <div class="container">
-    <header class="section-header">
-      <span class="section-number">03</span>
-      <h2 class="section-title">Currently Building</h2>
-      <p class="section-subtitle">
-        What I'm learning and creating right now.
-      </p>
-    </header>
-    
-    <div class="grid">
-      {items.map((item) => (
-        <article class="card">
-          <div class="card-icon">
-            <Icon name={item.icon} size={24} />
-          </div>
-          <h4 class="card-title">{item.title}</h4>
-          <p class="card-desc">{item.description}</p>
-        </article>
-      ))}
+    <div class="container">
+        <header class="section-header">
+            <span class="section-number">03</span>
+            <h2 class="section-title">Currently Building</h2>
+            <p class="section-subtitle">
+                What I'm learning and creating right now.
+            </p>
+        </header>
+
+        <div class="grid">
+            {
+                items.map((item) => (
+                    <article class="card">
+                        <div class="card-icon">
+                            <Icon name={item.icon} size={24} />
+                        </div>
+                        <h4 class="card-title">{item.title}</h4>
+                        <p class="card-desc">{item.description}</p>
+                    </article>
+                ))
+            }
+        </div>
     </div>
-  </div>
 </section>
 
 <style>
-  .currently {
-    padding: var(--space-5xl) 0;
-    position: relative;
-    z-index: 1;
-  }
-  
-  .section-header {
-    margin-bottom: var(--space-3xl);
-  }
-  
-  .section-number {
-    font-size: 14px;
-    color: var(--color-accent);
-    font-weight: 600;
-    font-family: var(--font-mono);
-  }
-  
-  .section-title {
-    margin-top: var(--space-sm);
-    margin-bottom: var(--space-md);
-  }
-  
-  .section-subtitle {
-    font-size: 18px;
-    color: var(--color-text-muted);
-    max-width: 500px;
-    line-height: 1.6;
-  }
-  
-  .grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-    gap: var(--space-lg);
-  }
-  
-  .card {
-    padding: var(--space-xl);
-    background-color: var(--color-bg-elevated);
-    border: 1px solid var(--color-border);
-    border-radius: var(--radius-lg);
-    transition: all var(--transition-slow);
-  }
-  
-  .card:hover {
-    border-color: var(--color-border-hover);
-    transform: translateY(-2px);
-  }
-  
-  .card:hover .card-icon {
-    background: var(--color-accent);
-    color: var(--color-bg);
-  }
-  
-  .card-icon {
-    width: 48px;
-    height: 48px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: var(--color-accent-bg);
-    color: var(--color-accent);
-    border-radius: var(--radius-md);
-    margin-bottom: var(--space-md);
-    transition: all var(--transition-base);
-  }
-  
-  .card-title {
-    font-size: 18px;
-    font-weight: 600;
-    margin-bottom: var(--space-sm);
-  }
-  
-  .card-desc {
-    font-size: 14px;
-    color: var(--color-text-secondary);
-    line-height: 1.6;
-  }
-  
-  @media (max-width: 640px) {
     .currently {
-      padding: var(--space-4xl) 0;
+        padding: var(--space-5xl) 0;
+        position: relative;
+        z-index: 1;
     }
-    
+
+    .section-header {
+        margin-bottom: var(--space-3xl);
+    }
+
+    .section-number {
+        font-size: 14px;
+        color: var(--color-accent);
+        font-weight: 600;
+        font-family: var(--font-mono);
+    }
+
+    .section-title {
+        margin-top: var(--space-sm);
+        margin-bottom: var(--space-md);
+    }
+
+    .section-subtitle {
+        font-size: 18px;
+        color: var(--color-text-muted);
+        max-width: 500px;
+        line-height: 1.6;
+    }
+
     .grid {
-      grid-template-columns: 1fr;
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: var(--space-lg);
     }
-  }
+
+    .card {
+        padding: var(--space-xl);
+        background-color: var(--color-bg-elevated);
+        border: 1px solid var(--color-border);
+        border-radius: var(--radius-lg);
+        transition: all var(--transition-slow);
+    }
+
+    .card:hover {
+        border-color: var(--color-border-hover);
+        transform: translateY(-2px);
+    }
+
+    .card:hover .card-icon {
+        background: var(--color-accent);
+        color: var(--color-bg);
+    }
+
+    .card-icon {
+        width: 48px;
+        height: 48px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: var(--color-accent-bg);
+        color: var(--color-accent);
+        border-radius: var(--radius-md);
+        margin-bottom: var(--space-md);
+        transition: all var(--transition-base);
+    }
+
+    .card-title {
+        font-size: 18px;
+        font-weight: 600;
+        margin-bottom: var(--space-sm);
+    }
+
+    .card-desc {
+        font-size: 14px;
+        color: var(--color-text-secondary);
+        line-height: 1.6;
+    }
+
+    @media (max-width: 640px) {
+        .currently {
+            padding: var(--space-4xl) 0;
+        }
+
+        .grid {
+            grid-template-columns: 1fr;
+        }
+    }
 </style>
