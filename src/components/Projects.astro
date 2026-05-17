@@ -35,21 +35,6 @@ const {
             url: "https://roaming.camp",
         },
         {
-            id: "songle",
-            title: "Songle",
-            description:
-                "A daily music guessing game where players identify songs from isolated audio stems — vocals, drums, bass, or instrumentation.",
-            tags: ["Angular", ".NET", "Python", "PostgreSQL", "Docker"],
-            problem:
-                "Music trivia games rely on playing full tracks, making it too easy to identify songs. There's no game that challenges players with isolated stems — just vocals, drums, or bass — for a genuinely difficult guessing experience.",
-            solution:
-                "Built a daily Wordle-style music guessing game where players identify songs from isolated audio stems. A .NET API orchestrates Python ML models (Spleeter/Demucs) to separate uploaded tracks into vocals, drums, bass, and instrumentation.",
-            tradeoffs:
-                "Audio separation runs Python ML models invoked via subprocess from .NET rather than porting to native code. This adds deployment complexity (multi-container Docker setup) but leverages battle-tested models that would take months to reimplement.",
-            impact: "Players get 4 attempts with scoring based on speed (100/75/50/25 points). A daily background job auto-selects the Song of the Day, and the hybrid .NET/Python pipeline processes tracks end-to-end from YouTube URL to separated stems stored in cloud storage.",
-            url: "https://songle.lol",
-        },
-        {
             id: "rswebtwain",
             title: "RSWebTWAIN",
             description:
@@ -63,6 +48,21 @@ const {
                 "Chose Rust's typestate pattern to make invalid TWAIN state transitions compile-time errors instead of runtime bugs. This added upfront design complexity but eliminated an entire class of scanner communication failures. A 32-bit sidecar over JSON-line IPC was simpler than forcing the whole app to 32-bit, at the cost of cross-process coordination.",
             impact: "Eliminates per-seat licensing costs for commercial scanning SDKs. Supports both modern 64-bit and legacy 32-bit TWAIN drivers in a single install — critical for enterprise deployments with mixed hardware. DPAPI-encrypted auth and origin validation secure the localhost WebSocket without TLS certificate complexity.",
             url: "https://github.com/seancampbell3161/WebTWAIN",
+        },
+        {
+            id: "songle",
+            title: "Songle",
+            description:
+                "A daily music guessing game where players identify songs from isolated audio stems — vocals, drums, bass, or instrumentation.",
+            tags: ["Angular", ".NET", "Python", "PostgreSQL", "Docker"],
+            problem:
+                "Music trivia games rely on playing full tracks, making it too easy to identify songs. There's no game that challenges players with isolated stems — just vocals, drums, or bass — for a genuinely difficult guessing experience.",
+            solution:
+                "Built a daily Wordle-style music guessing game where players identify songs from isolated audio stems. A .NET API orchestrates Python ML models (Spleeter/Demucs) to separate uploaded tracks into vocals, drums, bass, and instrumentation.",
+            tradeoffs:
+                "Audio separation runs Python ML models invoked via subprocess from .NET rather than porting to native code. This adds deployment complexity (multi-container Docker setup) but leverages battle-tested models that would take months to reimplement.",
+            impact: "Players get 4 attempts with scoring based on speed (100/75/50/25 points). A daily background job auto-selects the Song of the Day, and the hybrid .NET/Python pipeline processes tracks end-to-end from YouTube URL to separated stems stored in cloud storage.",
+            url: "https://songle.lol",
         },
     ],
 } = Astro.props;
