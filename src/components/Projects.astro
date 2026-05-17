@@ -1,354 +1,399 @@
 ---
-import Icon from './Icon.astro';
+import Icon from "./Icon.astro";
 
 interface Project {
-  id: string;
-  title: string;
-  description: string;
-  tags: string[];
-  problem: string;
-  solution: string;
-  tradeoffs: string;
-  impact: string;
-  url?: string;
+    id: string;
+    title: string;
+    description: string;
+    tags: string[];
+    problem: string;
+    solution: string;
+    tradeoffs: string;
+    impact: string;
+    url?: string;
 }
 
 interface Props {
-  projects?: Project[];
+    projects?: Project[];
 }
 
-const { projects = [
-  {
-    id: "roaming-camp",
-    title: "Roaming.Camp",
-    description: "A geospatial campsite discovery platform that unifies NPS, weather, cell coverage, and reservation data into a single interactive map.",
-    tags: ["Next.js", "Go", "PostGIS", "Mapbox", "Docker"],
-    problem: "Planning outdoor trips requires juggling multiple disconnected sources — NPS, Recreation.gov, weather services, cell coverage maps — with no unified way to discover and evaluate campsites.",
-    solution: "Built a full-stack geospatial platform with a Next.js frontend backed by 4 Go microservices that aggregate NPS, RIDB, NWS, and FCC data into an interactive Mapbox map with site details, weather, and cell coverage.",
-    tradeoffs: "Chose microservices over a monolith — each service (places, weather, coverage, reservations) scales and deploys independently, but adds orchestration complexity. PostGIS handles spatial queries correctly (Earth curvature) at the cost of a heavier database dependency.",
-    impact: "Consolidates 4+ data sources into a single map-based interface. Background sync keeps data fresh without blocking users, and the BFF pattern keeps internal services unexposed.",
-    url: "https://roaming.camp",
-  },
-  {
-    id: "songle",
-    title: "Songle",
-    description: "A daily music guessing game where players identify songs from isolated audio stems — vocals, drums, bass, or instrumentation.",
-    tags: ["Angular", ".NET", "Python", "PostgreSQL", "Docker"],
-    problem: "Music trivia games rely on playing full tracks, making it too easy to identify songs. There's no game that challenges players with isolated stems — just vocals, drums, or bass — for a genuinely difficult guessing experience.",
-    solution: "Built a daily Wordle-style music guessing game where players identify songs from isolated audio stems. A .NET API orchestrates Python ML models (Spleeter/Demucs) to separate uploaded tracks into vocals, drums, bass, and instrumentation.",
-    tradeoffs: "Audio separation runs Python ML models invoked via subprocess from .NET rather than porting to native code. This adds deployment complexity (multi-container Docker setup) but leverages battle-tested models that would take months to reimplement.",
-    impact: "Players get 4 attempts with scoring based on speed (100/75/50/25 points). A daily background job auto-selects the Song of the Day, and the hybrid .NET/Python pipeline processes tracks end-to-end from YouTube URL to separated stems stored in cloud storage.",
-    url: "https://songle.lol",
-  },
-  {
-    id: "rswebtwain",
-    title: "RSWebTWAIN",
-    description: "A headless Rust/Tauri desktop agent that bridges web browsers to TWAIN document scanners, replacing expensive proprietary libraries.",
-    tags: ["Rust", "Tauri v2", "WebSocket", "Angular", "FFI"],
-    problem: "Enterprise web apps need browser-based document scanning, but the go-to commercial library is expensive and can't handle legacy 32-bit-only scanner drivers on modern 64-bit systems.",
-    solution: "Built a headless Tauri v2 system-tray agent that exposes a WebSocket API on localhost for browser-to-scanner communication. Uses a typestate pattern for the TWAIN state machine — seven state transitions verified at compile time — and spawns a 32-bit sidecar process to bridge the architecture gap for legacy drivers.",
-    tradeoffs: "Chose Rust's typestate pattern to make invalid TWAIN state transitions compile-time errors instead of runtime bugs. This added upfront design complexity but eliminated an entire class of scanner communication failures. A 32-bit sidecar over JSON-line IPC was simpler than forcing the whole app to 32-bit, at the cost of cross-process coordination.",
-    impact: "Eliminates per-seat licensing costs for commercial scanning SDKs. Supports both modern 64-bit and legacy 32-bit TWAIN drivers in a single install — critical for enterprise deployments with mixed hardware. DPAPI-encrypted auth and origin validation secure the localhost WebSocket without TLS certificate complexity.",
-    url: "https://github.com/seancampbell3161/WebTWAIN",
-  },
-]} = Astro.props;
+const {
+    projects = [
+        {
+            id: "roaming-camp",
+            title: "Roaming.Camp",
+            description:
+                "A geospatial campsite discovery platform that unifies NPS, weather, cell coverage, and reservation data into a single interactive map.",
+            tags: ["Next.js", "Go", "PostGIS", "Mapbox", "Docker"],
+            problem:
+                "Planning outdoor trips requires juggling multiple disconnected sources — NPS, Recreation.gov, weather services, cell coverage maps — with no unified way to discover and evaluate campsites.",
+            solution:
+                "Built a full-stack geospatial platform with a Next.js frontend backed by 4 Go microservices that aggregate NPS, RIDB, NWS, and FCC data into an interactive Mapbox map with site details, weather, and cell coverage.",
+            tradeoffs:
+                "Chose microservices over a monolith — each service (places, weather, coverage, reservations) scales and deploys independently, but adds orchestration complexity. PostGIS handles spatial queries correctly (Earth curvature) at the cost of a heavier database dependency.",
+            impact: "Consolidates 4+ data sources into a single map-based interface. Background sync keeps data fresh without blocking users, and the BFF pattern keeps internal services unexposed.",
+            url: "https://roaming.camp",
+        },
+        {
+            id: "songle",
+            title: "Songle",
+            description:
+                "A daily music guessing game where players identify songs from isolated audio stems — vocals, drums, bass, or instrumentation.",
+            tags: ["Angular", ".NET", "Python", "PostgreSQL", "Docker"],
+            problem:
+                "Music trivia games rely on playing full tracks, making it too easy to identify songs. There's no game that challenges players with isolated stems — just vocals, drums, or bass — for a genuinely difficult guessing experience.",
+            solution:
+                "Built a daily Wordle-style music guessing game where players identify songs from isolated audio stems. A .NET API orchestrates Python ML models (Spleeter/Demucs) to separate uploaded tracks into vocals, drums, bass, and instrumentation.",
+            tradeoffs:
+                "Audio separation runs Python ML models invoked via subprocess from .NET rather than porting to native code. This adds deployment complexity (multi-container Docker setup) but leverages battle-tested models that would take months to reimplement.",
+            impact: "Players get 4 attempts with scoring based on speed (100/75/50/25 points). A daily background job auto-selects the Song of the Day, and the hybrid .NET/Python pipeline processes tracks end-to-end from YouTube URL to separated stems stored in cloud storage.",
+            url: "https://songle.lol",
+        },
+        {
+            id: "rswebtwain",
+            title: "RSWebTWAIN",
+            description:
+                "An open-source, headless Rust/Tauri desktop agent that bridges web browsers to TWAIN document scanners, replacing expensive proprietary libraries.",
+            tags: ["Rust", "Tauri v2", "WebSocket", "Angular", "FFI"],
+            problem:
+                "Enterprise web apps need browser-based document scanning, but the go-to commercial library is expensive and can't handle legacy 32-bit-only scanner drivers on modern 64-bit systems.",
+            solution:
+                "Built a headless Tauri v2 system-tray agent that exposes a WebSocket API on localhost for browser-to-scanner communication. Uses a typestate pattern for the TWAIN state machine — seven state transitions verified at compile time — and spawns a 32-bit sidecar process to bridge the architecture gap for legacy drivers.",
+            tradeoffs:
+                "Chose Rust's typestate pattern to make invalid TWAIN state transitions compile-time errors instead of runtime bugs. This added upfront design complexity but eliminated an entire class of scanner communication failures. A 32-bit sidecar over JSON-line IPC was simpler than forcing the whole app to 32-bit, at the cost of cross-process coordination.",
+            impact: "Eliminates per-seat licensing costs for commercial scanning SDKs. Supports both modern 64-bit and legacy 32-bit TWAIN drivers in a single install — critical for enterprise deployments with mixed hardware. DPAPI-encrypted auth and origin validation secure the localhost WebSocket without TLS certificate complexity.",
+            url: "https://github.com/seancampbell3161/WebTWAIN",
+        },
+    ],
+} = Astro.props;
 ---
 
 <section id="work" class="work">
-  <div class="container">
-    <header class="section-header">
-      <span class="section-number">02</span>
-      <h2 class="section-title">Featured Work</h2>
-      <p class="section-subtitle">
-        Every project tells a story. Here's the thinking behind the code.
-      </p>
-    </header>
-    
-    <div class="projects">
-      {projects.map((project) => (
-        <article class="project-card" data-project={project.id}>
-          <button class="project-toggle" aria-expanded="false" aria-controls={`details-${project.id}`}>
-            <div class="project-header">
-              <h3 class="project-title">{project.title}</h3>
-              {project.url && (
-                <a href={project.url} class="project-visit" target="_blank" rel="noopener" onclick="event.stopPropagation()">
-                  <span>Visit</span>
-                  <Icon name="arrow-up-right" size={14} />
-                </a>
-              )}
-            </div>
-            <div class="tags">
-              {project.tags.map((tag) => (
-                <span class="tag">{tag}</span>
-              ))}
-            </div>
-            <p class="project-description">{project.description}</p>
-            <span class="expand-hint">
-              <span class="expand-text">Click to explore</span>
-              <Icon name="arrow-right" size={16} class="expand-arrow" />
-            </span>
-          </button>
-          
-          <div id={`details-${project.id}`} class="project-details" aria-hidden="true">
-            <div class="detail-block">
-              <h4 class="detail-label">
-                <Icon name="target" size={16} />
-                <span>The Problem</span>
-              </h4>
-              <p class="detail-text">{project.problem}</p>
-            </div>
-            <div class="detail-block">
-              <h4 class="detail-label">
-                <Icon name="lightbulb" size={16} />
-                <span>The Solution</span>
-              </h4>
-              <p class="detail-text">{project.solution}</p>
-            </div>
-            <div class="detail-block">
-              <h4 class="detail-label">
-                <Icon name="scale" size={16} />
-                <span>Tradeoffs & Decisions</span>
-              </h4>
-              <p class="detail-text">{project.tradeoffs}</p>
-            </div>
-            <div class="detail-block">
-              <h4 class="detail-label">
-                <Icon name="trending-up" size={16} />
-                <span>Impact</span>
-              </h4>
-              <p class="detail-text">{project.impact}</p>
-            </div>
-          </div>
-        </article>
-      ))}
+    <div class="container">
+        <header class="section-header">
+            <span class="section-number">02</span>
+            <h2 class="section-title">Featured Work</h2>
+            <p class="section-subtitle">
+                Every project tells a story. Here's the thinking behind the
+                code.
+            </p>
+        </header>
+
+        <div class="projects">
+            {
+                projects.map((project) => (
+                    <article class="project-card" data-project={project.id}>
+                        <button
+                            class="project-toggle"
+                            aria-expanded="false"
+                            aria-controls={`details-${project.id}`}
+                        >
+                            <div class="project-header">
+                                <h3 class="project-title">{project.title}</h3>
+                                {project.url && (
+                                    <a
+                                        href={project.url}
+                                        class="project-visit"
+                                        target="_blank"
+                                        rel="noopener"
+                                        onclick="event.stopPropagation()"
+                                    >
+                                        <span>Visit</span>
+                                        <Icon name="arrow-up-right" size={14} />
+                                    </a>
+                                )}
+                            </div>
+                            <div class="tags">
+                                {project.tags.map((tag) => (
+                                    <span class="tag">{tag}</span>
+                                ))}
+                            </div>
+                            <p class="project-description">
+                                {project.description}
+                            </p>
+                            <span class="expand-hint">
+                                <span class="expand-text">
+                                    Click to explore
+                                </span>
+                                <Icon
+                                    name="arrow-right"
+                                    size={16}
+                                    class="expand-arrow"
+                                />
+                            </span>
+                        </button>
+
+                        <div
+                            id={`details-${project.id}`}
+                            class="project-details"
+                            aria-hidden="true"
+                        >
+                            <div class="detail-block">
+                                <h4 class="detail-label">
+                                    <Icon name="target" size={16} />
+                                    <span>The Problem</span>
+                                </h4>
+                                <p class="detail-text">{project.problem}</p>
+                            </div>
+                            <div class="detail-block">
+                                <h4 class="detail-label">
+                                    <Icon name="lightbulb" size={16} />
+                                    <span>The Solution</span>
+                                </h4>
+                                <p class="detail-text">{project.solution}</p>
+                            </div>
+                            <div class="detail-block">
+                                <h4 class="detail-label">
+                                    <Icon name="scale" size={16} />
+                                    <span>Tradeoffs & Decisions</span>
+                                </h4>
+                                <p class="detail-text">{project.tradeoffs}</p>
+                            </div>
+                            <div class="detail-block">
+                                <h4 class="detail-label">
+                                    <Icon name="trending-up" size={16} />
+                                    <span>Impact</span>
+                                </h4>
+                                <p class="detail-text">{project.impact}</p>
+                            </div>
+                        </div>
+                    </article>
+                ))
+            }
+        </div>
     </div>
-  </div>
 </section>
 
 <script>
-  document.querySelectorAll('.project-toggle').forEach(toggle => {
-    toggle.addEventListener('click', () => {
-      const card = toggle.closest('.project-card');
-      const details = card?.querySelector('.project-details');
-      const expandText = toggle.querySelector('.expand-text');
-      const isExpanded = toggle.getAttribute('aria-expanded') === 'true';
-      
-      // Close all other cards
-      document.querySelectorAll('.project-card').forEach(otherCard => {
-        if (otherCard !== card) {
-          const otherToggle = otherCard.querySelector('.project-toggle');
-          const otherDetails = otherCard.querySelector('.project-details');
-          const otherExpandText = otherCard.querySelector('.expand-text');
-          otherToggle?.setAttribute('aria-expanded', 'false');
-          otherDetails?.setAttribute('aria-hidden', 'true');
-          otherCard.classList.remove('active');
-          if (otherExpandText) otherExpandText.textContent = 'Click to explore';
-        }
-      });
-      
-      // Toggle current card
-      toggle.setAttribute('aria-expanded', (!isExpanded).toString());
-      details?.setAttribute('aria-hidden', isExpanded.toString());
-      card?.classList.toggle('active', !isExpanded);
-      
-      if (expandText) {
-        expandText.textContent = isExpanded ? 'Click to explore' : 'Click to collapse';
-      }
+    document.querySelectorAll(".project-toggle").forEach((toggle) => {
+        toggle.addEventListener("click", () => {
+            const card = toggle.closest(".project-card");
+            const details = card?.querySelector(".project-details");
+            const expandText = toggle.querySelector(".expand-text");
+            const isExpanded = toggle.getAttribute("aria-expanded") === "true";
+
+            // Close all other cards
+            document.querySelectorAll(".project-card").forEach((otherCard) => {
+                if (otherCard !== card) {
+                    const otherToggle =
+                        otherCard.querySelector(".project-toggle");
+                    const otherDetails =
+                        otherCard.querySelector(".project-details");
+                    const otherExpandText =
+                        otherCard.querySelector(".expand-text");
+                    otherToggle?.setAttribute("aria-expanded", "false");
+                    otherDetails?.setAttribute("aria-hidden", "true");
+                    otherCard.classList.remove("active");
+                    if (otherExpandText)
+                        otherExpandText.textContent = "Click to explore";
+                }
+            });
+
+            // Toggle current card
+            toggle.setAttribute("aria-expanded", (!isExpanded).toString());
+            details?.setAttribute("aria-hidden", isExpanded.toString());
+            card?.classList.toggle("active", !isExpanded);
+
+            if (expandText) {
+                expandText.textContent = isExpanded
+                    ? "Click to explore"
+                    : "Click to collapse";
+            }
+        });
     });
-  });
 </script>
 
 <style>
-  .work {
-    padding: var(--space-5xl) 0;
-    background: rgba(255, 255, 255, 0.01);
-    position: relative;
-    z-index: 1;
-  }
-  
-  .section-header {
-    margin-bottom: var(--space-3xl);
-  }
-  
-  .section-number {
-    font-size: 14px;
-    color: var(--color-accent);
-    font-weight: 600;
-    font-family: var(--font-mono);
-  }
-  
-  .section-title {
-    margin-top: var(--space-sm);
-    margin-bottom: var(--space-md);
-  }
-  
-  .section-subtitle {
-    font-size: 18px;
-    color: var(--color-text-muted);
-    max-width: 500px;
-    line-height: 1.6;
-  }
-  
-  .projects {
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-lg);
-  }
-  
-  .project-card {
-    background-color: var(--color-bg-elevated);
-    border: 1px solid var(--color-border);
-    border-radius: var(--radius-xl);
-    transition: all var(--transition-slow);
-    overflow: hidden;
-  }
-  
-  .project-card:hover {
-    border-color: var(--color-border-hover);
-  }
-  
-  .project-card.active {
-    border-color: var(--color-accent-border);
-    background-color: rgba(96, 165, 250, 0.05);
-  }
-  
-  .project-toggle {
-    width: 100%;
-    padding: var(--space-lg) var(--space-xl);
-    background: none;
-    border: none;
-    cursor: pointer;
-    text-align: left;
-    color: inherit;
-  }
-
-  .project-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: var(--space-md);
-  }
-
-  .project-title {
-    font-size: 24px;
-    font-weight: 600;
-  }
-
-  .project-visit {
-    display: inline-flex;
-    align-items: center;
-    gap: 4px;
-    font-size: 13px;
-    color: var(--color-accent);
-    font-weight: 500;
-    padding: 4px 12px;
-    border: 1px solid var(--color-border);
-    border-radius: var(--radius-full);
-    transition: all var(--transition-base);
-    white-space: nowrap;
-    flex-shrink: 0;
-  }
-
-  .project-visit:hover {
-    border-color: var(--color-accent);
-    background: var(--color-accent-bg);
-  }
-  
-  .tags {
-    display: flex;
-    flex-wrap: wrap;
-    gap: var(--space-sm);
-    margin-top: var(--space-sm);
-  }
-  
-  .tag {
-    font-size: 12px;
-    padding: 4px 12px;
-    background: var(--color-accent-bg);
-    color: var(--color-accent);
-    border-radius: var(--radius-full);
-    font-weight: 500;
-  }
-  
-  .project-description {
-    font-size: 15px;
-    color: var(--color-text-muted);
-    line-height: 1.6;
-    margin-top: var(--space-sm);
-  }
-
-  .expand-hint {
-    display: flex;
-    align-items: center;
-    gap: var(--space-sm);
-    margin-top: var(--space-md);
-    font-size: 13px;
-    color: var(--color-accent);
-    font-weight: 500;
-  }
-  
-  .expand-arrow {
-    transition: transform var(--transition-base);
-  }
-  
-  .project-card.active .expand-arrow {
-    transform: rotate(90deg);
-  }
-  
-  .project-details {
-    max-height: 0;
-    overflow: hidden;
-    transition: max-height var(--transition-slower), padding var(--transition-slower);
-    padding: 0 var(--space-xl);
-  }
-
-  .project-card.active .project-details {
-    max-height: 1200px;
-    padding: 0 var(--space-xl) var(--space-lg);
-  }
-
-  
-  .detail-block {
-    margin-bottom: var(--space-lg);
-  }
-  
-  .detail-block:last-of-type {
-    margin-bottom: 0;
-  }
-  
-  .detail-label {
-    display: flex;
-    align-items: center;
-    gap: var(--space-sm);
-    font-size: 14px;
-    font-weight: 600;
-    margin-bottom: var(--space-sm);
-    color: var(--color-text-primary);
-  }
-  
-  .detail-label :global(.icon) {
-    color: var(--color-accent);
-  }
-  
-  .detail-text {
-    font-size: 15px;
-    color: var(--color-text-secondary);
-    line-height: 1.7;
-    padding-left: 24px;
-  }
-  
-  
-  @media (max-width: 640px) {
     .work {
-      padding: var(--space-4xl) 0;
+        padding: var(--space-5xl) 0;
+        background: rgba(255, 255, 255, 0.01);
+        position: relative;
+        z-index: 1;
+    }
+
+    .section-header {
+        margin-bottom: var(--space-3xl);
+    }
+
+    .section-number {
+        font-size: 14px;
+        color: var(--color-accent);
+        font-weight: 600;
+        font-family: var(--font-mono);
+    }
+
+    .section-title {
+        margin-top: var(--space-sm);
+        margin-bottom: var(--space-md);
+    }
+
+    .section-subtitle {
+        font-size: 18px;
+        color: var(--color-text-muted);
+        max-width: 500px;
+        line-height: 1.6;
+    }
+
+    .projects {
+        display: flex;
+        flex-direction: column;
+        gap: var(--space-lg);
+    }
+
+    .project-card {
+        background-color: var(--color-bg-elevated);
+        border: 1px solid var(--color-border);
+        border-radius: var(--radius-xl);
+        transition: all var(--transition-slow);
+        overflow: hidden;
+    }
+
+    .project-card:hover {
+        border-color: var(--color-border-hover);
+    }
+
+    .project-card.active {
+        border-color: var(--color-accent-border);
+        background-color: rgba(96, 165, 250, 0.05);
+    }
+
+    .project-toggle {
+        width: 100%;
+        padding: var(--space-lg) var(--space-xl);
+        background: none;
+        border: none;
+        cursor: pointer;
+        text-align: left;
+        color: inherit;
+    }
+
+    .project-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: var(--space-md);
     }
 
     .project-title {
-      font-size: 20px;
+        font-size: 24px;
+        font-weight: 600;
+    }
+
+    .project-visit {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        font-size: 13px;
+        color: var(--color-accent);
+        font-weight: 500;
+        padding: 4px 12px;
+        border: 1px solid var(--color-border);
+        border-radius: var(--radius-full);
+        transition: all var(--transition-base);
+        white-space: nowrap;
+        flex-shrink: 0;
+    }
+
+    .project-visit:hover {
+        border-color: var(--color-accent);
+        background: var(--color-accent-bg);
+    }
+
+    .tags {
+        display: flex;
+        flex-wrap: wrap;
+        gap: var(--space-sm);
+        margin-top: var(--space-sm);
+    }
+
+    .tag {
+        font-size: 12px;
+        padding: 4px 12px;
+        background: var(--color-accent-bg);
+        color: var(--color-accent);
+        border-radius: var(--radius-full);
+        font-weight: 500;
+    }
+
+    .project-description {
+        font-size: 15px;
+        color: var(--color-text-muted);
+        line-height: 1.6;
+        margin-top: var(--space-sm);
+    }
+
+    .expand-hint {
+        display: flex;
+        align-items: center;
+        gap: var(--space-sm);
+        margin-top: var(--space-md);
+        font-size: 13px;
+        color: var(--color-accent);
+        font-weight: 500;
+    }
+
+    .expand-arrow {
+        transition: transform var(--transition-base);
+    }
+
+    .project-card.active .expand-arrow {
+        transform: rotate(90deg);
+    }
+
+    .project-details {
+        max-height: 0;
+        overflow: hidden;
+        transition:
+            max-height var(--transition-slower),
+            padding var(--transition-slower);
+        padding: 0 var(--space-xl);
+    }
+
+    .project-card.active .project-details {
+        max-height: 1200px;
+        padding: 0 var(--space-xl) var(--space-lg);
+    }
+
+    .detail-block {
+        margin-bottom: var(--space-lg);
+    }
+
+    .detail-block:last-of-type {
+        margin-bottom: 0;
+    }
+
+    .detail-label {
+        display: flex;
+        align-items: center;
+        gap: var(--space-sm);
+        font-size: 14px;
+        font-weight: 600;
+        margin-bottom: var(--space-sm);
+        color: var(--color-text-primary);
+    }
+
+    .detail-label :global(.icon) {
+        color: var(--color-accent);
     }
 
     .detail-text {
-      padding-left: 0;
+        font-size: 15px;
+        color: var(--color-text-secondary);
+        line-height: 1.7;
+        padding-left: 24px;
     }
-  }
+
+    @media (max-width: 640px) {
+        .work {
+            padding: var(--space-4xl) 0;
+        }
+
+        .project-title {
+            font-size: 20px;
+        }
+
+        .detail-text {
+            padding-left: 0;
+        }
+    }
 </style>
