@@ -26,7 +26,7 @@ describe("roadmap content", () => {
     expect(allIds.has("m1.w1.log")).toBe(true);
   });
 
-  it("has 9 tasks and 2 logs in the current content", () => {
+  it("current content has 9 tasks and 2 logs (update when M2+ weeks are filled)", () => {
     expect(allTaskIds).toHaveLength(9);
     expect(allLogIds).toHaveLength(2);
   });

@@ -5,7 +5,7 @@
 
 export type Track = "build" | "systems" | "foundations";
 
-export interface Resource {
+export interface Resource { // reserved for future week-level reference links
   title: string;
   source: string;
   kind: "video" | "docs" | "article" | "course" | "book";
@@ -23,7 +23,7 @@ export interface Task {
   id: string;
   day?: string;
   label: string;
-  hours?: number;
+  hours?: number; // reserved for future per-task hour display
 }
 
 export interface DecisionLog {
@@ -297,7 +297,7 @@ export function deriveStats(completed: string[]): RoadmapStats {
   const pct = tasksTotal ? Math.round((tasksDone / tasksTotal) * 100) : 0;
 
   const weekHours = roadmap.reduce(
-    (sum, m) => sum + m.weeks.reduce((a, w) => a + (w.hours || 0), 0),
+    (sum, m) => sum + m.weeks.reduce((a, w) => a + (w.hours ?? 0), 0),
     0,
   );
   const estHours = roadmap.reduce(
@@ -308,6 +308,7 @@ export function deriveStats(completed: string[]): RoadmapStats {
 
   const perMilestone: Record<string, number> = {};
   for (const m of roadmap) {
+    // Per-milestone % counts tasks + logs (what the milestone ring tracks), unlike the top-level pct which is tasks only.
     const ids = [...taskIdsOf(m), ...logIdsOf(m)];
     const d = ids.filter((id) => done.has(id)).length;
     perMilestone[m.id] = ids.length ? Math.round((d / ids.length) * 100) : 0;
