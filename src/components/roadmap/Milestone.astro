@@ -1,5 +1,5 @@
 ---
-import type { Milestone } from "../../data/roadmap";
+import type { Milestone, Track } from "../../data/roadmap";
 import Week from "./Week.astro";
 
 interface Props {
@@ -9,7 +9,7 @@ interface Props {
 
 const { milestone, open = false } = Astro.props;
 
-const trackLabel: Record<string, string> = {
+const trackLabel: Record<Track, string> = {
   build: "Build",
   systems: "Systems",
   foundations: "Foundations",

@@ -1,5 +1,5 @@
 ---
-import type { Week } from "../../data/roadmap";
+import type { Week, Track } from "../../data/roadmap";
 import TaskList from "./TaskList.astro";
 import DecisionLog from "./DecisionLog.astro";
 
@@ -10,7 +10,7 @@ interface Props {
 
 const { week, open = false } = Astro.props;
 
-const trackLabel: Record<string, string> = {
+const trackLabel: Record<Track, string> = {
   build: "Build",
   systems: "Systems",
   foundations: "Foundations",

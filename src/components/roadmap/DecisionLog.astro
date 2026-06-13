@@ -14,7 +14,7 @@ const { log } = Astro.props;
   </div>
   {log.intro && <p class="rm-log-intro">{log.intro}</p>}
   <p class="rm-log-prompt">{log.prompt}</p>
-  <label class="rm-mark">
+  <label class="rm-mark" for={log.id}>
     <input type="checkbox" id={log.id} data-id={log.id} disabled />
     <span>Mark logged</span>
   </label>
