@@ -1,0 +1,21 @@
+---
+import type { DecisionLog } from "../../data/roadmap";
+
+interface Props {
+  log: DecisionLog;
+}
+
+const { log } = Astro.props;
+---
+
+<div class="rm-log">
+  <div class="rm-log-head">
+    <span class="rm-dot d-judgment"></span>Decision log — the week's artifact
+  </div>
+  {log.intro && <p class="rm-log-intro">{log.intro}</p>}
+  <p class="rm-log-prompt">{log.prompt}</p>
+  <label class="rm-mark" for={log.id}>
+    <input type="checkbox" id={log.id} data-id={log.id} disabled />
+    <span>Mark logged</span>
+  </label>
+</div>

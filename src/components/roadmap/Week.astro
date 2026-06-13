@@ -1,0 +1,51 @@
+---
+import type { Week, Track } from "../../data/roadmap";
+import TaskList from "./TaskList.astro";
+import DecisionLog from "./DecisionLog.astro";
+
+interface Props {
+  week: Week;
+  open?: boolean;
+}
+
+const { week, open = false } = Astro.props;
+
+const trackLabel: Record<Track, string> = {
+  build: "Build",
+  systems: "Systems",
+  foundations: "Foundations",
+};
+
+const components = week.components ?? [];
+const tasks = week.tasks ?? [];
+---
+
+<details class="rm-wk" open={open}>
+  <summary>
+    <span class="rm-wk-no">{week.no}</span>
+    <span class="rm-wk-name">{week.name}</span>
+    <span class="rm-wk-meta">~{week.hours}h</span>
+  </summary>
+  <div class="rm-wk-body">
+    <p class="rm-goal">{week.goal}</p>
+
+    {
+      components.map((c) => (
+        <div class="rm-comp">
+          <span class="rm-comp-tag" style={`color:var(--${c.track})`}>
+            <span class={`rm-dot d-${c.track}`} />
+            {trackLabel[c.track]}
+          </span>
+          <div>
+            <h4>{c.title}</h4>
+            {c.detail && <p>{c.detail}</p>}
+            {c.source && <p class="rm-src">{c.source}</p>}
+          </div>
+        </div>
+      ))
+    }
+
+    {tasks.length > 0 && <TaskList tasks={tasks} />}
+    {week.log && <DecisionLog log={week.log} />}
+  </div>
+</details>

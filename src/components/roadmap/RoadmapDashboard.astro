@@ -1,0 +1,44 @@
+---
+import { deriveStats } from "../../data/roadmap";
+
+// Server-rendered defaults (zeroed); the client island overwrites these on load.
+const s = deriveStats([]);
+---
+
+<div class="rm-dash">
+  <div class="rm-stat">
+    <div class="rm-n"><span id="rm-pct">0</span><small>%</small></div>
+    <div class="rm-l">Complete</div>
+  </div>
+  <div class="rm-stat">
+    <div class="rm-n">
+      <span id="rm-done">0</span><small> / <span id="rm-total">{s.tasksTotal}</span></small>
+    </div>
+    <div class="rm-l">Tasks done</div>
+  </div>
+  <div class="rm-stat">
+    <div class="rm-n">~<span id="rm-hours">{s.plannedHours}</span><small>h</small></div>
+    <div class="rm-l">Planned</div>
+  </div>
+  <div class="rm-stat">
+    <div class="rm-n">
+      <span id="rm-logs-done">0</span><small> / <span id="rm-logs-total">{s.logsTotal}</span></small>
+    </div>
+    <div class="rm-l">Decision logs</div>
+  </div>
+</div>
+<div class="rm-bar"><i id="rm-bar-fill"></i></div>
+
+<div class="rm-controls">
+  <div class="rm-legend">
+    <span><i class="rm-dot d-build"></i><b>Build</b> — CodeCrafters</span>
+    <span><i class="rm-dot d-systems"></i><b>Systems</b> — DDIA, the lens</span>
+    <span><i class="rm-dot d-foundations"></i><b>Foundations</b> — NeetCode reps</span>
+    <span><i class="rm-dot d-judgment"></i><b>Judgment</b> — decision log</span>
+  </div>
+  <div class="rm-edit-wrap">
+    <span id="rm-save-state" class="rm-save-state" role="status" aria-live="polite"></span>
+    <button id="rm-edit" type="button" class="rm-edit-btn">Edit</button>
+  </div>
+</div>
+<p id="rm-message" class="rm-message" role="alert" aria-live="assertive" hidden></p>

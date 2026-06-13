@@ -1,0 +1,24 @@
+---
+import type { Task } from "../../data/roadmap";
+
+interface Props {
+  tasks: Task[];
+}
+
+const { tasks } = Astro.props;
+---
+
+<div class="rm-rhythm">
+  <h5>Daily rhythm</h5>
+  {
+    tasks.map((task) => (
+      <div class="rm-task">
+        <input type="checkbox" id={task.id} data-id={task.id} disabled />
+        <label for={task.id}>
+          {task.day && <span class="rm-day">{task.day}</span>}
+          {task.label}
+        </label>
+      </div>
+    ))
+  }
+</div>

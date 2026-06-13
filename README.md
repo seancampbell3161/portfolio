@@ -227,6 +227,35 @@ import Footer from '../components/Footer.astro';
 </Layout>
 ```
 
+## Roadmap page (`/roadmap`)
+
+A public learning roadmap with a shared, persisted progress state.
+
+- **Content** lives in `src/data/roadmap.ts` (single source of truth).
+- **Progress** is stored in Netlify Blobs (store `roadmap`, key `progress`) via the
+  `netlify/functions/progress.ts` function. `GET /api/progress` is public; `POST` is
+  gated by a bearer token.
+- **Edit mode**: on `/roadmap`, click **Edit** and enter `ROADMAP_ADMIN_TOKEN`. The token
+  is kept in `sessionStorage` and sent only to the API — it never ships in the client bundle.
+
+### Environment
+
+Set `ROADMAP_ADMIN_TOKEN` (a long random secret) in:
+
+- the Netlify site environment variables (Site settings → Environment variables), and
+- a local `.env` file for development (see `.env.example`).
+
+### Local development
+
+Blobs require the Netlify environment, so run the dev server through the Netlify CLI:
+
+```bash
+netlify dev
+```
+
+`npm run dev` (plain Astro) serves the page but the `/api/progress` calls will fail because
+Blobs are not configured outside `netlify dev`.
+
 ## Tech Stack
 
 - [Astro](https://astro.build) - Static site generator
