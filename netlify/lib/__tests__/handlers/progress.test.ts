@@ -65,6 +65,14 @@ describe("handleProgress POST auth", () => {
     const res = await handleProgress(post({ completed: [] }, "Bearer wrong"), deps());
     expect(res.status).toBe(401);
   });
+
+  it("rejects all writes when the expected token is empty", async () => {
+    const res = await handleProgress(
+      post({ completed: [] }, "Bearer anything"),
+      deps({ token: "" }),
+    );
+    expect(res.status).toBe(401);
+  });
 });
 
 describe("handleProgress POST validation", () => {
@@ -116,6 +124,17 @@ describe("handleProgress POST success", () => {
       deps({ store }),
     );
     expect(store.current()?.completed).toEqual(["m1.w1.mon"]);
+  });
+
+  it("accepts an empty completed array as a reset", async () => {
+    const store = fakeStore({
+      version: 1,
+      updatedAt: "2026-06-01T00:00:00.000Z",
+      completed: ["m1.w1.mon"],
+    });
+    const res = await handleProgress(post({ completed: [] }, "Bearer secret"), deps({ store }));
+    expect(res.status).toBe(200);
+    expect(store.current()?.completed).toEqual([]);
   });
 });
 
