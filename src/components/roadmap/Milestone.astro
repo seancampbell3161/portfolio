@@ -1,0 +1,78 @@
+---
+import type { Milestone } from "../../data/roadmap";
+import Week from "./Week.astro";
+
+interface Props {
+  milestone: Milestone;
+  open?: boolean;
+}
+
+const { milestone, open = false } = Astro.props;
+
+const trackLabel: Record<string, string> = {
+  build: "Build",
+  systems: "Systems",
+  foundations: "Foundations",
+};
+
+const scaffolded = milestone.weeks.length === 0;
+const components = milestone.components ?? [];
+// The first enumerated week opens by default so the page lands on real content.
+---
+
+<details class="rm-m" open={open} data-milestone={milestone.id}>
+  <summary>
+    <span class="rm-m-no">{milestone.no}</span>
+    <span class="rm-m-mid">
+      <p class="rm-m-title">{milestone.title}</p>
+      <p class="rm-m-goal">{milestone.goal}</p>
+      <span class="rm-threads">
+        <span class="rm-dot d-build"></span>
+        <span class="rm-dot d-systems"></span>
+        <span class="rm-dot d-foundations"></span>
+        <span class="rm-dot d-judgment"></span>
+      </span>
+    </span>
+    <span class="rm-m-right">
+      <span class="rm-pct" data-milestone-pct={milestone.id}>0%</span>
+      <span class="rm-ring">+</span>
+    </span>
+  </summary>
+
+  <div class="rm-m-body">
+    {
+      !scaffolded &&
+        milestone.weeks.map((week, i) => <Week week={week} open={i === 0} />)
+    }
+
+    {
+      scaffolded && (
+        <>
+          {components.map((c) => (
+            <div class="rm-comp">
+              <span class="rm-comp-tag" style={`color:var(--${c.track})`}>
+                <span class={`rm-dot d-${c.track}`} />
+                {trackLabel[c.track]}
+              </span>
+              <div>
+                <h4>{c.title}</h4>
+                {c.detail && <p>{c.detail}</p>}
+              </div>
+            </div>
+          ))}
+          {milestone.judgment && (
+            <div class="rm-comp">
+              <span class="rm-comp-tag" style="color:var(--judgment)">
+                <span class="rm-dot d-judgment" />
+                Judgment
+              </span>
+              <div>
+                <h4>{milestone.judgment}</h4>
+              </div>
+            </div>
+          )}
+        </>
+      )
+    }
+  </div>
+</details>
