@@ -58,6 +58,13 @@ const {
                 ))
             }
         </div>
+
+        <div class="roadmap-cta-wrap">
+            <a href="/roadmap" class="roadmap-cta">
+                <span>Explore the full roadmap</span>
+                <Icon name="arrow-right" size={18} class="roadmap-cta-arrow" />
+            </a>
+        </div>
     </div>
 </section>
 
@@ -138,6 +145,33 @@ const {
         font-size: 14px;
         color: var(--color-text-secondary);
         line-height: 1.6;
+    }
+
+    .roadmap-cta-wrap {
+        margin-top: var(--space-2xl);
+        text-align: center;
+    }
+
+    .roadmap-cta {
+        display: inline-flex;
+        align-items: center;
+        gap: var(--space-sm);
+        font-size: 15px;
+        font-weight: 600;
+        color: var(--color-accent);
+        transition: color var(--transition-base);
+    }
+
+    .roadmap-cta:hover {
+        color: var(--color-text-primary);
+    }
+
+    .roadmap-cta-arrow {
+        transition: transform var(--transition-base);
+    }
+
+    .roadmap-cta:hover .roadmap-cta-arrow {
+        transform: translateX(4px);
     }
 
     @media (max-width: 640px) {
