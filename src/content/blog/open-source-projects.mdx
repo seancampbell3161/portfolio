@@ -1,0 +1,105 @@
+---
+title: "3 Open Source Projects To Make You a Better Software Engineer"
+description: "Become a better Software Engineer by understanding these codebases"
+pubDate: 2026-06-13
+tags: ["open source", "code design", "systems thinking", "best practices"]
+draft: true
+---
+
+### What SQLite, Redis, and Git teach you that no tutorial can
+
+Every "how to get better at engineering" list eventually says the same thing: *read more source code.* It's good advice and almost useless on its own, because nobody tells you **which** code or **what you're looking for**. Open a random repo with no goal and you'll bounce off it in ten minutes.
+
+So here's a more specific version of the advice. Read these three projects, and read each one for a *different reason*. Together they cover the three layers where engineering quality actually lives: the **tests**, the **implementation**, and the **data model**.
+
+> You don't read all three the same way. SQLite teaches you to read the tests. Redis teaches you to read the code. Git teaches you to read the design.
+
+---
+
+### 1. SQLite — the tests *are* the product
+
+SQLite runs on your phone, in your browser, in your car, and on a good chunk of the world's aircraft. It is one of the most deployed pieces of software ever written. And when you go looking for what makes it trustworthy, you find something strange: most of SQLite isn't SQLite.
+
+> **The number that stops people:** roughly a **590-to-1** ratio of test code to core code — about **155,000 lines** of core C against some **92 million lines** of tests.
+
+That's not a typo. According to the project's own testing documentation, SQLite backs its small core with four independent test harnesses, achieves 100% branch coverage, and runs a fuzzer that throws on the order of **a billion mutations a day** at the database. It even re-runs huge query suites against PostgreSQL, MySQL, SQL Server, and Oracle to confirm everyone agrees on the answers.
+
+**What to read:** don't start with the C. Start with the page titled *"How SQLite Is Tested"* — it reads like a manifesto. Then skim the virtual machine (the VDBE) to see how a SQL statement becomes bytecode.
+
+**The lesson for your reader:** reliability isn't a personality trait or a code-review checkbox. It's an architecture you commit to on purpose. The most-trusted database in the world earned that trust by treating its tests as the real deliverable.
+
+> [PLACEHOLDER — graphic: an inverted pyramid or a 1:590 bar comparison showing core code vs. test code. This stat is the post's biggest hook; give it a visual.]
+
+---
+
+### 2. Redis — code written to be *read*
+
+Most systems code is written to be executed and merely tolerated by the next human who opens it. Redis is the rare exception: its creator, Salvatore "antirez" Sanfilippo, wrote it in deliberately clear, heavily commented C. You can open a file cold and actually follow what's happening — which makes it the single best codebase to take the "go read the source" advice literally.
+
+**What to read:** the hash table implementation, the event loop, and the string commands are all approachable starting points. Read the comments as much as the code; antirez explains *why*, not just *what*.
+
+**The bonus that makes it a story:** Redis is also a case study in the messy economics of open source. It left its permissive open-source license in 2024 to fight off cloud providers reselling it, the community responded by forking it into **Valkey** under the Linux Foundation, and then in 2025 **Redis 8 returned to an OSI-approved open-source license (AGPLv3)**, with antirez rejoining the project to lead the move. Few codebases let you talk about both elegant data structures *and* who gets to profit from free software.
+
+> **Try it yourself:** clone the repo and open the data-structure files before anything else. Notice how much of the file is comments. Ask yourself when you last wrote code that explained its own reasoning that clearly.
+
+**The lesson for your reader:** clarity is a feature. Code is read far more often than it's written, and "readable" is a design decision you make, not a happy accident.
+
+---
+
+### 3. Git — the beautiful model under the scary CLI
+
+Everyone uses Git. Almost nobody feels like they understand it. The command line is a museum of confusing verbs, and most of us survive on five memorized incantations and a prayer.
+
+Here's the reversal that makes a great section: the scary part is only the surface. Underneath, Git is one of the most elegant data models in everyday software — a **content-addressable object store** plus a **directed acyclic graph** of commits. Once you see it, the CLI stops feeling random and starts feeling like a (clumsy) interface to something genuinely simple.
+
+The whole system is built from a few object types: a **blob** (file contents), a **tree** (a directory listing pointing at blobs and other trees), and a **commit** (a snapshot pointing at one tree, plus its parent commits). Each is identified by the hash of its own contents. That's it. Branches and tags are just labels pointing at commits.
+
+> [PLACEHOLDER — diagram: the Git object graph. Show a commit → tree → blobs, with a parent commit behind it, all labeled by hash. This is the single highest-value visual in the post.]
+
+**Try it yourself** — you can see the whole model from the inside in about a minute:
+
+```bash
+# make a tiny repo
+mkdir gitpeek && cd gitpeek && git init
+echo "hello" > file.txt
+git add file.txt && git commit -m "first"
+
+# now look at what Git actually stored
+git cat-file -p HEAD          # the commit object -> points to a tree
+git cat-file -p HEAD^{tree}   # the tree -> points to a blob
+git cat-file -p HEAD:file.txt # the blob -> your file's contents
+
+# and hash a string by hand, the way Git does
+echo "hello" | git hash-object --stdin
+```
+
+Watch the hashes line up, and the "magic" evaporates.
+
+**The lesson for your reader:** pick the right data structure and a hard problem dissolves. (It's also a nice origin hook — Linus Torvalds wrote Git in 2005 because he needed version control for the Linux kernel and didn't like the options.)
+
+---
+
+## The through-line
+
+Notice what changed from section to section. With SQLite you read the **tests**. With Redis you read the **implementation**. With Git you read the **data model**. That's the real takeaway, bigger than any one project: engineering quality hides in three different places, and a good engineer learns to look at all three.
+
+And whichever you pick, don't clone-and-stare. The move that actually works:
+
+1. **Pick one feature or one bug.** Just one.
+2. **Trace it end to end** through the code.
+3. **Read its tests** to see what the authors were afraid of.
+4. **Skim the commit history and design docs** to learn *why* it's built that way.
+
+The reasoning behind the code is where the learning lives — and it's the part no tutorial will ever hand you.
+
+---
+
+## TL;DR cheat sheet
+
+| Project | Layer it teaches | What you actually read | The one-line lesson | Where to start |
+|---|---|---|---|---|
+| **SQLite** | Process | The test architecture | Reliability is a discipline you commit to | The "How SQLite Is Tested" doc |
+| **Redis** | Craft | The implementation + comments | Clarity is a feature | The data-structure and event-loop files |
+| **Git** | Design | The object model | The right data structure dissolves the problem | `git cat-file` inside a tiny repo |
+
+---

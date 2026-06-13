@@ -1,0 +1,1203 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Roadmap — Building Engineering Judgment</title>
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+        <link
+            href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;700&display=swap"
+            rel="stylesheet"
+        />
+        <style>
+            :root {
+                --ink: #0e1116;
+                --ink-2: #141923;
+                --ink-3: #1a2230;
+                --line: rgba(255, 255, 255, 0.09);
+                --line-2: rgba(255, 255, 255, 0.16);
+                --text: #e7eaef;
+                --dim: #95a0ae;
+                --faint: #6b7480;
+                --build: #e0a458; /* CodeCrafters — the build */
+                --systems: #5fb3ac; /* DDIA — the systems lens */
+                --found: #9a93d6; /* NeetCode — daily reps   */
+                --judgment: #d98b6f; /* decision log — the artifact */
+                --font-display: "Space Grotesk", system-ui, sans-serif;
+                --font-body: "Inter", system-ui, sans-serif;
+                --font-mono: "JetBrains Mono", ui-monospace, monospace;
+            }
+            * {
+                box-sizing: border-box;
+            }
+            html {
+                -webkit-text-size-adjust: 100%;
+            }
+            body {
+                margin: 0;
+                background: var(--ink);
+                color: var(--text);
+                font-family: var(--font-body);
+                line-height: 1.6;
+                font-feature-settings: "ss01";
+                background-image: radial-gradient(
+                    1200px 600px at 80% -10%,
+                    rgba(95, 179, 172, 0.05),
+                    transparent 60%
+                );
+            }
+            .wrap {
+                max-width: 920px;
+                margin: 0 auto;
+                padding: 64px 24px 96px;
+            }
+            a {
+                color: inherit;
+            }
+
+            /* ---- header ---- */
+            .eyebrow {
+                font-family: var(--font-mono);
+                font-size: 12px;
+                letter-spacing: 0.22em;
+                text-transform: uppercase;
+                color: var(--dim);
+                margin: 0 0 18px;
+                display: flex;
+                gap: 10px;
+                align-items: center;
+            }
+            .eyebrow::before {
+                content: "";
+                width: 28px;
+                height: 1px;
+                background: var(--line-2);
+            }
+            h1 {
+                font-family: var(--font-display);
+                font-weight: 600;
+                font-size: clamp(34px, 6vw, 56px);
+                line-height: 1.02;
+                letter-spacing: -0.02em;
+                margin: 0 0 20px;
+            }
+            h1 em {
+                font-style: normal;
+                color: var(--build);
+            }
+            .thesis {
+                font-size: clamp(16px, 2.4vw, 19px);
+                color: var(--dim);
+                max-width: 60ch;
+                margin: 0;
+            }
+            .thesis strong {
+                color: var(--text);
+                font-weight: 600;
+            }
+
+            /* ---- dashboard ---- */
+            .dash {
+                display: grid;
+                grid-template-columns: repeat(4, 1fr);
+                gap: 1px;
+                background: var(--line);
+                border: 1px solid var(--line);
+                border-radius: 12px;
+                overflow: hidden;
+                margin: 44px 0 14px;
+            }
+            .stat {
+                background: var(--ink-2);
+                padding: 18px 20px;
+            }
+            .stat .n {
+                font-family: var(--font-display);
+                font-weight: 600;
+                font-size: 26px;
+                letter-spacing: -0.01em;
+            }
+            .stat .n small {
+                font-size: 15px;
+                color: var(--faint);
+                font-weight: 500;
+            }
+            .stat .l {
+                font-family: var(--font-mono);
+                font-size: 10.5px;
+                letter-spacing: 0.16em;
+                text-transform: uppercase;
+                color: var(--faint);
+                margin-top: 6px;
+            }
+            .bar {
+                height: 4px;
+                background: var(--ink-3);
+                border-radius: 99px;
+                overflow: hidden;
+                margin-top: 14px;
+            }
+            .bar > i {
+                display: block;
+                height: 100%;
+                width: 0;
+                background: linear-gradient(90deg, var(--build), #f0c074);
+                transition: width 0.5s ease;
+            }
+            @media (max-width: 640px) {
+                .dash {
+                    grid-template-columns: repeat(2, 1fr);
+                }
+            }
+
+            /* ---- legend / the braid ---- */
+            .legend {
+                display: flex;
+                flex-wrap: wrap;
+                gap: 10px 22px;
+                margin: 26px 0 8px;
+                font-family: var(--font-mono);
+                font-size: 11.5px;
+                letter-spacing: 0.04em;
+                color: var(--dim);
+            }
+            .legend span {
+                display: inline-flex;
+                align-items: center;
+                gap: 8px;
+            }
+            .dot {
+                width: 9px;
+                height: 9px;
+                border-radius: 99px;
+                flex: none;
+            }
+            .d-build {
+                background: var(--build);
+            }
+            .d-sys {
+                background: var(--systems);
+            }
+            .d-found {
+                background: var(--found);
+            }
+            .d-judge {
+                background: var(--judgment);
+            }
+            .legend b {
+                color: var(--text);
+                font-weight: 500;
+            }
+
+            /* ---- milestones ---- */
+            .m {
+                border: 1px solid var(--line);
+                border-radius: 14px;
+                background: var(--ink-2);
+                margin-top: 14px;
+                overflow: hidden;
+            }
+            .m > summary {
+                list-style: none;
+                cursor: pointer;
+                padding: 22px 24px;
+                display: flex;
+                align-items: flex-start;
+                gap: 18px;
+                outline: none;
+            }
+            .m > summary::-webkit-details-marker {
+                display: none;
+            }
+            .m > summary:focus-visible {
+                box-shadow: inset 0 0 0 2px var(--systems);
+            }
+            .m-no {
+                font-family: var(--font-mono);
+                font-size: 12px;
+                color: var(--faint);
+                padding-top: 5px;
+                min-width: 30px;
+                letter-spacing: 0.05em;
+            }
+            .m-mid {
+                flex: 1;
+                min-width: 0;
+            }
+            .m-title {
+                font-family: var(--font-display);
+                font-weight: 600;
+                font-size: 19px;
+                letter-spacing: -0.01em;
+                margin: 0 0 4px;
+            }
+            .m-goal {
+                color: var(--dim);
+                font-size: 14.5px;
+                margin: 0;
+            }
+            .m-goal::before {
+                content: "Judgment goal — ";
+                color: var(--judgment);
+                font-family: var(--font-mono);
+                font-size: 11px;
+                letter-spacing: 0.04em;
+                text-transform: uppercase;
+            }
+            .threads {
+                display: flex;
+                gap: 6px;
+                margin-top: 13px;
+            }
+            .threads .dot {
+                width: 7px;
+                height: 7px;
+                opacity: 0.9;
+            }
+            .m-right {
+                display: flex;
+                flex-direction: column;
+                align-items: flex-end;
+                gap: 9px;
+                padding-top: 3px;
+            }
+            .pct {
+                font-family: var(--font-mono);
+                font-size: 13px;
+                color: var(--dim);
+                min-width: 38px;
+                text-align: right;
+            }
+            .ring {
+                font-family: var(--font-mono);
+                color: var(--faint);
+                font-size: 18px;
+                transition: transform 0.25s;
+            }
+            .m[open] > summary .ring {
+                transform: rotate(45deg);
+            }
+            .m-body {
+                padding: 4px 24px 26px;
+                border-top: 1px solid var(--line);
+            }
+
+            /* ---- weeks ---- */
+            .wk {
+                border: 1px solid var(--line);
+                border-radius: 11px;
+                background: var(--ink-3);
+                margin-top: 14px;
+                overflow: hidden;
+            }
+            .wk > summary {
+                list-style: none;
+                cursor: pointer;
+                padding: 15px 18px;
+                display: flex;
+                align-items: center;
+                gap: 14px;
+                outline: none;
+            }
+            .wk > summary::-webkit-details-marker {
+                display: none;
+            }
+            .wk > summary:focus-visible {
+                box-shadow: inset 0 0 0 2px var(--systems);
+            }
+            .wk-no {
+                font-family: var(--font-mono);
+                font-size: 11px;
+                color: var(--build);
+                border: 1px solid
+                    color-mix(in srgb, var(--build) 40%, transparent);
+                padding: 3px 8px;
+                border-radius: 6px;
+                letter-spacing: 0.05em;
+            }
+            .wk-name {
+                font-weight: 600;
+                font-size: 15px;
+                flex: 1;
+            }
+            .wk-meta {
+                font-family: var(--font-mono);
+                font-size: 11px;
+                color: var(--faint);
+            }
+            .wk-body {
+                padding: 6px 18px 20px;
+            }
+
+            .goal {
+                font-size: 14px;
+                color: var(--dim);
+                border-left: 2px solid var(--judgment);
+                padding: 2px 0 2px 14px;
+                margin: 8px 0 20px;
+            }
+            .goal b {
+                color: var(--text);
+                font-weight: 600;
+            }
+
+            /* ---- braided component rows ---- */
+            .comp {
+                display: grid;
+                grid-template-columns: 118px 1fr;
+                gap: 0 18px;
+                padding: 13px 0;
+                border-top: 1px solid var(--line);
+            }
+            .comp:first-of-type {
+                border-top: none;
+            }
+            .comp-tag {
+                font-family: var(--font-mono);
+                font-size: 10.5px;
+                letter-spacing: 0.1em;
+                text-transform: uppercase;
+                display: flex;
+                align-items: flex-start;
+                gap: 8px;
+                padding-top: 2px;
+            }
+            .comp-tag .dot {
+                margin-top: 4px;
+            }
+            .comp h4 {
+                margin: 0 0 3px;
+                font-size: 14.5px;
+                font-weight: 600;
+            }
+            .comp p {
+                margin: 0;
+                font-size: 13.5px;
+                color: var(--dim);
+            }
+            .comp .src {
+                font-family: var(--font-mono);
+                font-size: 11.5px;
+                color: var(--faint);
+                margin-top: 3px;
+            }
+
+            /* ---- checkable daily rhythm ---- */
+            .rhythm {
+                margin-top: 18px;
+                border-top: 1px solid var(--line);
+                padding-top: 16px;
+            }
+            .rhythm h5 {
+                font-family: var(--font-mono);
+                font-size: 11px;
+                letter-spacing: 0.12em;
+                text-transform: uppercase;
+                color: var(--faint);
+                margin: 0 0 12px;
+            }
+            .task {
+                display: flex;
+                gap: 11px;
+                align-items: flex-start;
+                padding: 7px 0;
+                font-size: 13.5px;
+            }
+            .task input {
+                appearance: none;
+                width: 17px;
+                height: 17px;
+                border: 1.5px solid var(--line-2);
+                border-radius: 5px;
+                flex: none;
+                margin-top: 2px;
+                cursor: pointer;
+                position: relative;
+                transition: 0.15s;
+            }
+            .task input:hover {
+                border-color: var(--dim);
+            }
+            .task input:checked {
+                background: var(--build);
+                border-color: var(--build);
+            }
+            .task input:checked::after {
+                content: "";
+                position: absolute;
+                left: 5px;
+                top: 1.5px;
+                width: 4px;
+                height: 8px;
+                border: solid var(--ink);
+                border-width: 0 2px 2px 0;
+                transform: rotate(45deg);
+            }
+            .task input:focus-visible {
+                outline: 2px solid var(--systems);
+                outline-offset: 2px;
+            }
+            .task label {
+                cursor: pointer;
+            }
+            .task .day {
+                font-family: var(--font-mono);
+                font-size: 10.5px;
+                color: var(--found);
+                text-transform: uppercase;
+                letter-spacing: 0.08em;
+                margin-right: 6px;
+            }
+            .task input:checked + label {
+                color: var(--faint);
+                text-decoration: line-through;
+                text-decoration-color: var(--line-2);
+            }
+
+            /* ---- decision log (the signature) ---- */
+            .log {
+                margin-top: 20px;
+                border: 1px dashed
+                    color-mix(in srgb, var(--judgment) 45%, transparent);
+                border-radius: 11px;
+                padding: 18px;
+                background: color-mix(in srgb, var(--judgment) 6%, transparent);
+            }
+            .log .lh {
+                font-family: var(--font-mono);
+                font-size: 11px;
+                letter-spacing: 0.1em;
+                text-transform: uppercase;
+                color: var(--judgment);
+                display: flex;
+                align-items: center;
+                gap: 8px;
+                margin-bottom: 6px;
+            }
+            .log p {
+                margin: 0 0 12px;
+                font-size: 13.5px;
+                color: var(--dim);
+            }
+            .log .prompt {
+                font-size: 14px;
+                color: var(--text);
+                font-weight: 500;
+                border-left: 2px solid var(--judgment);
+                padding-left: 12px;
+                margin: 0;
+            }
+
+            .note {
+                font-size: 12.5px;
+                color: var(--faint);
+                text-align: center;
+                margin-top: 46px;
+                font-family: var(--font-mono);
+                letter-spacing: 0.02em;
+                line-height: 1.7;
+            }
+
+            @media (prefers-reduced-motion: reduce) {
+                * {
+                    transition: none !important;
+                }
+            }
+        </style>
+    </head>
+    <body>
+        <div class="wrap">
+            <p class="eyebrow">A learning roadmap · in progress</p>
+            <h1>Building <em>engineering judgment</em></h1>
+            <p class="thesis">
+                Follow along with what I'm doing to become better at decision
+                making & problem solving as a Software Engineer. Building
+                everything out in the open for anyone to see.
+            </p>
+
+            <!-- dashboard -->
+            <div class="dash">
+                <div class="stat">
+                    <div class="n" id="pctNum">0<small>%</small></div>
+                    <div class="l">Complete</div>
+                </div>
+                <div class="stat">
+                    <div class="n">
+                        <span id="done">0</span
+                        ><small> / <span id="total">0</span></small>
+                    </div>
+                    <div class="l">Tasks done</div>
+                </div>
+                <div class="stat">
+                    <div class="n">~180<small>h</small></div>
+                    <div class="l">Planned</div>
+                </div>
+                <div class="stat">
+                    <div class="n">0<small> / 6</small></div>
+                    <div class="l">Decision logs</div>
+                </div>
+            </div>
+            <div class="bar"><i id="barFill"></i></div>
+
+            <!-- the braid -->
+            <div class="legend">
+                <span
+                    ><i class="dot d-build"></i><b>Build</b> —
+                    CodeCrafters</span
+                >
+                <span
+                    ><i class="dot d-sys"></i><b>Systems</b> — DDIA, the
+                    lens</span
+                >
+                <span
+                    ><i class="dot d-found"></i><b>Foundations</b> — NeetCode
+                    reps</span
+                >
+                <span
+                    ><i class="dot d-judge"></i><b>Judgment</b> — decision
+                    log</span
+                >
+            </div>
+
+            <!-- ============ M1 (fully built out) ============ -->
+            <details class="m" open data-m="1">
+                <summary>
+                    <span class="m-no">M1</span>
+                    <span class="m-mid">
+                        <p class="m-title">
+                            Storage — how bytes become a database
+                        </p>
+                        <p class="m-goal">
+                            defend choosing an in-memory store over disk, and
+                            name exactly when that choice breaks.
+                        </p>
+                        <span class="threads"
+                            ><i class="dot d-build"></i><i class="dot d-sys"></i
+                            ><i class="dot d-found"></i
+                            ><i class="dot d-judge"></i
+                        ></span>
+                    </span>
+                    <span class="m-right"
+                        ><span class="pct" data-pct="1">0%</span
+                        ><span class="ring">+</span></span
+                    >
+                </summary>
+                <div class="m-body">
+                    <details class="wk" open>
+                        <summary>
+                            <span class="wk-no">W1</span>
+                            <span class="wk-name"
+                                >A server that speaks a protocol</span
+                            >
+                            <span class="wk-meta">~8h</span>
+                        </summary>
+                        <div class="wk-body">
+                            <p class="goal">
+                                By Sunday you can
+                                <b
+                                    >open a raw TCP socket, parse a wire
+                                    protocol by hand, and explain why Redis
+                                    chose RESP over JSON.</b
+                                >
+                            </p>
+
+                            <div class="comp">
+                                <span
+                                    class="comp-tag"
+                                    style="color: var(--build)"
+                                    ><i class="dot d-build"></i>Build</span
+                                >
+                                <div>
+                                    <h4>Build Your Own Redis — stages 1–4</h4>
+                                    <p>
+                                        Bind a TCP listener, accept connections,
+                                        parse the RESP protocol, answer PING /
+                                        ECHO.
+                                    </p>
+                                    <p class="src">
+                                        codecrafters.io · Redis track
+                                    </p>
+                                </div>
+                            </div>
+                            <div class="comp">
+                                <span
+                                    class="comp-tag"
+                                    style="color: var(--systems)"
+                                    ><i class="dot d-sys"></i>Systems</span
+                                >
+                                <div>
+                                    <h4>DDIA — Ch. 1</h4>
+                                    <p>
+                                        Reliability, scalability,
+                                        maintainability — the three words you'll
+                                        keep returning to. Read it as the rubric
+                                        every later decision is graded against.
+                                    </p>
+                                </div>
+                            </div>
+                            <div class="comp">
+                                <span
+                                    class="comp-tag"
+                                    style="color: var(--found)"
+                                    ><i class="dot d-found"></i
+                                    >Foundations</span
+                                >
+                                <div>
+                                    <h4>NeetCode — Arrays &amp; Hashing</h4>
+                                    <p>
+                                        15 min daily. The hash map you reach for
+                                        here is the same structure the store is
+                                        built on.
+                                    </p>
+                                </div>
+                            </div>
+
+                            <div class="rhythm">
+                                <h5>Daily rhythm</h5>
+                                <div class="task">
+                                    <input type="checkbox" id="t1" /><label
+                                        for="t1"
+                                        ><span class="day">Mon</span>Socket +
+                                        accept loop, echo bytes back raw</label
+                                    >
+                                </div>
+                                <div class="task">
+                                    <input type="checkbox" id="t2" /><label
+                                        for="t2"
+                                        ><span class="day">Tue</span>Parse a
+                                        single RESP array; handle PING</label
+                                    >
+                                </div>
+                                <div class="task">
+                                    <input type="checkbox" id="t3" /><label
+                                        for="t3"
+                                        ><span class="day">Wed</span>Handle
+                                        ECHO; DDIA Ch.1 first half</label
+                                    >
+                                </div>
+                                <div class="task">
+                                    <input type="checkbox" id="t4" /><label
+                                        for="t4"
+                                        ><span class="day">Thu</span>Concurrent
+                                        connections; DDIA Ch.1 finish</label
+                                    >
+                                </div>
+                                <div class="task">
+                                    <input type="checkbox" id="t5" /><label
+                                        for="t5"
+                                        ><span class="day">Fri</span>NeetCode:
+                                        Two Sum, Group Anagrams, Top-K</label
+                                    >
+                                </div>
+                                <div class="task">
+                                    <input type="checkbox" id="t6" /><label
+                                        for="t6"
+                                        ><span class="day">Sat</span>Refactor
+                                        parser; write the decision log
+                                        below</label
+                                    >
+                                </div>
+                            </div>
+
+                            <div class="log">
+                                <div class="lh">
+                                    <i class="dot d-judge"></i>Decision log —
+                                    the week's artifact
+                                </div>
+                                <p>
+                                    One entry, ~150 words, tagged for retrieval.
+                                    This is the part that turns hours into
+                                    transferable judgment — and the seed of a
+                                    blog post.
+                                </p>
+                                <p class="prompt">
+                                    "RESP vs JSON for a wire protocol: what
+                                    Redis traded away, and the workload where
+                                    I'd make the opposite call."
+                                </p>
+                            </div>
+                        </div>
+                    </details>
+
+                    <details class="wk">
+                        <summary>
+                            <span class="wk-no">W2</span>
+                            <span class="wk-name"
+                                >An in-memory store with expiry</span
+                            >
+                            <span class="wk-meta">~8h</span>
+                        </summary>
+                        <div class="wk-body">
+                            <p class="goal">
+                                By Sunday you can
+                                <b
+                                    >reason about why a hash index is O(1) and
+                                    what it costs you in memory and
+                                    durability.</b
+                                >
+                            </p>
+                            <div class="comp">
+                                <span
+                                    class="comp-tag"
+                                    style="color: var(--build)"
+                                    ><i class="dot d-build"></i>Build</span
+                                >
+                                <div>
+                                    <h4>Redis — SET / GET / TTL stages</h4>
+                                    <p>
+                                        Back the store with a hash map; add key
+                                        expiry and the passive/active expiry
+                                        choice.
+                                    </p>
+                                    <p class="src">
+                                        codecrafters.io · Redis track
+                                    </p>
+                                </div>
+                            </div>
+                            <div class="comp">
+                                <span
+                                    class="comp-tag"
+                                    style="color: var(--systems)"
+                                    ><i class="dot d-sys"></i>Systems</span
+                                >
+                                <div>
+                                    <h4>DDIA — Ch. 3, hash indexes</h4>
+                                    <p>
+                                        Why the log-structured hash index works,
+                                        and the moment it stops scaling.
+                                    </p>
+                                </div>
+                            </div>
+                            <div class="comp">
+                                <span
+                                    class="comp-tag"
+                                    style="color: var(--found)"
+                                    ><i class="dot d-found"></i
+                                    >Foundations</span
+                                >
+                                <div>
+                                    <h4>NeetCode — Two Pointers</h4>
+                                    <p>15 min daily.</p>
+                                </div>
+                            </div>
+                            <div class="rhythm">
+                                <h5>Daily rhythm</h5>
+                                <div class="task">
+                                    <input type="checkbox" id="t7" /><label
+                                        for="t7"
+                                        ><span class="day">Mon</span>SET / GET
+                                        against an in-memory map</label
+                                    >
+                                </div>
+                                <div class="task">
+                                    <input type="checkbox" id="t8" /><label
+                                        for="t8"
+                                        ><span class="day">Wed</span>Key expiry;
+                                        DDIA Ch.3 hash indexes</label
+                                    >
+                                </div>
+                                <div class="task">
+                                    <input type="checkbox" id="t9" /><label
+                                        for="t9"
+                                        ><span class="day">Sat</span>Decision
+                                        log + push to genai-journey repo</label
+                                    >
+                                </div>
+                            </div>
+                            <div class="log">
+                                <div class="lh">
+                                    <i class="dot d-judge"></i>Decision log
+                                </div>
+                                <p class="prompt">
+                                    "In-memory vs durable: the actual failure
+                                    I'm accepting when I keep state in RAM."
+                                </p>
+                            </div>
+                        </div>
+                    </details>
+
+                    <details class="wk">
+                        <summary>
+                            <span class="wk-no">W3</span
+                            ><span class="wk-name">Indexes &amp; retrieval</span
+                            ><span class="wk-meta">~8h</span>
+                        </summary>
+                        <div class="wk-body">
+                            <p class="goal">
+                                Build secondary lookups; read DDIA Ch.3 on
+                                B-trees vs LSM as a preview of M2.
+                                <b
+                                    >(Weeks expand into the same Build / Systems
+                                    / Foundations / Decision-log shape.)</b
+                                >
+                            </p>
+                        </div>
+                    </details>
+                    <details class="wk">
+                        <summary>
+                            <span class="wk-no">W4</span
+                            ><span class="wk-name"
+                                >Persistence — RDB &amp; AOF</span
+                            ><span class="wk-meta">~8h</span>
+                        </summary>
+                        <div class="wk-body">
+                            <p class="goal">
+                                Add snapshotting and an append-only log; the
+                                capstone decision log compares the two
+                                durability strategies.
+                            </p>
+                        </div>
+                    </details>
+                </div>
+            </details>
+
+            <!-- ============ M2–M6 (headers, same shape underneath) ============ -->
+            <details class="m" data-m="2">
+                <summary>
+                    <span class="m-no">M2</span
+                    ><span class="m-mid">
+                        <p class="m-title">Storage engines — B-trees vs LSM</p>
+                        <p class="m-goal">
+                            read a query pattern and predict which engine wins,
+                            before you benchmark.
+                        </p>
+                        <span class="threads"
+                            ><i class="dot d-build"></i><i class="dot d-sys"></i
+                            ><i class="dot d-found"></i
+                            ><i class="dot d-judge"></i
+                        ></span> </span
+                    ><span class="m-right"
+                        ><span class="pct" data-pct="2">0%</span
+                        ><span class="ring">+</span></span
+                    >
+                </summary>
+                <div class="m-body">
+                    <div class="comp">
+                        <span class="comp-tag" style="color: var(--build)"
+                            ><i class="dot d-build"></i>Build</span
+                        >
+                        <div>
+                            <h4>Build Your Own SQLite</h4>
+                            <p>
+                                Read the real file format, walk the B-tree, run
+                                an indexed query.
+                            </p>
+                        </div>
+                    </div>
+                    <div class="comp">
+                        <span class="comp-tag" style="color: var(--systems)"
+                            ><i class="dot d-sys"></i>Systems</span
+                        >
+                        <div>
+                            <h4>DDIA Ch. 3 (deep) + Ch. 2</h4>
+                            <p>
+                                B-trees vs LSM-trees; relational vs document vs
+                                graph models.
+                            </p>
+                        </div>
+                    </div>
+                    <div class="comp">
+                        <span class="comp-tag" style="color: var(--found)"
+                            ><i class="dot d-found"></i>Foundations</span
+                        >
+                        <div><h4>Binary Search · Trees · Tries</h4></div>
+                    </div>
+                    <div class="comp">
+                        <span class="comp-tag" style="color: var(--judgment)"
+                            ><i class="dot d-judge"></i>Judgment</span
+                        >
+                        <div>
+                            <h4>"The workload decides the engine"</h4>
+                            <p>
+                                A log entry mapping read/write ratios to B-tree
+                                vs LSM.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </details>
+
+            <details class="m" data-m="3">
+                <summary>
+                    <span class="m-no">M3</span
+                    ><span class="m-mid">
+                        <p class="m-title">Encoding &amp; the wire</p>
+                        <p class="m-goal">
+                            version an API without breaking last year's clients.
+                        </p>
+                        <span class="threads"
+                            ><i class="dot d-build"></i><i class="dot d-sys"></i
+                            ><i class="dot d-found"></i
+                            ><i class="dot d-judge"></i
+                        ></span> </span
+                    ><span class="m-right"
+                        ><span class="pct" data-pct="3">0%</span
+                        ><span class="ring">+</span></span
+                    >
+                </summary>
+                <div class="m-body">
+                    <div class="comp">
+                        <span class="comp-tag" style="color: var(--build)"
+                            ><i class="dot d-build"></i>Build</span
+                        >
+                        <div>
+                            <h4>HTTP server + DNS server</h4>
+                            <p>
+                                Two CodeCrafters tracks — request/response, then
+                                resolution and caching.
+                            </p>
+                        </div>
+                    </div>
+                    <div class="comp">
+                        <span class="comp-tag" style="color: var(--systems)"
+                            ><i class="dot d-sys"></i>Systems</span
+                        >
+                        <div>
+                            <h4>DDIA Ch. 4</h4>
+                            <p>
+                                Encoding &amp; evolution: JSON, Protobuf, Avro,
+                                schema migrations.
+                            </p>
+                        </div>
+                    </div>
+                    <div class="comp">
+                        <span class="comp-tag" style="color: var(--found)"
+                            ><i class="dot d-found"></i>Foundations</span
+                        >
+                        <div><h4>Stack · Linked List · Sliding Window</h4></div>
+                    </div>
+                    <div class="comp">
+                        <span class="comp-tag" style="color: var(--judgment)"
+                            ><i class="dot d-judge"></i>Judgment</span
+                        >
+                        <div><h4>"The migration I'd never ship"</h4></div>
+                    </div>
+                </div>
+            </details>
+
+            <details class="m" data-m="4">
+                <summary>
+                    <span class="m-no">M4</span
+                    ><span class="m-mid">
+                        <p class="m-title">
+                            Distribution — replication &amp; partitioning
+                        </p>
+                        <p class="m-goal">
+                            place data and pick a leader strategy under a real
+                            failure model.
+                        </p>
+                        <span class="threads"
+                            ><i class="dot d-build"></i><i class="dot d-sys"></i
+                            ><i class="dot d-found"></i
+                            ><i class="dot d-judge"></i
+                        ></span> </span
+                    ><span class="m-right"
+                        ><span class="pct" data-pct="4">0%</span
+                        ><span class="ring">+</span></span
+                    >
+                </summary>
+                <div class="m-body">
+                    <div class="comp">
+                        <span class="comp-tag" style="color: var(--build)"
+                            ><i class="dot d-build"></i>Build</span
+                        >
+                        <div>
+                            <h4>Redis replication stages</h4>
+                            <p>
+                                Leader/follower handshake, command propagation.
+                            </p>
+                        </div>
+                    </div>
+                    <div class="comp">
+                        <span class="comp-tag" style="color: var(--systems)"
+                            ><i class="dot d-sys"></i>Systems</span
+                        >
+                        <div>
+                            <h4>DDIA Ch. 5 + Ch. 6</h4>
+                            <p>Replication and partitioning.</p>
+                        </div>
+                    </div>
+                    <div class="comp">
+                        <span class="comp-tag" style="color: var(--found)"
+                            ><i class="dot d-found"></i>Foundations</span
+                        >
+                        <div><h4>Graphs · Heaps</h4></div>
+                    </div>
+                    <div class="comp">
+                        <span class="comp-tag" style="color: var(--judgment)"
+                            ><i class="dot d-judge"></i>Judgment</span
+                        >
+                        <div>
+                            <h4>
+                                "Single-leader vs multi-leader: where I draw the
+                                line"
+                            </h4>
+                        </div>
+                    </div>
+                </div>
+            </details>
+
+            <details class="m" data-m="5">
+                <summary>
+                    <span class="m-no">M5</span
+                    ><span class="m-mid">
+                        <p class="m-title">Consistency &amp; consensus</p>
+                        <p class="m-goal">
+                            name the consistency model a feature needs — and the
+                            one it's secretly relying on.
+                        </p>
+                        <span class="threads"
+                            ><i class="dot d-build"></i><i class="dot d-sys"></i
+                            ><i class="dot d-found"></i
+                            ><i class="dot d-judge"></i
+                        ></span> </span
+                    ><span class="m-right"
+                        ><span class="pct" data-pct="5">0%</span
+                        ><span class="ring">+</span></span
+                    >
+                </summary>
+                <div class="m-body">
+                    <div class="comp">
+                        <span class="comp-tag" style="color: var(--build)"
+                            ><i class="dot d-build"></i>Build</span
+                        >
+                        <div>
+                            <h4>Build Your Own Kafka</h4>
+                            <p>
+                                Partitioned log, offsets, ordering guarantees.
+                            </p>
+                        </div>
+                    </div>
+                    <div class="comp">
+                        <span class="comp-tag" style="color: var(--systems)"
+                            ><i class="dot d-sys"></i>Systems</span
+                        >
+                        <div>
+                            <h4>DDIA Ch. 7 · 8 · 9</h4>
+                            <p>
+                                Transactions, the trouble with distributed
+                                systems, consensus.
+                            </p>
+                        </div>
+                    </div>
+                    <div class="comp">
+                        <span class="comp-tag" style="color: var(--found)"
+                            ><i class="dot d-found"></i>Foundations</span
+                        >
+                        <div><h4>Dynamic Programming · Intervals</h4></div>
+                    </div>
+                    <div class="comp">
+                        <span class="comp-tag" style="color: var(--judgment)"
+                            ><i class="dot d-judge"></i>Judgment</span
+                        >
+                        <div>
+                            <h4>
+                                "Which consistency model, and what it costs"
+                            </h4>
+                        </div>
+                    </div>
+                </div>
+            </details>
+
+            <details class="m" data-m="6">
+                <summary>
+                    <span class="m-no">M6</span
+                    ><span class="m-mid">
+                        <p class="m-title">
+                            Systems in the wild — batch, streams &amp; a real
+                            design
+                        </p>
+                        <p class="m-goal">
+                            take a project you already shipped and write the
+                            design doc it deserved.
+                        </p>
+                        <span class="threads"
+                            ><i class="dot d-build"></i><i class="dot d-sys"></i
+                            ><i class="dot d-found"></i
+                            ><i class="dot d-judge"></i
+                        ></span> </span
+                    ><span class="m-right"
+                        ><span class="pct" data-pct="6">0%</span
+                        ><span class="ring">+</span></span
+                    >
+                </summary>
+                <div class="m-body">
+                    <div class="comp">
+                        <span class="comp-tag" style="color: var(--build)"
+                            ><i class="dot d-build"></i>Build</span
+                        >
+                        <div>
+                            <h4>Finish Kafka → apply it for real</h4>
+                            <p>
+                                Retrofit a streaming or batch component onto
+                                Songle or Roaming.Camp.
+                            </p>
+                        </div>
+                    </div>
+                    <div class="comp">
+                        <span class="comp-tag" style="color: var(--systems)"
+                            ><i class="dot d-sys"></i>Systems</span
+                        >
+                        <div>
+                            <h4>DDIA Ch. 10 · 11 · 12</h4>
+                            <p>Batch, stream, and the closing synthesis.</p>
+                        </div>
+                    </div>
+                    <div class="comp">
+                        <span class="comp-tag" style="color: var(--found)"
+                            ><i class="dot d-found"></i>Foundations</span
+                        >
+                        <div>
+                            <h4>
+                                Graphs (advanced) · Backtracking · mixed review
+                            </h4>
+                        </div>
+                    </div>
+                    <div class="comp">
+                        <span class="comp-tag" style="color: var(--judgment)"
+                            ><i class="dot d-judge"></i>Judgment</span
+                        >
+                        <div>
+                            <h4>
+                                Capstone — a published system-design writeup
+                            </h4>
+                            <p>
+                                The decision logs, distilled into one post for
+                                the blog.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </details>
+
+            <p class="note">
+                Preview · progress is in-memory only here — the real build
+                persists it.<br />Check a few boxes in M1 / W1 above to see the
+                dashboard update.
+            </p>
+        </div>
+
+        <script>
+            const boxes = Array.from(
+                document.querySelectorAll(".task input[type=checkbox]"),
+            );
+            const total = boxes.length;
+            document.getElementById("total").textContent = total;
+
+            function refresh() {
+                const done = boxes.filter((b) => b.checked).length;
+                const pct = total ? Math.round((done / total) * 100) : 0;
+                document.getElementById("done").textContent = done;
+                document.getElementById("pctNum").innerHTML =
+                    pct + "<small>%</small>";
+                document.getElementById("barFill").style.width = pct + "%";
+                // M1 is the only milestone with live tasks in this preview
+                const m1 = document.querySelector('.pct[data-pct="1"]');
+                if (m1) m1.textContent = pct + "%";
+            }
+            boxes.forEach((b) => b.addEventListener("change", refresh));
+            refresh();
+        </script>
+    </body>
+</html>
