@@ -1,55 +1,92 @@
 import { describe, it, expect } from "vitest";
 import {
-  roadmap,
-  allTaskIds,
-  allLogIds,
+  build,
+  reading,
+  foundations,
   allIds,
   deriveStats,
 } from "../roadmap.js";
 
-describe("roadmap content", () => {
-  it("exposes six milestones", () => {
-    expect(roadmap).toHaveLength(6);
+describe("build track", () => {
+  it("has 5 course-milestones", () => {
+    expect(build).toHaveLength(5);
   });
-
-  it("has unique IDs across all tasks and logs", () => {
-    const ids = [...allTaskIds, ...allLogIds];
-    expect(new Set(ids).size).toBe(ids.length);
+  it("has 14 stage-groups summing to 98 stages", () => {
+    const groups = build.flatMap((m) => m.groups);
+    expect(groups).toHaveLength(14);
+    expect(groups.reduce((s, g) => s + g.stages, 0)).toBe(98);
   });
-
-  it("builds allIds as the union of task and log IDs", () => {
-    expect(allIds.size).toBe(allTaskIds.length + allLogIds.length);
+  it("has 8 capstone decision logs", () => {
+    expect(build.flatMap((m) => m.logs ?? [])).toHaveLength(8);
   });
-
-  it("includes the known M1/W1 task and log IDs", () => {
-    expect(allIds.has("m1.w1.mon")).toBe(true);
-    expect(allIds.has("m1.w1.log")).toBe(true);
+  it("starts with Redis and ends with Kafka", () => {
+    expect(build[0].course).toBe("Redis");
+    expect(build[4].course).toBe("Kafka");
   });
+});
 
-  it("current content has 9 tasks and 2 logs (update when M2+ weeks are filled)", () => {
-    expect(allTaskIds).toHaveLength(9);
-    expect(allLogIds).toHaveLength(2);
+describe("reading track", () => {
+  it("has the 4 core books", () => {
+    expect(reading).toHaveLength(4);
+    expect(reading.map((b) => b.id).sort()).toEqual(
+      ["aposd", "dbint", "ddia", "ostep"],
+    );
+  });
+  it("has 38 chapters total", () => {
+    expect(reading.reduce((s, b) => s + b.chapters.length, 0)).toBe(38);
+  });
+});
+
+describe("foundations track", () => {
+  it("has 22 items (4 courses + 18 patterns)", () => {
+    expect(foundations).toHaveLength(22);
+    expect(foundations.filter((i) => i.kind === "course")).toHaveLength(4);
+    expect(foundations.filter((i) => i.kind === "pattern")).toHaveLength(18);
+  });
+});
+
+describe("allIds", () => {
+  it("is the union of every checkable id (14+8+38+22 = 82), all unique", () => {
+    expect(allIds.size).toBe(82);
+  });
+  it("contains known ids from each track", () => {
+    expect(allIds.has("redis.core")).toBe(true);
+    expect(allIds.has("redis.log.resp")).toBe(true);
+    expect(allIds.has("ddia.ch1")).toBe(true);
+    expect(allIds.has("fd.nc.arrays")).toBe(true);
   });
 });
 
 describe("deriveStats", () => {
-  it("reports zero progress for an empty completed list", () => {
+  it("reports zeros for an empty completed list", () => {
     const s = deriveStats([]);
-    expect(s.pct).toBe(0);
-    expect(s.tasksDone).toBe(0);
-    expect(s.tasksTotal).toBe(allTaskIds.length);
-    expect(s.logsDone).toBe(0);
-    expect(s.logsTotal).toBe(allLogIds.length);
+    expect(s.build.stagesDone).toBe(0);
+    expect(s.build.stagesTotal).toBe(98);
+    expect(s.build.coursesDone).toBe(0);
+    expect(s.build.coursesTotal).toBe(5);
+    expect(s.reading.chaptersTotal).toBe(38);
+    expect(s.foundations.itemsTotal).toBe(22);
+    expect(s.logsTotal).toBe(8);
   });
-
-  it("counts completed tasks and logs and ignores unknown IDs", () => {
-    const s = deriveStats(["m1.w1.mon", "m1.w1.log", "does.not.exist"]);
-    expect(s.tasksDone).toBe(1);
+  it("counts a completed build group toward stages and milestone %", () => {
+    const s = deriveStats(["redis.core"]);
+    expect(s.build.stagesDone).toBe(7);
+    expect(s.build.perMilestone.redis).toBeGreaterThan(0);
+    expect(s.build.coursesDone).toBe(0); // redis not fully done
+  });
+  it("marks a course done only when all its groups are checked", () => {
+    const s = deriveStats(["sqlite.base"]);
+    expect(s.build.coursesDone).toBe(1);
+  });
+  it("tracks reading per-book and book completion", () => {
+    const s = deriveStats(["ddia.ch1", "ddia.ch2"]);
+    expect(s.reading.chaptersDone).toBe(2);
+    expect(s.reading.perBook.ddia.done).toBe(2);
+    expect(s.reading.booksDone).toBe(0);
+  });
+  it("counts foundations items and decision logs, ignoring unknown ids", () => {
+    const s = deriveStats(["fd.nc.arrays", "redis.log.resp", "nope.unknown"]);
+    expect(s.foundations.itemsDone).toBe(1);
     expect(s.logsDone).toBe(1);
-    expect(s.perMilestone.m1).toBeGreaterThan(0);
-  });
-
-  it("computes planned hours as 180 (weeks + milestone estimates)", () => {
-    expect(deriveStats([]).plannedHours).toBe(180);
   });
 });
