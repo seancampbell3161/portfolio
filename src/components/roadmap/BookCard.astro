@@ -13,7 +13,7 @@ const { book, open = false } = Astro.props;
   <summary>
     <span class="rm-m-mid">
       <p class="rm-book-title">
-        {book.url ? <a href={book.url} target="_blank" rel="noopener" onclick="event.stopPropagation()">{book.title}</a> : book.title}
+        {book.url ? <span onclick="event.stopPropagation()" onkeydown="event.stopPropagation()"><a href={book.url} target="_blank" rel="noopener noreferrer">{book.title}</a></span> : book.title}
         {book.free && <span class="rm-badge">free</span>}
       </p>
       <p class="rm-book-author">{book.author}{book.scopeNote ? ` · ${book.scopeNote}` : ""}</p>
