@@ -4,578 +4,446 @@ import Nav from "../components/Nav.astro";
 import Footer from "../components/Footer.astro";
 import RoadmapDashboard from "../components/roadmap/RoadmapDashboard.astro";
 import Milestone from "../components/roadmap/Milestone.astro";
-import { roadmap } from "../data/roadmap";
+import BookCard from "../components/roadmap/BookCard.astro";
+import FoundationsSection from "../components/roadmap/FoundationsSection.astro";
+import { build, reading, foundations } from "../data/roadmap";
 ---
 
 <Layout
-    title="Roadmap — Building Engineering Judgment | Sean Campbell"
-    description="A public learning roadmap: a four-thread braid of building, systems, foundations, and the decision logs that turn hours into engineering judgment."
+  title="Roadmap — Building Engineering Judgment | Sean Campbell"
+  description="A public learning roadmap: building real systems (CodeCrafters), reading deeply (DDIA & more), and DSA fundamentals (NeetCode) — building engineering judgment in the open."
 >
-    <Nav />
+  <Nav />
 
-    <main class="roadmap-page">
-        <div class="rm-wrap">
-            <p class="rm-eyebrow">A learning roadmap · in progress</p>
-            <h1 class="rm-title">Building <em>engineering judgment</em></h1>
-            <p class="rm-thesis">
-                Follow along with what I'm doing and the resources I'm using to
-                become better at decision making & problem solving as a Software
-                Engineer. Building everything out in the open for anyone to see.
-            </p>
+  <main class="roadmap-page">
+    <div class="rm-wrap">
+      <p class="rm-eyebrow">A learning roadmap · in progress</p>
+      <h1 class="rm-title">Building <em>engineering judgment</em></h1>
+      <p class="rm-thesis">
+        Follow along with what I'm doing and the resources I'm using to become better at
+        decision making &amp; problem solving as a Software Engineer. Building everything out in
+        the open for anyone to see.
+      </p>
 
-            <RoadmapDashboard />
+      <RoadmapDashboard />
 
-            <div class="rm-milestones">
-                {
-                    roadmap.map((m, i) => (
-                        <Milestone milestone={m} open={i === 0} />
-                    ))
-                }
-            </div>
-
-            <p class="rm-note">
-                Progress is shared — what you see is the live, saved state. The
-                owner can unlock edit mode to check items off.
-            </p>
+      <section class="rm-track" aria-labelledby="rm-track-build">
+        <h2 id="rm-track-build" class="rm-track-h"><span class="rm-dot d-build"></span>Build — CodeCrafters</h2>
+        <p class="rm-track-note">One milestone per course, taken to (pragmatic) completion, in order. Sub-checkpoints are the CodeCrafters stage-groups; each milestone ends in a capstone decision log.</p>
+        <div class="rm-milestones">
+          {build.map((m, i) => <Milestone milestone={m} open={i === 0} />)}
         </div>
-    </main>
+      </section>
 
-    <Footer />
+      <section class="rm-track" aria-labelledby="rm-track-reading">
+        <h2 id="rm-track-reading" class="rm-track-h"><span class="rm-dot d-reading"></span>Reading — interleaved</h2>
+        <p class="rm-track-note">Read ~1–2 chapters/week, interleaved with the builds: one "anchor" chapter (DDIA / Database Internals) plus one "light" read (A Philosophy of Software Design, then OSTEP). DDIA + APoSD finish within the build; the rest carries past it.</p>
+        <div class="rm-books">
+          {reading.map((b, i) => <BookCard book={b} open={i === 0} />)}
+        </div>
+      </section>
+
+      <section class="rm-track" aria-labelledby="rm-track-foundations">
+        <h2 id="rm-track-foundations" class="rm-track-h"><span class="rm-dot d-foundations"></span>Foundations — NeetCode</h2>
+        <p class="rm-track-note">Course-first, then problems: finish the courses, then work NeetCode 150 pattern by pattern. The patterns line up with the builds (shown as ↔ hints).</p>
+        <FoundationsSection foundations={foundations} />
+      </section>
+
+      <p class="rm-note">
+        Progress is shared — what you see is the live, saved state. The owner can unlock edit
+        mode to check items off.
+      </p>
+    </div>
+  </main>
+
+  <Footer />
 </Layout>
 
 <script>
-    import "../scripts/roadmap.ts";
+  import "../scripts/roadmap.ts";
 </script>
 
 <style is:global>
-    /* ---- four-thread palette (site-native) ---- */
-    .roadmap-page {
-        --build: #60a5fa;
-        --systems: #5fb3ac;
-        --foundations: #a78bfa;
-        --judgment: #d98b6f;
-        position: relative;
-        z-index: 1;
-        padding-top: 80px;
-    }
+  /* ---- four-thread palette (site-native) ---- */
+  .roadmap-page {
+    --build: #60a5fa;
+    --reading: #5fb3ac;
+    --foundations: #a78bfa;
+    --judgment: #d98b6f;
+    position: relative;
+    z-index: 1;
+    padding-top: 80px;
+  }
+  .roadmap-page .rm-wrap {
+    max-width: 920px;
+    margin: 0 auto;
+    padding: var(--space-3xl) var(--space-lg) var(--space-4xl);
+  }
 
-    .roadmap-page .rm-wrap {
-        max-width: 920px;
-        margin: 0 auto;
-        padding: var(--space-3xl) var(--space-lg) var(--space-4xl);
-    }
+  /* ---- header ---- */
+  .rm-eyebrow {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--color-text-secondary);
+    margin: 0 0 18px;
+    display: flex;
+    gap: 10px;
+    align-items: center;
+  }
+  .rm-eyebrow::before {
+    content: "";
+    width: 28px;
+    height: 1px;
+    background: var(--color-border-hover);
+  }
+  .rm-title {
+    font-size: clamp(34px, 6vw, 56px);
+    line-height: 1.02;
+    margin: 0 0 20px;
+  }
+  .rm-title em {
+    font-style: normal;
+    color: var(--build);
+  }
+  .rm-thesis {
+    font-size: clamp(16px, 2.4vw, 19px);
+    color: var(--color-text-secondary);
+    max-width: 62ch;
+    margin: 0;
+  }
 
-    /* ---- header ---- */
-    .rm-eyebrow {
-        font-family: var(--font-mono);
-        font-size: 12px;
-        letter-spacing: 0.22em;
-        text-transform: uppercase;
-        color: var(--color-text-secondary);
-        margin: 0 0 18px;
-        display: flex;
-        gap: 10px;
-        align-items: center;
-    }
-    .rm-eyebrow::before {
-        content: "";
-        width: 28px;
-        height: 1px;
-        background: var(--color-border-hover);
-    }
-    .rm-title {
-        font-size: clamp(34px, 6vw, 56px);
-        line-height: 1.02;
-        margin: 0 0 20px;
-    }
-    .rm-title em {
-        font-style: normal;
-        color: var(--build);
-    }
-    .rm-thesis {
-        font-size: clamp(16px, 2.4vw, 19px);
-        color: var(--color-text-secondary);
-        max-width: 60ch;
-        margin: 0;
-    }
-    .rm-thesis strong {
-        color: var(--color-text-primary);
-        font-weight: 600;
-    }
+  /* ---- dashboard ---- */
+  .rm-dash {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1px;
+    background: var(--color-border);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    margin: 44px 0 14px;
+  }
+  .rm-stat {
+    background: var(--color-bg-elevated);
+    padding: 18px 20px;
+  }
+  .rm-n {
+    font-size: 24px;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+  }
+  .rm-n small {
+    font-size: 13px;
+    color: var(--color-text-faint);
+    font-weight: 500;
+  }
+  .rm-l {
+    font-family: var(--font-mono);
+    font-size: 10.5px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--color-text-muted);
+    margin-top: 6px;
+  }
+  .rm-bar {
+    height: 4px;
+    background: var(--color-bg-hover);
+    border-radius: var(--radius-full);
+    overflow: hidden;
+    margin-top: 12px;
+  }
+  .rm-bar > i {
+    display: block;
+    height: 100%;
+    width: 0;
+    border-radius: var(--radius-full);
+    transition: width var(--transition-slow);
+  }
+  .f-build { background: var(--build); }
+  .f-reading { background: var(--reading); }
+  .f-foundations { background: var(--foundations); }
 
-    /* ---- dashboard ---- */
-    .rm-dash {
-        display: grid;
-        grid-template-columns: repeat(4, 1fr);
-        gap: 1px;
-        background: var(--color-border);
-        border: 1px solid var(--color-border);
-        border-radius: var(--radius-lg);
-        overflow: hidden;
-        margin: 44px 0 14px;
-    }
-    .rm-stat {
-        background: var(--color-bg-elevated);
-        padding: 18px 20px;
-    }
-    .rm-n {
-        font-size: 26px;
-        font-weight: 700;
-        letter-spacing: -0.01em;
-    }
-    .rm-n small {
-        font-size: 15px;
-        color: var(--color-text-faint);
-        font-weight: 500;
-    }
-    .rm-l {
-        font-family: var(--font-mono);
-        font-size: 10.5px;
-        letter-spacing: 0.16em;
-        text-transform: uppercase;
-        color: var(--color-text-muted);
-        margin-top: 6px;
-    }
-    .rm-bar {
-        height: 4px;
-        background: var(--color-bg-hover);
-        border-radius: var(--radius-full);
-        overflow: hidden;
-        margin-top: 14px;
-    }
-    .rm-bar > i {
-        display: block;
-        height: 100%;
-        width: 0;
-        background: linear-gradient(
-            90deg,
-            var(--build),
-            var(--color-accent-secondary)
-        );
-        transition: width var(--transition-slow);
-    }
+  /* ---- controls / legend ---- */
+  .rm-controls {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+    justify-content: space-between;
+    align-items: center;
+    margin: 26px 0 8px;
+  }
+  .rm-legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px 22px;
+    font-family: var(--font-mono);
+    font-size: 11.5px;
+    color: var(--color-text-secondary);
+  }
+  .rm-legend span { display: inline-flex; align-items: center; gap: 8px; }
+  .rm-legend b { color: var(--color-text-primary); font-weight: 500; }
+  .rm-dot { width: 9px; height: 9px; border-radius: var(--radius-full); flex: none; display: inline-block; }
+  .d-build { background: var(--build); }
+  .d-reading { background: var(--reading); }
+  .d-foundations { background: var(--foundations); }
+  .d-judgment { background: var(--judgment); }
 
-    /* ---- controls: legend + edit ---- */
-    .rm-controls {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 16px;
-        justify-content: space-between;
-        align-items: center;
-        margin: 26px 0 8px;
-    }
-    .rm-legend {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 10px 22px;
-        font-family: var(--font-mono);
-        font-size: 11.5px;
-        letter-spacing: 0.04em;
-        color: var(--color-text-secondary);
-    }
-    .rm-legend span {
-        display: inline-flex;
-        align-items: center;
-        gap: 8px;
-    }
-    .rm-legend b {
-        color: var(--color-text-primary);
-        font-weight: 500;
-    }
-    .rm-dot {
-        width: 9px;
-        height: 9px;
-        border-radius: var(--radius-full);
-        flex: none;
-        display: inline-block;
-    }
-    .d-build {
-        background: var(--build);
-    }
-    .d-systems {
-        background: var(--systems);
-    }
-    .d-foundations {
-        background: var(--foundations);
-    }
-    .d-judgment {
-        background: var(--judgment);
-    }
+  .rm-edit-wrap { display: flex; align-items: center; gap: 12px; }
+  .rm-save-state { font-family: var(--font-mono); font-size: 11px; color: var(--color-text-faint); }
+  .rm-edit-btn {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    color: var(--color-accent);
+    background: none;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-full);
+    padding: 6px 16px;
+    cursor: pointer;
+    transition: all var(--transition-base);
+  }
+  .rm-edit-btn:hover { border-color: var(--color-accent); background: var(--color-accent-bg); }
+  .rm-message { font-size: 13px; color: #f4a896; margin: 12px 0 0; }
 
-    .rm-edit-wrap {
-        display: flex;
-        align-items: center;
-        gap: 12px;
-    }
-    .rm-save-state {
-        font-family: var(--font-mono);
-        font-size: 11px;
-        color: var(--color-text-faint);
-    }
-    .rm-edit-btn {
-        font-family: var(--font-mono);
-        font-size: 12px;
-        color: var(--color-accent);
-        background: none;
-        border: 1px solid var(--color-border);
-        border-radius: var(--radius-full);
-        padding: 6px 16px;
-        cursor: pointer;
-        transition: all var(--transition-base);
-    }
-    .rm-edit-btn:hover {
-        border-color: var(--color-accent);
-        background: var(--color-accent-bg);
-    }
-    .rm-message {
-        font-size: 13px;
-        color: #f4a896;
-        margin: 12px 0 0;
-    }
+  /* ---- track sections ---- */
+  .rm-track { margin-top: var(--space-3xl); }
+  .rm-track-h {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 20px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    margin: 0 0 6px;
+  }
+  .rm-track-h .rm-dot { width: 11px; height: 11px; }
+  .rm-track-note {
+    color: var(--color-text-secondary);
+    font-size: 14px;
+    margin: 0 0 14px;
+    max-width: 70ch;
+  }
 
-    /* ---- milestones ---- */
-    .rm-milestones {
-        margin-top: 6px;
-    }
-    .rm-m {
-        border: 1px solid var(--color-border);
-        border-radius: var(--radius-lg);
-        background: var(--color-bg-elevated);
-        margin-top: 14px;
-        overflow: hidden;
-    }
-    .rm-m > summary {
-        list-style: none;
-        cursor: pointer;
-        padding: 22px 24px;
-        display: flex;
-        align-items: flex-start;
-        gap: 18px;
-        outline: none;
-    }
-    .rm-m > summary::-webkit-details-marker {
-        display: none;
-    }
-    .rm-m > summary:focus-visible {
-        box-shadow: inset 0 0 0 2px var(--systems);
-    }
-    .rm-m-no {
-        font-family: var(--font-mono);
-        font-size: 12px;
-        color: var(--color-text-faint);
-        padding-top: 5px;
-        min-width: 30px;
-        letter-spacing: 0.05em;
-    }
-    .rm-m-mid {
-        flex: 1;
-        min-width: 0;
-    }
-    .rm-m-title {
-        font-size: 19px;
-        font-weight: 600;
-        letter-spacing: -0.01em;
-        margin: 0 0 4px;
-    }
-    .rm-m-goal {
-        color: var(--color-text-secondary);
-        font-size: 14.5px;
-        margin: 0;
-    }
-    .rm-m-goal::before {
-        content: "Judgment goal — ";
-        color: var(--judgment);
-        font-family: var(--font-mono);
-        font-size: 11px;
-        letter-spacing: 0.04em;
-        text-transform: uppercase;
-    }
-    .rm-threads {
-        display: flex;
-        gap: 6px;
-        margin-top: 13px;
-    }
-    .rm-threads .rm-dot {
-        width: 7px;
-        height: 7px;
-        opacity: 0.9;
-    }
-    .rm-m-right {
-        display: flex;
-        flex-direction: column;
-        align-items: flex-end;
-        gap: 9px;
-        padding-top: 3px;
-    }
-    .rm-pct {
-        font-family: var(--font-mono);
-        font-size: 13px;
-        color: var(--color-text-secondary);
-        min-width: 38px;
-        text-align: right;
-    }
-    .rm-ring {
-        font-family: var(--font-mono);
-        color: var(--color-text-faint);
-        font-size: 18px;
-        transition: transform var(--transition-base);
-    }
-    .rm-m[open] > summary .rm-ring {
-        transform: rotate(45deg);
-    }
-    .rm-m-body {
-        padding: 4px 24px 26px;
-        border-top: 1px solid var(--color-border);
-    }
+  /* ---- milestone / book cards (shared) ---- */
+  .rm-m, .rm-book {
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    background: var(--color-bg-elevated);
+    margin-top: 12px;
+    overflow: hidden;
+  }
+  .rm-m > summary, .rm-book > summary {
+    list-style: none;
+    cursor: pointer;
+    padding: 20px 22px;
+    display: flex;
+    align-items: flex-start;
+    gap: 16px;
+    outline: none;
+  }
+  .rm-m > summary::-webkit-details-marker,
+  .rm-book > summary::-webkit-details-marker { display: none; }
+  .rm-m > summary:focus-visible,
+  .rm-book > summary:focus-visible { box-shadow: inset 0 0 0 2px var(--reading); }
+  .rm-m-no {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    color: var(--color-text-faint);
+    padding-top: 4px;
+    min-width: 28px;
+    letter-spacing: 0.05em;
+  }
+  .rm-m-mid { flex: 1; min-width: 0; }
+  .rm-m-title, .rm-book-title {
+    font-size: 18px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    margin: 0 0 4px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .rm-m-goal {
+    color: var(--color-text-secondary);
+    font-size: 14px;
+    margin: 0;
+  }
+  .rm-m-goal::before {
+    content: "Goal — ";
+    color: var(--judgment);
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+  .rm-book-author { color: var(--color-text-muted); font-size: 13px; margin: 0; }
+  .rm-badge {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--reading);
+    border: 1px solid color-mix(in srgb, var(--reading) 40%, transparent);
+    border-radius: var(--radius-sm);
+    padding: 1px 6px;
+  }
+  .rm-threads { display: flex; gap: 6px; margin-top: 12px; }
+  .rm-threads .rm-dot { width: 7px; height: 7px; opacity: 0.9; }
+  .rm-m-right { display: flex; flex-direction: column; align-items: flex-end; gap: 8px; padding-top: 2px; }
+  .rm-pct {
+    font-family: var(--font-mono);
+    font-size: 13px;
+    color: var(--color-text-secondary);
+    min-width: 44px;
+    text-align: right;
+    white-space: nowrap;
+  }
+  .rm-ring {
+    font-family: var(--font-mono);
+    color: var(--color-text-faint);
+    font-size: 18px;
+    transition: transform var(--transition-base);
+  }
+  .rm-m[open] > summary .rm-ring,
+  .rm-book[open] > summary .rm-ring { transform: rotate(45deg); }
+  .rm-m-body { padding: 4px 22px 22px; border-top: 1px solid var(--color-border); }
 
-    /* ---- weeks ---- */
-    .rm-wk {
-        border: 1px solid var(--color-border);
-        border-radius: var(--radius-md);
-        background: var(--color-bg-hover);
-        margin-top: 14px;
-        overflow: hidden;
-    }
-    .rm-wk > summary {
-        list-style: none;
-        cursor: pointer;
-        padding: 15px 18px;
-        display: flex;
-        align-items: center;
-        gap: 14px;
-        outline: none;
-    }
-    .rm-wk > summary::-webkit-details-marker {
-        display: none;
-    }
-    .rm-wk > summary:focus-visible {
-        box-shadow: inset 0 0 0 2px var(--systems);
-    }
-    .rm-wk-no {
-        font-family: var(--font-mono);
-        font-size: 11px;
-        color: var(--build);
-        border: 1px solid color-mix(in srgb, var(--build) 40%, transparent);
-        padding: 3px 8px;
-        border-radius: var(--radius-sm);
-        letter-spacing: 0.05em;
-    }
-    .rm-wk-name {
-        font-weight: 600;
-        font-size: 15px;
-        flex: 1;
-    }
-    .rm-wk-meta {
-        font-family: var(--font-mono);
-        font-size: 11px;
-        color: var(--color-text-faint);
-    }
-    .rm-wk-body {
-        padding: 6px 18px 20px;
-    }
+  /* ---- checkable rows (shared by all tracks) ---- */
+  .rm-check {
+    display: flex;
+    gap: 11px;
+    align-items: flex-start;
+    padding: 9px 0;
+    border-top: 1px solid var(--color-border);
+  }
+  .rm-check:first-child { border-top: none; }
+  .rm-track-sub + .rm-check { border-top: none; }
+  /* checkbox styling shared by track rows (.rm-check) and decision logs (.rm-mark) */
+  .rm-check input,
+  .rm-mark input {
+    appearance: none;
+    width: 17px;
+    height: 17px;
+    border: 1.5px solid var(--color-border-hover);
+    border-radius: 5px;
+    flex: none;
+    margin-top: 2px;
+    cursor: pointer;
+    position: relative;
+    transition: var(--transition-fast);
+  }
+  .rm-check input:disabled,
+  .rm-mark input:disabled { cursor: default; }
+  .roadmap-page.rm-editing .rm-check input:hover,
+  .roadmap-page.rm-editing .rm-mark input:hover { border-color: var(--color-text-secondary); }
+  .rm-check input:checked,
+  .rm-mark input:checked { background: var(--build); border-color: var(--build); }
+  .rm-check input:checked::after,
+  .rm-mark input:checked::after {
+    content: "";
+    position: absolute;
+    left: 5px;
+    top: 1.5px;
+    width: 4px;
+    height: 8px;
+    border: solid var(--color-bg);
+    border-width: 0 2px 2px 0;
+    transform: rotate(45deg);
+  }
+  .rm-check input:focus-visible,
+  .rm-mark input:focus-visible { outline: 2px solid var(--reading); outline-offset: 2px; }
+  .rm-check label { cursor: default; font-size: 14px; line-height: 1.5; }
+  .roadmap-page.rm-editing .rm-check label { cursor: pointer; }
+  .rm-check input:checked + label .rm-check-label {
+    color: var(--color-text-faint);
+    text-decoration: line-through;
+    text-decoration-color: var(--color-border-hover);
+  }
+  .rm-check-meta {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--color-text-faint);
+    margin-left: 8px;
+  }
+  .rm-check-hint {
+    display: inline-block;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--foundations);
+    margin-left: 8px;
+  }
 
-    .rm-goal {
-        font-size: 14px;
-        color: var(--color-text-secondary);
-        border-left: 2px solid var(--judgment);
-        padding: 2px 0 2px 14px;
-        margin: 8px 0 20px;
-    }
+  /* ---- decision log (the signature) ---- */
+  .rm-log {
+    margin-top: 16px;
+    border: 1px dashed color-mix(in srgb, var(--judgment) 45%, transparent);
+    border-radius: var(--radius-md);
+    padding: 16px 18px;
+    background: color-mix(in srgb, var(--judgment) 6%, transparent);
+  }
+  .rm-log-head {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--judgment);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 6px;
+  }
+  .rm-log-intro { margin: 0 0 12px; font-size: 13.5px; color: var(--color-text-secondary); }
+  .rm-log-prompt {
+    font-size: 14px;
+    color: var(--color-text-primary);
+    font-weight: 500;
+    border-left: 2px solid var(--judgment);
+    padding-left: 12px;
+    margin: 0 0 14px;
+  }
+  .rm-mark {
+    display: inline-flex;
+    align-items: center;
+    gap: 9px;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--color-text-secondary);
+    cursor: default;
+  }
+  .roadmap-page.rm-editing .rm-mark { cursor: pointer; }
 
-    /* ---- component rows ---- */
-    .rm-comp {
-        display: grid;
-        grid-template-columns: 118px 1fr;
-        gap: 0 18px;
-        padding: 13px 0;
-        border-top: 1px solid var(--color-border);
-    }
-    .rm-comp:first-of-type {
-        border-top: none;
-    }
-    .rm-comp-tag {
-        font-family: var(--font-mono);
-        font-size: 10.5px;
-        letter-spacing: 0.1em;
-        text-transform: uppercase;
-        display: flex;
-        align-items: flex-start;
-        gap: 8px;
-        padding-top: 2px;
-    }
-    .rm-comp-tag .rm-dot {
-        margin-top: 4px;
-    }
-    .rm-comp h4 {
-        margin: 0 0 3px;
-        font-size: 14.5px;
-        font-weight: 600;
-    }
-    .rm-comp p {
-        margin: 0;
-        font-size: 13.5px;
-        color: var(--color-text-secondary);
-        line-height: 1.6;
-    }
-    .rm-comp .rm-src {
-        font-family: var(--font-mono);
-        font-size: 11.5px;
-        color: var(--color-text-faint);
-        margin-top: 3px;
-    }
+  /* ---- foundations ---- */
+  .rm-foundations {
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    background: var(--color-bg-elevated);
+    padding: 6px 22px 18px;
+  }
+  .rm-track-sub {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--color-text-faint);
+    margin: 18px 0 4px;
+  }
 
-    /* ---- checkable daily rhythm ---- */
-    .rm-rhythm {
-        margin-top: 18px;
-        border-top: 1px solid var(--color-border);
-        padding-top: 16px;
-    }
-    .rm-rhythm h5 {
-        font-family: var(--font-mono);
-        font-size: 11px;
-        letter-spacing: 0.12em;
-        text-transform: uppercase;
-        color: var(--color-text-faint);
-        margin: 0 0 12px;
-    }
-    .rm-task {
-        display: flex;
-        gap: 11px;
-        align-items: flex-start;
-        padding: 7px 0;
-        font-size: 13.5px;
-    }
-    .rm-task input,
-    .rm-mark input {
-        appearance: none;
-        width: 17px;
-        height: 17px;
-        border: 1.5px solid var(--color-border-hover);
-        border-radius: 5px;
-        flex: none;
-        margin-top: 2px;
-        cursor: pointer;
-        position: relative;
-        transition: var(--transition-fast);
-    }
-    .rm-task input:disabled,
-    .rm-mark input:disabled {
-        cursor: default;
-    }
-    .roadmap-page.rm-editing .rm-task input:hover,
-    .roadmap-page.rm-editing .rm-mark input:hover {
-        border-color: var(--color-text-secondary);
-    }
-    .rm-task input:checked,
-    .rm-mark input:checked {
-        background: var(--build);
-        border-color: var(--build);
-    }
-    .rm-task input:checked::after,
-    .rm-mark input:checked::after {
-        content: "";
-        position: absolute;
-        left: 5px;
-        top: 1.5px;
-        width: 4px;
-        height: 8px;
-        border: solid var(--color-bg);
-        border-width: 0 2px 2px 0;
-        transform: rotate(45deg);
-    }
-    .rm-task input:focus-visible,
-    .rm-mark input:focus-visible {
-        outline: 2px solid var(--systems);
-        outline-offset: 2px;
-    }
-    .rm-task label {
-        cursor: default;
-    }
-    .rm-day {
-        font-family: var(--font-mono);
-        font-size: 10.5px;
-        color: var(--foundations);
-        text-transform: uppercase;
-        letter-spacing: 0.08em;
-        margin-right: 6px;
-    }
-    .rm-task input:checked + label {
-        color: var(--color-text-faint);
-        text-decoration: line-through;
-        text-decoration-color: var(--color-border-hover);
-    }
+  .rm-note {
+    font-size: 12.5px;
+    color: var(--color-text-faint);
+    text-align: center;
+    margin-top: 46px;
+    font-family: var(--font-mono);
+    line-height: 1.7;
+  }
 
-    /* ---- decision log (the signature) ---- */
-    .rm-log {
-        margin-top: 20px;
-        border: 1px dashed color-mix(in srgb, var(--judgment) 45%, transparent);
-        border-radius: var(--radius-md);
-        padding: 18px;
-        background: color-mix(in srgb, var(--judgment) 6%, transparent);
-    }
-    .rm-log-head {
-        font-family: var(--font-mono);
-        font-size: 11px;
-        letter-spacing: 0.1em;
-        text-transform: uppercase;
-        color: var(--judgment);
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        margin-bottom: 6px;
-    }
-    .rm-log-intro {
-        margin: 0 0 12px;
-        font-size: 13.5px;
-        color: var(--color-text-secondary);
-    }
-    .rm-log-prompt {
-        font-size: 14px;
-        color: var(--color-text-primary);
-        font-weight: 500;
-        border-left: 2px solid var(--judgment);
-        padding-left: 12px;
-        margin: 0 0 14px;
-    }
-    .rm-mark {
-        display: inline-flex;
-        align-items: center;
-        gap: 9px;
-        font-family: var(--font-mono);
-        font-size: 11px;
-        letter-spacing: 0.06em;
-        text-transform: uppercase;
-        color: var(--color-text-secondary);
-        cursor: default;
-    }
-    .roadmap-page.rm-editing .rm-task label,
-    .roadmap-page.rm-editing .rm-mark {
-        cursor: pointer;
-    }
-
-    .rm-note {
-        font-size: 12.5px;
-        color: var(--color-text-faint);
-        text-align: center;
-        margin-top: 46px;
-        font-family: var(--font-mono);
-        letter-spacing: 0.02em;
-        line-height: 1.7;
-    }
-
-    @media (max-width: 640px) {
-        .rm-dash {
-            grid-template-columns: repeat(2, 1fr);
-        }
-        .rm-comp {
-            grid-template-columns: 1fr;
-            gap: 8px 0;
-        }
-    }
-
-    @media (prefers-reduced-motion: reduce) {
-        .roadmap-page * {
-            transition: none !important;
-        }
-    }
+  @media (max-width: 640px) {
+    .rm-dash { grid-template-columns: repeat(2, 1fr); }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .roadmap-page * { transition: none !important; }
+  }
 </style>

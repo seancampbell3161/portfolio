@@ -1,0 +1,18 @@
+---
+import type { FoundationItem } from "../../data/roadmap";
+import CheckItem from "./CheckItem.astro";
+
+interface Props {
+  foundations: FoundationItem[];
+}
+const { foundations } = Astro.props;
+const courses = foundations.filter((i) => i.kind === "course");
+const patterns = foundations.filter((i) => i.kind === "pattern");
+---
+
+<div class="rm-foundations">
+  <h4 class="rm-track-sub">Courses</h4>
+  {courses.map((i) => <CheckItem id={i.id} label={i.label} meta={i.total ? `${i.total} lessons` : undefined} />)}
+  <h4 class="rm-track-sub">NeetCode 150 — patterns</h4>
+  {patterns.map((i) => <CheckItem id={i.id} label={i.label} meta={i.total ? `${i.total} problems` : undefined} hint={i.pairsWith} />)}
+</div>

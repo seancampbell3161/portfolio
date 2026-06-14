@@ -1,0 +1,29 @@
+---
+import type { Book } from "../../data/roadmap";
+import CheckItem from "./CheckItem.astro";
+
+interface Props {
+  book: Book;
+  open?: boolean;
+}
+const { book, open = false } = Astro.props;
+---
+
+<details class="rm-book" open={open} data-book={book.id}>
+  <summary>
+    <span class="rm-m-mid">
+      <p class="rm-book-title">
+        {book.url ? <span onclick="event.stopPropagation()" onkeydown="event.stopPropagation()"><a href={book.url} target="_blank" rel="noopener noreferrer">{book.title}</a></span> : book.title}
+        {book.free && <span class="rm-badge">free</span>}
+      </p>
+      <p class="rm-book-author">{book.author}{book.scopeNote ? ` · ${book.scopeNote}` : ""}</p>
+    </span>
+    <span class="rm-m-right">
+      <span class="rm-pct" data-book-pct={book.id}>0/{book.chapters.length}</span>
+      <span class="rm-ring">+</span>
+    </span>
+  </summary>
+  <div class="rm-m-body">
+    {book.chapters.map((c) => <CheckItem id={c.id} label={`${c.no}. ${c.title}`} />)}
+  </div>
+</details>

@@ -1,0 +1,18 @@
+---
+interface Props {
+  id: string;
+  label: string;
+  meta?: string;
+  hint?: string;
+}
+const { id, label, meta, hint } = Astro.props;
+---
+
+<div class="rm-check">
+  <input type="checkbox" id={id} data-id={id} disabled />
+  <label for={id}>
+    <span class="rm-check-label">{label}</span>
+    {meta && <span class="rm-check-meta">{meta}</span>}
+    {hint && <span class="rm-check-hint">↔ {hint}</span>}
+  </label>
+</div>
