@@ -46,7 +46,7 @@ describe("foundations track", () => {
 });
 
 describe("allIds", () => {
-  it("is the union of every checkable id (14+8+38+22 = 82), all unique", () => {
+  it("is the union of every checkable id (14 groups + 8 logs + 38 chapters + 22 foundations = 82), all unique", () => {
     expect(allIds.size).toBe(82);
   });
   it("contains known ids from each track", () => {
@@ -77,6 +77,16 @@ describe("deriveStats", () => {
   it("marks a course done only when all its groups are checked", () => {
     const s = deriveStats(["sqlite.base"]);
     expect(s.build.coursesDone).toBe(1);
+  });
+  it("completes a multi-group milestone only when every group is checked", () => {
+    const partial = deriveStats(["redis.core", "redis.rdb"]);
+    expect(partial.build.coursesDone).toBe(0);
+    expect(partial.build.perMilestone.redis).toBeGreaterThan(0);
+    expect(partial.build.perMilestone.redis).toBeLessThan(100);
+
+    const full = deriveStats(["redis.core", "redis.rdb", "redis.aof", "redis.replication"]);
+    expect(full.build.coursesDone).toBe(1);
+    expect(full.build.perMilestone.redis).toBe(100);
   });
   it("tracks reading per-book and book completion", () => {
     const s = deriveStats(["ddia.ch1", "ddia.ch2"]);

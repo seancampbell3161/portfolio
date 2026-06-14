@@ -233,6 +233,8 @@ export const allIds: Set<string> = new Set([
   ...foundations.map((i) => i.id),
 ]);
 
+const logIds = build.flatMap((m) => (m.logs ?? []).map((l) => l.id));
+
 export interface RoadmapStats {
   build: {
     stagesDone: number;
@@ -290,8 +292,6 @@ export function deriveStats(completed: string[]): RoadmapStats {
 
   const itemsTotal = foundations.length;
   const itemsDone = foundations.filter((i) => done.has(i.id)).length;
-
-  const logIds = build.flatMap((m) => (m.logs ?? []).map((l) => l.id));
 
   return {
     build: {
