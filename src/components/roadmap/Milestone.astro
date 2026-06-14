@@ -1,35 +1,23 @@
 ---
-import type { Milestone, Track } from "../../data/roadmap";
-import Week from "./Week.astro";
+import type { BuildMilestone } from "../../data/roadmap";
+import CheckItem from "./CheckItem.astro";
+import DecisionLog from "./DecisionLog.astro";
 
 interface Props {
-  milestone: Milestone;
+  milestone: BuildMilestone;
   open?: boolean;
 }
-
 const { milestone, open = false } = Astro.props;
-
-const trackLabel: Record<Track, string> = {
-  build: "Build",
-  systems: "Systems",
-  foundations: "Foundations",
-};
-
-const scaffolded = milestone.weeks.length === 0;
-const components = milestone.components ?? [];
-// The first enumerated week opens by default so the page lands on real content.
 ---
 
 <details class="rm-m" open={open} data-milestone={milestone.id}>
   <summary>
     <span class="rm-m-no">{milestone.no}</span>
     <span class="rm-m-mid">
-      <p class="rm-m-title">{milestone.title}</p>
+      <p class="rm-m-title">{milestone.course}</p>
       <p class="rm-m-goal">{milestone.goal}</p>
       <span class="rm-threads">
         <span class="rm-dot d-build"></span>
-        <span class="rm-dot d-systems"></span>
-        <span class="rm-dot d-foundations"></span>
         <span class="rm-dot d-judgment"></span>
       </span>
     </span>
@@ -38,41 +26,16 @@ const components = milestone.components ?? [];
       <span class="rm-ring">+</span>
     </span>
   </summary>
-
   <div class="rm-m-body">
     {
-      !scaffolded &&
-        milestone.weeks.map((week, i) => <Week week={week} open={i === 0} />)
+      milestone.groups.map((g) => (
+        <CheckItem
+          id={g.id}
+          label={g.label}
+          meta={`${g.stages} stages${g.hours ? ` · ~${g.hours}h` : ""}`}
+        />
+      ))
     }
-
-    {
-      scaffolded && (
-        <>
-          {components.map((c) => (
-            <div class="rm-comp">
-              <span class="rm-comp-tag" style={`color:var(--${c.track})`}>
-                <span class={`rm-dot d-${c.track}`} />
-                {trackLabel[c.track]}
-              </span>
-              <div>
-                <h4>{c.title}</h4>
-                {c.detail && <p>{c.detail}</p>}
-              </div>
-            </div>
-          ))}
-          {milestone.judgment && (
-            <div class="rm-comp">
-              <span class="rm-comp-tag" style="color:var(--judgment)">
-                <span class="rm-dot d-judgment" />
-                Judgment
-              </span>
-              <div>
-                <h4>{milestone.judgment}</h4>
-              </div>
-            </div>
-          )}
-        </>
-      )
-    }
+    {(milestone.logs ?? []).map((log) => <DecisionLog log={log} />)}
   </div>
 </details>
