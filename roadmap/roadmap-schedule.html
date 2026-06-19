@@ -1,0 +1,1215 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Roadmap — a 24-week schedule</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=JetBrains+Mono:wght@400;500;600&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --bg: #0a0a0b;
+        --panel: rgba(255, 255, 255, 0.03);
+        --panel-2: rgba(255, 255, 255, 0.05);
+        --border: rgba(255, 255, 255, 0.06);
+        --border-2: rgba(255, 255, 255, 0.12);
+
+        --text: #e4e4e7;
+        --text-2: #a1a1aa;
+        --text-3: #71717a;
+        --text-4: #52525b;
+
+        /* Four-thread color system (matches /roadmap) */
+        --build: #60a5fa;
+        --reading: #5fb3ac;
+        --foundations: #a78bfa;
+        --judgment: #d98b6f;
+
+        --font-sans: "DM Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        --font-mono: "JetBrains Mono", "Fira Code", monospace;
+
+        --radius: 12px;
+        --radius-sm: 8px;
+        --maxw: 1080px;
+      }
+
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+
+      html {
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+        scroll-behavior: smooth;
+      }
+
+      body {
+        font-family: var(--font-sans);
+        background: var(--bg);
+        color: var(--text);
+        line-height: 1.6;
+        min-height: 100vh;
+        position: relative;
+        overflow-x: hidden;
+      }
+
+      /* Grid + atmospheric glow, lifted from the site */
+      body::before {
+        content: "";
+        position: fixed;
+        inset: 0;
+        background-image:
+          linear-gradient(rgba(255, 255, 255, 0.02) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
+        background-size: 60px 60px;
+        pointer-events: none;
+        z-index: 0;
+      }
+      body::after {
+        content: "";
+        position: fixed;
+        top: -20%;
+        left: 50%;
+        width: 900px;
+        height: 600px;
+        transform: translateX(-50%);
+        background: radial-gradient(
+          ellipse at center,
+          rgba(96, 165, 250, 0.08),
+          transparent 65%
+        );
+        filter: blur(20px);
+        pointer-events: none;
+        z-index: 0;
+      }
+
+      .wrap {
+        position: relative;
+        z-index: 1;
+        max-width: var(--maxw);
+        margin: 0 auto;
+        padding: 72px 24px 96px;
+      }
+
+      /* ---------- Masthead ---------- */
+      .kicker {
+        font-family: var(--font-mono);
+        font-size: 12px;
+        letter-spacing: 0.22em;
+        text-transform: uppercase;
+        color: var(--text-3);
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+      .kicker::after {
+        content: "";
+        flex: 1;
+        height: 1px;
+        background: linear-gradient(90deg, var(--border-2), transparent);
+      }
+
+      h1 {
+        font-size: clamp(2.4rem, 5.5vw, 3.9rem);
+        font-weight: 700;
+        letter-spacing: -0.03em;
+        line-height: 1.05;
+        margin: 22px 0 0;
+      }
+      h1 .accent {
+        color: var(--build);
+      }
+
+      .thesis {
+        max-width: 60ch;
+        margin: 22px 0 0;
+        font-size: 1.075rem;
+        color: var(--text-2);
+        line-height: 1.65;
+      }
+      .thesis strong {
+        color: var(--text);
+        font-weight: 600;
+      }
+
+      .meta-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-top: 28px;
+      }
+      .chip {
+        font-family: var(--font-mono);
+        font-size: 12px;
+        color: var(--text-2);
+        background: var(--panel);
+        border: 1px solid var(--border);
+        border-radius: 999px;
+        padding: 7px 13px;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        white-space: nowrap;
+      }
+      .chip b {
+        color: var(--text);
+        font-weight: 600;
+      }
+
+      /* ---------- Legend ---------- */
+      .legend {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 18px 26px;
+        margin-top: 40px;
+        padding: 18px 20px;
+        background: var(--panel);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+      }
+      .legend-item {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-size: 14px;
+      }
+      .dot {
+        width: 11px;
+        height: 11px;
+        border-radius: 50%;
+        flex-shrink: 0;
+        box-shadow: 0 0 0 4px color-mix(in srgb, var(--c) 12%, transparent);
+      }
+      .legend-item b {
+        font-weight: 600;
+      }
+      .legend-item span {
+        color: var(--text-3);
+        font-size: 13px;
+      }
+      .d-build { --c: var(--build); background: var(--build); }
+      .d-reading { --c: var(--reading); background: var(--reading); }
+      .d-foundations { --c: var(--foundations); background: var(--foundations); }
+      .d-judgment { --c: var(--judgment); background: var(--judgment); }
+
+      /* ---------- Section titles ---------- */
+      .section-h {
+        font-family: var(--font-mono);
+        font-size: 12px;
+        letter-spacing: 0.2em;
+        text-transform: uppercase;
+        color: var(--text-3);
+        margin: 64px 0 20px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+      .section-h::after {
+        content: "";
+        flex: 1;
+        height: 1px;
+        background: var(--border);
+      }
+
+      /* ---------- Phase ribbon (mini-gantt) ---------- */
+      .ribbon {
+        display: flex;
+        gap: 4px;
+        border: 1px solid var(--border);
+        background: var(--panel);
+        border-radius: var(--radius);
+        padding: 6px;
+      }
+      .ribbon-seg {
+        position: relative;
+        border-radius: 7px;
+        padding: 14px 12px 12px;
+        min-width: 0;
+        overflow: hidden;
+        background: color-mix(in srgb, var(--c) 9%, transparent);
+        border: 1px solid color-mix(in srgb, var(--c) 22%, transparent);
+        transition: background 0.2s ease;
+      }
+      .ribbon-seg:hover {
+        background: color-mix(in srgb, var(--c) 16%, transparent);
+      }
+      .ribbon-seg::before {
+        content: "";
+        position: absolute;
+        left: 0;
+        top: 0;
+        bottom: 0;
+        width: 3px;
+        background: var(--c);
+      }
+      .ribbon-seg .wk {
+        font-family: var(--font-mono);
+        font-size: 10.5px;
+        color: var(--c);
+        letter-spacing: 0.04em;
+      }
+      .ribbon-seg .nm {
+        font-size: 12.5px;
+        font-weight: 600;
+        color: var(--text);
+        margin-top: 5px;
+        line-height: 1.25;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .ribbon-seg.s-ramp { --c: var(--text-3); }
+      .ribbon-seg.s-build { --c: var(--build); }
+      .ribbon-seg.s-cap { --c: var(--judgment); }
+
+      /* ---------- The 2-hour day ---------- */
+      .rhythm {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 16px;
+      }
+      .day {
+        background: var(--panel);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        padding: 22px;
+      }
+      .day-h {
+        display: flex;
+        align-items: baseline;
+        justify-content: space-between;
+        gap: 12px;
+        margin-bottom: 16px;
+      }
+      .day-h h3 {
+        font-size: 1.05rem;
+        font-weight: 600;
+        letter-spacing: -0.01em;
+      }
+      .day-h .tag {
+        font-family: var(--font-mono);
+        font-size: 11px;
+        color: var(--text-3);
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+      .bar {
+        display: flex;
+        height: 30px;
+        border-radius: 7px;
+        overflow: hidden;
+        border: 1px solid var(--border);
+      }
+      .bar > span {
+        display: block;
+        height: 100%;
+      }
+      .slots {
+        margin-top: 14px;
+        display: flex;
+        flex-direction: column;
+        gap: 9px;
+      }
+      .slot {
+        display: grid;
+        grid-template-columns: 70px 11px 1fr;
+        align-items: start;
+        gap: 11px;
+        font-size: 13.5px;
+        color: var(--text-2);
+      }
+      .slot .t {
+        font-family: var(--font-mono);
+        font-size: 11.5px;
+        color: var(--text-3);
+        padding-top: 1px;
+      }
+      .slot .sw {
+        width: 9px;
+        height: 9px;
+        border-radius: 2px;
+        margin-top: 5px;
+      }
+      .slot b {
+        color: var(--text);
+        font-weight: 600;
+      }
+      .sw-build { background: var(--build); }
+      .sw-reading { background: var(--reading); }
+      .sw-foundations { background: var(--foundations); }
+      .sw-judgment { background: var(--judgment); }
+
+      /* ---------- Milestone cards ---------- */
+      .phases {
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+        position: relative;
+      }
+      /* the build "spine" */
+      .phases::before {
+        content: "";
+        position: absolute;
+        left: 0;
+        top: 14px;
+        bottom: 14px;
+        width: 2px;
+        background: linear-gradient(
+          180deg,
+          transparent,
+          var(--border-2) 8%,
+          var(--border-2) 92%,
+          transparent
+        );
+      }
+
+      .card {
+        position: relative;
+        margin-left: 26px;
+        background: var(--panel);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        padding: 24px 26px 26px;
+        transition: border-color 0.2s ease, transform 0.2s ease;
+      }
+      .card:hover {
+        border-color: var(--border-2);
+      }
+      /* node on the spine */
+      .card::before {
+        content: "";
+        position: absolute;
+        left: -27px;
+        top: 30px;
+        width: 11px;
+        height: 11px;
+        border-radius: 50%;
+        background: var(--bg);
+        border: 2px solid var(--node, var(--build));
+        box-shadow: 0 0 0 4px color-mix(in srgb, var(--node, var(--build)) 14%, transparent);
+      }
+      .card.ramp { --node: var(--text-3); }
+      .card.cap { --node: var(--judgment); }
+
+      .card-head {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: baseline;
+        gap: 8px 14px;
+        margin-bottom: 4px;
+      }
+      .card-no {
+        font-family: var(--font-mono);
+        font-size: 12px;
+        font-weight: 600;
+        letter-spacing: 0.1em;
+        color: var(--node, var(--build));
+        text-transform: uppercase;
+      }
+      .card-title {
+        font-size: 1.45rem;
+        font-weight: 700;
+        letter-spacing: -0.02em;
+        line-height: 1.15;
+        width: 100%;
+        margin: 2px 0 0;
+      }
+      .card-dates {
+        font-family: var(--font-mono);
+        font-size: 12px;
+        color: var(--text-3);
+        margin-left: auto;
+      }
+      .card-goal {
+        color: var(--text-2);
+        font-size: 0.98rem;
+        margin: 12px 0 0;
+        max-width: 68ch;
+      }
+      .card-stats {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-top: 16px;
+      }
+      .stat {
+        font-family: var(--font-mono);
+        font-size: 11px;
+        color: var(--text-2);
+        background: var(--panel-2);
+        border: 1px solid var(--border);
+        border-radius: 6px;
+        padding: 5px 9px;
+      }
+      .stat b { color: var(--text); }
+
+      /* the three tracks inside a card */
+      .tracks {
+        display: grid;
+        grid-template-columns: 1.35fr 1fr 1fr;
+        gap: 18px;
+        margin-top: 22px;
+      }
+      .tcol-h {
+        font-family: var(--font-mono);
+        font-size: 11px;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding-bottom: 10px;
+        margin-bottom: 12px;
+        border-bottom: 1px solid var(--border);
+      }
+      .tcol-h .dot { width: 8px; height: 8px; box-shadow: none; }
+      .tcol-h.h-build { color: color-mix(in srgb, var(--build) 80%, #fff); }
+      .tcol-h.h-reading { color: color-mix(in srgb, var(--reading) 80%, #fff); }
+      .tcol-h.h-foundations { color: color-mix(in srgb, var(--foundations) 80%, #fff); }
+
+      .tlist {
+        list-style: none;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+      }
+      .tlist li {
+        font-size: 13.5px;
+        line-height: 1.45;
+        color: var(--text-2);
+      }
+      .tlist li b {
+        color: var(--text);
+        font-weight: 600;
+      }
+      .tlist .sub {
+        display: block;
+        font-size: 12px;
+        color: var(--text-3);
+        margin-top: 2px;
+      }
+
+      /* build sub-checkpoint with a stage/hour meter */
+      .ckpt .meter {
+        height: 4px;
+        border-radius: 3px;
+        background: color-mix(in srgb, var(--build) 22%, transparent);
+        margin-top: 6px;
+      }
+      .ckpt .meter > span {
+        display: block;
+        height: 100%;
+        border-radius: 3px;
+        background: var(--build);
+      }
+      .hours {
+        font-family: var(--font-mono);
+        font-size: 11px;
+        color: var(--build);
+        margin-left: 4px;
+      }
+
+      .pat {
+        font-family: var(--font-mono);
+        font-size: 11.5px;
+        color: var(--text-3);
+      }
+      .pat b { color: var(--foundations); font-weight: 500; }
+      .pairs {
+        display: inline-block;
+        margin-top: 3px;
+        font-size: 11px;
+        color: var(--text-4);
+      }
+      .pairs::before { content: "↔ "; color: var(--foundations); }
+
+      /* dashed decision-log signature block */
+      .log {
+        margin-top: 22px;
+        border: 1px dashed color-mix(in srgb, var(--judgment) 45%, transparent);
+        background: color-mix(in srgb, var(--judgment) 6%, transparent);
+        border-radius: var(--radius-sm);
+        padding: 16px 18px;
+      }
+      .log-h {
+        font-family: var(--font-mono);
+        font-size: 11px;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        color: var(--judgment);
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 10px;
+      }
+      .log-h .dot { width: 8px; height: 8px; box-shadow: none; }
+      .log ul {
+        list-style: none;
+        display: flex;
+        flex-direction: column;
+        gap: 9px;
+      }
+      .log li {
+        font-size: 13.5px;
+        color: var(--text);
+        line-height: 1.5;
+        padding-left: 16px;
+        position: relative;
+        font-style: italic;
+      }
+      .log li::before {
+        content: "";
+        position: absolute;
+        left: 0;
+        top: 9px;
+        width: 7px;
+        height: 7px;
+        border: 1px solid var(--judgment);
+        border-radius: 2px;
+      }
+
+      /* ---------- Totals / footer ---------- */
+      .totals {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 14px;
+      }
+      .total {
+        background: var(--panel);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        padding: 20px;
+      }
+      .total .big {
+        font-size: 2rem;
+        font-weight: 700;
+        letter-spacing: -0.02em;
+        line-height: 1;
+        color: var(--accent, var(--text));
+      }
+      .total .lbl {
+        font-size: 13px;
+        color: var(--text-3);
+        margin-top: 8px;
+      }
+      .total.t-build .big { color: var(--build); }
+      .total.t-reading .big { color: var(--reading); }
+      .total.t-foundations .big { color: var(--foundations); }
+      .total.t-judgment .big { color: var(--judgment); }
+
+      .caveats {
+        margin-top: 24px;
+        background: var(--panel);
+        border: 1px solid var(--border);
+        border-left: 2px solid var(--judgment);
+        border-radius: var(--radius);
+        padding: 22px 24px;
+      }
+      .caveats h3 {
+        font-size: 0.95rem;
+        font-weight: 600;
+        margin-bottom: 12px;
+      }
+      .caveats ul {
+        list-style: none;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+      }
+      .caveats li {
+        font-size: 13.5px;
+        color: var(--text-2);
+        line-height: 1.55;
+        padding-left: 18px;
+        position: relative;
+      }
+      .caveats li::before {
+        content: "—";
+        position: absolute;
+        left: 0;
+        color: var(--text-4);
+      }
+      .caveats li b { color: var(--text); font-weight: 600; }
+
+      footer {
+        margin-top: 48px;
+        padding-top: 22px;
+        border-top: 1px solid var(--border);
+        font-family: var(--font-mono);
+        font-size: 12px;
+        color: var(--text-4);
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: space-between;
+        gap: 8px;
+      }
+
+      /* ---------- Entrance motion ---------- */
+      .reveal {
+        opacity: 0;
+        transform: translateY(14px);
+        animation: rise 0.6s cubic-bezier(0.2, 0.7, 0.2, 1) forwards;
+      }
+      @keyframes rise {
+        to { opacity: 1; transform: none; }
+      }
+
+      /* ---------- Responsive ---------- */
+      @media (max-width: 880px) {
+        .tracks { grid-template-columns: 1fr; gap: 22px; }
+        .totals { grid-template-columns: repeat(2, 1fr); }
+        .rhythm { grid-template-columns: 1fr; }
+        .ribbon { flex-wrap: wrap; }
+        .ribbon-seg { flex: 1 1 140px; }
+        .ribbon-seg .nm { white-space: normal; }
+      }
+      @media (max-width: 560px) {
+        .wrap { padding: 48px 16px 72px; }
+        .card { margin-left: 18px; padding: 20px 18px; }
+        .card::before { left: -19px; }
+        .card-dates { margin-left: 0; width: 100%; }
+        .totals { grid-template-columns: 1fr 1fr; }
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        .reveal { animation: none; opacity: 1; transform: none; }
+        html { scroll-behavior: auto; }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="wrap">
+      <!-- ===================== Masthead ===================== -->
+      <header class="reveal" style="animation-delay: 0.02s">
+        <p class="kicker">Learning plan · 24 weeks · build-anchored</p>
+        <h1>From bytes to a database,<br /><span class="accent">one milestone at a time.</span></h1>
+        <p class="thesis">
+          Not three skill gaps to close in parallel — <strong>one skill: engineering
+          judgment.</strong> Every build, every chapter, every problem rolls up into knowing
+          which tool to reach for and being able to defend the call. The five CodeCrafters
+          builds are the spine; reading and NeetCode hang off whichever milestone they explain.
+        </p>
+        <div class="meta-row">
+          <span class="chip">📅 <b>Jun 22 → Dec 5, 2026</b></span>
+          <span class="chip">⏱ <b>~2h/day</b> · Mon–Sat</span>
+          <span class="chip"><b>12h</b>/week</span>
+          <span class="chip">5 builds · <b>~148h</b></span>
+          <span class="chip">8 decision logs</span>
+        </div>
+      </header>
+
+      <!-- ===================== Legend ===================== -->
+      <div class="legend reveal" style="animation-delay: 0.08s">
+        <div class="legend-item">
+          <span class="dot d-build"></span>
+          <b>Build</b>&nbsp;<span>— CodeCrafters, the spine</span>
+        </div>
+        <div class="legend-item">
+          <span class="dot d-reading"></span>
+          <b>Reading</b>&nbsp;<span>— DDIA / Database Internals / OSTEP / APoSD</span>
+        </div>
+        <div class="legend-item">
+          <span class="dot d-foundations"></span>
+          <b>Foundations</b>&nbsp;<span>— courses, then NeetCode 150</span>
+        </div>
+        <div class="legend-item">
+          <span class="dot d-judgment"></span>
+          <b>Judgment</b>&nbsp;<span>— the decision log (Saturday's artifact)</span>
+        </div>
+      </div>
+
+      <!-- ===================== Phase ribbon ===================== -->
+      <h2 class="section-h reveal" style="animation-delay: 0.12s">The arc · 7 phases across 24 weeks</h2>
+      <div class="ribbon reveal" style="animation-delay: 0.14s">
+        <div class="ribbon-seg s-ramp" style="flex-grow: 2">
+          <div class="wk">W1–2</div>
+          <div class="nm">Foundations ramp</div>
+        </div>
+        <div class="ribbon-seg s-build" style="flex-grow: 7">
+          <div class="wk">W3–9</div>
+          <div class="nm">M1 · Redis</div>
+        </div>
+        <div class="ribbon-seg s-build" style="flex-grow: 2">
+          <div class="wk">W10–11</div>
+          <div class="nm">M2 · SQLite</div>
+        </div>
+        <div class="ribbon-seg s-build" style="flex-grow: 3">
+          <div class="wk">W12–14</div>
+          <div class="nm">M3 · HTTP</div>
+        </div>
+        <div class="ribbon-seg s-build" style="flex-grow: 2">
+          <div class="wk">W15–16</div>
+          <div class="nm">M4 · DNS</div>
+        </div>
+        <div class="ribbon-seg s-build" style="flex-grow: 5">
+          <div class="wk">W17–21</div>
+          <div class="nm">M5 · Kafka</div>
+        </div>
+        <div class="ribbon-seg s-cap" style="flex-grow: 3">
+          <div class="wk">W22–24</div>
+          <div class="nm">Capstone</div>
+        </div>
+      </div>
+
+      <!-- ===================== The 2-hour day ===================== -->
+      <h2 class="section-h reveal" style="animation-delay: 0.16s">The repeating 2-hour day</h2>
+      <div class="rhythm reveal" style="animation-delay: 0.18s">
+        <div class="day">
+          <div class="day-h">
+            <h3>Mon–Fri · build days</h3>
+            <span class="tag">warm up → build → read</span>
+          </div>
+          <div class="bar">
+            <span class="sw-foundations" style="width: 21%"></span>
+            <span class="sw-build" style="width: 66%"></span>
+            <span class="sw-reading" style="width: 13%"></span>
+          </div>
+          <div class="slots">
+            <div class="slot">
+              <span class="t">0:00–0:25</span>
+              <span class="sw sw-foundations"></span>
+              <span><b>Foundations warm-up</b> — one course lesson early on, then one NeetCode problem in the week's pattern.</span>
+            </div>
+            <div class="slot">
+              <span class="t">0:25–1:45</span>
+              <span class="sw sw-build"></span>
+              <span><b>Build</b> — the current CodeCrafters stage. The anchor; most of the hour goes here.</span>
+            </div>
+            <div class="slot">
+              <span class="t">1:45–2:00</span>
+              <span class="sw sw-reading"></span>
+              <span><b>Read</b> — a few pages of the week's anchor chapter; jot one note toward the log.</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="day">
+          <div class="day-h">
+            <h3>Saturday · ship day</h3>
+            <span class="tag">refactor → read → log</span>
+          </div>
+          <div class="bar">
+            <span class="sw-build" style="width: 50%"></span>
+            <span class="sw-reading" style="width: 25%"></span>
+            <span class="sw-judgment" style="width: 25%"></span>
+          </div>
+          <div class="slots">
+            <div class="slot">
+              <span class="t">0:00–1:00</span>
+              <span class="sw sw-build"></span>
+              <span><b>Close the week's build</b> — finish or refactor the current stage; clear anything stuck.</span>
+            </div>
+            <div class="slot">
+              <span class="t">1:00–1:30</span>
+              <span class="sw sw-reading"></span>
+              <span><b>Reading catch-up</b> — the "light" book (APoSD, then OSTEP / Database Internals).</span>
+            </div>
+            <div class="slot">
+              <span class="t">1:30–2:00</span>
+              <span class="sw sw-judgment"></span>
+              <span><b>Write the decision log</b> — the real artifact. This is what turns three tracks into one skill.</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===================== Milestones ===================== -->
+      <h2 class="section-h reveal" style="animation-delay: 0.2s">The milestones</h2>
+      <div class="phases">
+        <!-- ---------- Phase 0 ---------- -->
+        <article class="card ramp reveal" style="animation-delay: 0.22s">
+          <div class="card-head">
+            <span class="card-no">Phase 0 · ramp</span>
+            <span class="card-dates">Weeks 1–2 · Jun 22 – Jul 4</span>
+            <h3 class="card-title">Foundations ramp — get fluent before the first socket</h3>
+          </div>
+          <p class="card-goal">
+            Front-load the courses so CodeCrafters isn't a language fight, and set the
+            "judgment" frame. No real build yet — optionally spike a "hello, socket" at the
+            end of week 2 and wire up the Redis track.
+          </p>
+          <div class="card-stats">
+            <span class="stat">no build hours</span>
+            <span class="stat">2 courses started</span>
+            <span class="stat">repo + CodeCrafters set up</span>
+          </div>
+          <div class="tracks">
+            <div>
+              <div class="tcol-h h-build"><span class="dot d-build"></span>Build</div>
+              <ul class="tlist">
+                <li><b>None yet.</b><span class="sub">Optional: a throwaway TCP "echo" spike to de-risk week 3.</span></li>
+              </ul>
+            </div>
+            <div>
+              <div class="tcol-h h-reading"><span class="dot d-reading"></span>Reading</div>
+              <ul class="tlist">
+                <li><b>APoSD</b> ch 1–3<span class="sub">Complexity & its symptoms — the judgment lens</span></li>
+                <li><b>DDIA</b> Ch. 1<span class="sub">Reliable, scalable, maintainable — the rubric for every later call</span></li>
+              </ul>
+            </div>
+            <div>
+              <div class="tcol-h h-foundations"><span class="dot d-foundations"></span>Foundations</div>
+              <ul class="tlist">
+                <li><b>Python for Coding Interviews</b><span class="sub">40 lessons — the refresher</span></li>
+                <li><b>Algorithms & DS for Beginners</b><span class="sub">35 lessons — start it</span></li>
+                <li class="pat"><b>Arrays & Hashing</b> begins (9) <span class="pairs">Redis hash store</span></li>
+              </ul>
+            </div>
+          </div>
+        </article>
+
+        <!-- ---------- Phase 1 · M1 Redis ---------- -->
+        <article class="card reveal" style="animation-delay: 0.24s">
+          <div class="card-head">
+            <span class="card-no">M1 · Storage</span>
+            <span class="card-dates">Weeks 3–9 · Jul 6 – Aug 22</span>
+            <h3 class="card-title">Redis — how bytes become a database</h3>
+          </div>
+          <p class="card-goal">
+            Build a Redis server from raw sockets to replication. Judgment goal: defend choosing
+            an in-memory store over disk — and name exactly when that choice breaks. The biggest
+            milestone; replication alone is most of it.
+          </p>
+          <div class="card-stats">
+            <span class="stat"><b>41</b> stages</span>
+            <span class="stat"><b>~62h</b> build</span>
+            <span class="stat">7 weeks</span>
+            <span class="stat">3 decision logs</span>
+          </div>
+          <div class="tracks">
+            <div>
+              <div class="tcol-h h-build"><span class="dot d-build"></span>Build · 4 checkpoints</div>
+              <ul class="tlist">
+                <li class="ckpt"><b>Core server</b> <span class="hours">7 · 11h</span><span class="sub">TCP sockets, RESP, PING/ECHO, SET/GET, expiry</span><span class="meter"><span style="width: 18%"></span></span></li>
+                <li class="ckpt"><b>RDB persistence</b> <span class="hours">6 · 9h</span><span class="sub">read the snapshot file</span><span class="meter"><span style="width: 32%"></span></span></li>
+                <li class="ckpt"><b>AOF persistence</b> <span class="hours">10 · 15h</span><span class="sub">append-only log + replay</span><span class="meter"><span style="width: 56%"></span></span></li>
+                <li class="ckpt"><b>Replication</b> <span class="hours">18 · 27h</span><span class="sub">leader/follower handshake, command propagation</span><span class="meter"><span style="width: 100%"></span></span></li>
+              </ul>
+            </div>
+            <div>
+              <div class="tcol-h h-reading"><span class="dot d-reading"></span>Reading</div>
+              <ul class="tlist">
+                <li><b>DDIA</b> Ch. 3<span class="sub">Storage & retrieval — log-structured hash indexes</span></li>
+                <li><b>OSTEP</b> Persistence P1–P4<span class="sub">disks, files, crash consistency — alongside RDB/AOF</span></li>
+                <li><b>OSTEP</b> Concurrency C1–C3<span class="sub">threads, locks, deadlock — alongside replication</span></li>
+                <li><b>DDIA</b> Ch. 5<span class="sub">Replication</span></li>
+                <li><b>APoSD</b> ch 4–6<span class="sub">light: modules should be deep</span></li>
+              </ul>
+            </div>
+            <div>
+              <div class="tcol-h h-foundations"><span class="dot d-foundations"></span>Foundations</div>
+              <ul class="tlist">
+                <li><b>Finish</b> Algorithms & DS for Beginners<span class="sub">+ Core Skills (20) — implement the data structures</span></li>
+                <li class="pat"><b>Arrays & Hashing</b> (9) <span class="pairs">Redis hash store</span></li>
+                <li class="pat"><b>Two Pointers</b> (5) · <b>Sliding Window</b> (6)</li>
+                <li class="pat"><b>Stack</b> (7) · <b>Linked List</b> (11)</li>
+              </ul>
+            </div>
+          </div>
+          <div class="log">
+            <div class="log-h"><span class="dot d-judgment"></span>Decision logs — Saturdays</div>
+            <ul>
+              <li>RESP vs JSON for a wire protocol: what Redis traded away, and the workload where I'd make the opposite call.</li>
+              <li>RDB vs AOF: the durability / latency / recovery trade I'd default to, and the workload that flips it.</li>
+              <li>Single-leader vs multi-leader: where I draw the line, and what each costs.</li>
+            </ul>
+          </div>
+        </article>
+
+        <!-- ---------- Phase 2 · M2 SQLite ---------- -->
+        <article class="card reveal" style="animation-delay: 0.26s">
+          <div class="card-head">
+            <span class="card-no">M2 · Engines</span>
+            <span class="card-dates">Weeks 10–11 · Aug 24 – Sep 5</span>
+            <h3 class="card-title">SQLite — B-trees vs LSM</h3>
+          </div>
+          <p class="card-goal">
+            Read a real SQLite database by hand — page headers, the B-tree, an indexed query.
+            Judgment goal: predict which storage engine wins a query pattern before you benchmark.
+          </p>
+          <div class="card-stats">
+            <span class="stat"><b>9</b> stages</span>
+            <span class="stat"><b>~14h</b> build</span>
+            <span class="stat">2 weeks</span>
+            <span class="stat">1 decision log</span>
+          </div>
+          <div class="tracks">
+            <div>
+              <div class="tcol-h h-build"><span class="dot d-build"></span>Build · 1 checkpoint</div>
+              <ul class="tlist">
+                <li class="ckpt"><b>Read the file format</b> <span class="hours">9 · 14h</span><span class="sub">walk the B-tree, run an indexed query</span><span class="meter"><span style="width: 100%"></span></span></li>
+              </ul>
+            </div>
+            <div>
+              <div class="tcol-h h-reading"><span class="dot d-reading"></span>Reading</div>
+              <ul class="tlist">
+                <li><b>DDIA</b> Ch. 2 + Ch. 3 (deep)<span class="sub">data models; B-trees vs LSM-trees</span></li>
+                <li><b>Database Internals</b> Ch. 1–4<span class="sub">B-tree basics, file formats, implementing B-trees — the exact match</span></li>
+              </ul>
+            </div>
+            <div>
+              <div class="tcol-h h-foundations"><span class="dot d-foundations"></span>Foundations</div>
+              <ul class="tlist">
+                <li class="pat"><b>Binary Search</b> (7) <span class="pairs">SQLite B-tree</span></li>
+                <li class="pat"><b>Trees</b> (15) <span class="pairs">SQLite B-tree</span></li>
+                <li class="pat"><b>Tries</b> (3)</li>
+              </ul>
+            </div>
+          </div>
+          <div class="log">
+            <div class="log-h"><span class="dot d-judgment"></span>Decision log</div>
+            <ul>
+              <li>B-tree vs LSM for this workload: which I'd reach for, and the read/write ratio that flips the call.</li>
+            </ul>
+          </div>
+        </article>
+
+        <!-- ---------- Phase 3 · M3 HTTP ---------- -->
+        <article class="card reveal" style="animation-delay: 0.28s">
+          <div class="card-head">
+            <span class="card-no">M3 · Encoding</span>
+            <span class="card-dates">Weeks 12–14 · Sep 7 – Sep 26</span>
+            <h3 class="card-title">HTTP server — encoding & the wire</h3>
+          </div>
+          <p class="card-goal">
+            Build an HTTP/1.1 server — requests, responses, headers, compression, keep-alive —
+            and reason about encoding and evolution on the wire. Judgment goal: version an API
+            without breaking last year's clients.
+          </p>
+          <div class="card-stats">
+            <span class="stat"><b>14</b> stages</span>
+            <span class="stat"><b>~21h</b> build</span>
+            <span class="stat">3 weeks</span>
+            <span class="stat">1 decision log</span>
+          </div>
+          <div class="tracks">
+            <div>
+              <div class="tcol-h h-build"><span class="dot d-build"></span>Build · 3 checkpoints</div>
+              <ul class="tlist">
+                <li class="ckpt"><b>Base server</b> <span class="hours">8 · 12h</span><span class="sub">bind, parse requests, respond, headers, body</span><span class="meter"><span style="width: 100%"></span></span></li>
+                <li class="ckpt"><b>Compression</b> <span class="hours">3 · 5h</span><span class="sub">gzip, multiple schemes</span><span class="meter"><span style="width: 42%"></span></span></li>
+                <li class="ckpt"><b>Persistent connections</b> <span class="hours">3 · 4h</span><span class="sub">keep-alive, concurrency, closure</span><span class="meter"><span style="width: 33%"></span></span></li>
+              </ul>
+            </div>
+            <div>
+              <div class="tcol-h h-reading"><span class="dot d-reading"></span>Reading</div>
+              <ul class="tlist">
+                <li><b>DDIA</b> Ch. 4<span class="sub">Encoding & evolution — JSON, Protobuf, Avro, schema migrations</span></li>
+                <li><b>Database Internals</b> Ch. 5–7<span class="sub">trailing: recovery, B-tree variants, log-structured storage</span></li>
+                <li><b>APoSD</b> ch 7–10<span class="sub">light: information hiding & general-purpose design</span></li>
+              </ul>
+            </div>
+            <div>
+              <div class="tcol-h h-foundations"><span class="dot d-foundations"></span>Foundations</div>
+              <ul class="tlist">
+                <li class="pat"><b>Heap / Priority Queue</b> (7)</li>
+                <li class="pat"><b>Backtracking</b> (9)</li>
+              </ul>
+            </div>
+          </div>
+          <div class="log">
+            <div class="log-h"><span class="dot d-judgment"></span>Decision log</div>
+            <ul>
+              <li>Versioning an API without breaking last year's clients — the migration I'd never ship.</li>
+            </ul>
+          </div>
+        </article>
+
+        <!-- ---------- Phase 4 · M4 DNS ---------- -->
+        <article class="card reveal" style="animation-delay: 0.3s">
+          <div class="card-head">
+            <span class="card-no">M4 · The packet</span>
+            <span class="card-dates">Weeks 15–16 · Sep 28 – Oct 10</span>
+            <h3 class="card-title">DNS server — the binary packet</h3>
+          </div>
+          <p class="card-goal">
+            Build a DNS server — construct and parse the binary packet format, handle name
+            compression, forward queries — and appreciate compact wire encoding. A shorter,
+            sharper milestone; lean into reading and patterns here.
+          </p>
+          <div class="card-stats">
+            <span class="stat"><b>8</b> stages</span>
+            <span class="stat"><b>~12h</b> build</span>
+            <span class="stat">2 weeks</span>
+            <span class="stat">1 decision log</span>
+          </div>
+          <div class="tracks">
+            <div>
+              <div class="tcol-h h-build"><span class="dot d-build"></span>Build · 1 checkpoint</div>
+              <ul class="tlist">
+                <li class="ckpt"><b>UDP server</b> <span class="hours">8 · 12h</span><span class="sub">write/parse header, question, answer; name compression; forwarding</span><span class="meter"><span style="width: 100%"></span></span></li>
+              </ul>
+            </div>
+            <div>
+              <div class="tcol-h h-reading"><span class="dot d-reading"></span>Reading</div>
+              <ul class="tlist">
+                <li><b>DDIA</b> Ch. 6<span class="sub">Partitioning — sets up M5</span></li>
+                <li><b>APoSD</b> ch 11–16<span class="sub">light: comments & naming</span></li>
+              </ul>
+            </div>
+            <div>
+              <div class="tcol-h h-foundations"><span class="dot d-foundations"></span>Foundations</div>
+              <ul class="tlist">
+                <li class="pat"><b>Greedy</b> (8)</li>
+                <li class="pat"><b>Intervals</b> (6)</li>
+              </ul>
+            </div>
+          </div>
+          <div class="log">
+            <div class="log-h"><span class="dot d-judgment"></span>Decision log</div>
+            <ul>
+              <li>Compact binary protocols: where DNS's choices (name compression, UDP) pay off and where they bite.</li>
+            </ul>
+          </div>
+        </article>
+
+        <!-- ---------- Phase 5 · M5 Kafka ---------- -->
+        <article class="card reveal" style="animation-delay: 0.32s">
+          <div class="card-head">
+            <span class="card-no">M5 · Consensus</span>
+            <span class="card-dates">Weeks 17–21 · Oct 12 – Nov 14</span>
+            <h3 class="card-title">Kafka — consistency & consensus</h3>
+          </div>
+          <p class="card-goal">
+            Build a Kafka broker — the partitioned log, offsets, fetch and produce — and name the
+            consistency model a system needs versus the one it secretly relies on. The
+            distributed-systems payoff of the whole plan.
+          </p>
+          <div class="card-stats">
+            <span class="stat"><b>26</b> stages</span>
+            <span class="stat"><b>~39h</b> build</span>
+            <span class="stat">5 weeks</span>
+            <span class="stat">1 decision log</span>
+          </div>
+          <div class="tracks">
+            <div>
+              <div class="tcol-h h-build"><span class="dot d-build"></span>Build · 5 checkpoints</div>
+              <ul class="tlist">
+                <li class="ckpt"><b>Base</b> <span class="hours">5 · 8h</span><span class="sub">bind, correlation IDs, API versions</span><span class="meter"><span style="width: 67%"></span></span></li>
+                <li class="ckpt"><b>Concurrent clients</b> <span class="hours">2 · 3h</span><span class="meter"><span style="width: 25%"></span></span></li>
+                <li class="ckpt"><b>Partitions</b> <span class="hours">5 · 7h</span><span class="sub">DescribeTopicPartitions</span><span class="meter"><span style="width: 58%"></span></span></li>
+                <li class="ckpt"><b>Consume</b> <span class="hours">6 · 9h</span><span class="sub">Fetch from disk</span><span class="meter"><span style="width: 75%"></span></span></li>
+                <li class="ckpt"><b>Produce</b> <span class="hours">8 · 12h</span><span class="sub">Produce records</span><span class="meter"><span style="width: 100%"></span></span></li>
+              </ul>
+            </div>
+            <div>
+              <div class="tcol-h h-reading"><span class="dot d-reading"></span>Reading</div>
+              <ul class="tlist">
+                <li><b>DDIA</b> Ch. 7 · 8 · 9<span class="sub">transactions, distributed trouble, consistency & consensus</span></li>
+                <li><b>Database Internals</b> Ch. 8–14<span class="sub">the distributed half: failure detection → consensus</span></li>
+                <li><b>APoSD</b> ch 17–21<span class="sub">light: consistency & obvious code — finishes the book</span></li>
+              </ul>
+            </div>
+            <div>
+              <div class="tcol-h h-foundations"><span class="dot d-foundations"></span>Foundations</div>
+              <ul class="tlist">
+                <li class="pat"><b>Graphs</b> (13) <span class="pairs">replication & partitioning</span></li>
+                <li class="pat"><b>Advanced Graphs</b> (6)</li>
+                <li class="pat"><b>1-D DP</b> (12) · <b>2-D DP</b> (11)</li>
+              </ul>
+            </div>
+          </div>
+          <div class="log">
+            <div class="log-h"><span class="dot d-judgment"></span>Decision log</div>
+            <ul>
+              <li>Which consistency model a feature needs — and the one it's secretly relying on.</li>
+            </ul>
+          </div>
+        </article>
+
+        <!-- ---------- Phase 6 · Capstone ---------- -->
+        <article class="card cap reveal" style="animation-delay: 0.34s">
+          <div class="card-head">
+            <span class="card-no">Capstone</span>
+            <span class="card-dates">Weeks 22–24 · Nov 16 – Dec 5</span>
+            <h3 class="card-title">Systems in the wild — the writeup</h3>
+          </div>
+          <p class="card-goal">
+            Finish the Kafka tail, then retrofit a streaming or batch component onto a project you
+            already shipped (Songle or Roaming.Camp). The capstone is a published system-design
+            writeup distilled from every decision log — it ties into the blog.
+          </p>
+          <div class="card-stats">
+            <span class="stat">synthesis</span>
+            <span class="stat">3 weeks</span>
+            <span class="stat">capstone log → blog post</span>
+          </div>
+          <div class="tracks">
+            <div>
+              <div class="tcol-h h-build"><span class="dot d-build"></span>Build</div>
+              <ul class="tlist">
+                <li><b>Kafka tail</b><span class="sub">close any remaining produce/consume stages</span></li>
+                <li><b>Retrofit</b> streaming or batch<span class="sub">onto Songle or Roaming.Camp — apply it for real</span></li>
+              </ul>
+            </div>
+            <div>
+              <div class="tcol-h h-reading"><span class="dot d-reading"></span>Reading</div>
+              <ul class="tlist">
+                <li><b>DDIA</b> Ch. 10 · 11 · 12<span class="sub">batch, stream, the future — finishes DDIA</span></li>
+              </ul>
+            </div>
+            <div>
+              <div class="tcol-h h-foundations"><span class="dot d-foundations"></span>Foundations</div>
+              <ul class="tlist">
+                <li class="pat"><b>Math & Geometry</b> (8) · <b>Bit Manipulation</b> (7)</li>
+                <li class="pat" style="color: var(--text-4)"><b style="color: var(--text-3)">Advanced Algorithms</b> course (35) — optional, deferred</li>
+              </ul>
+            </div>
+          </div>
+          <div class="log">
+            <div class="log-h"><span class="dot d-judgment"></span>Capstone decision log</div>
+            <ul>
+              <li>A published system-design writeup distilled from these decision logs.</li>
+            </ul>
+          </div>
+        </article>
+      </div>
+
+      <!-- ===================== Totals ===================== -->
+      <h2 class="section-h reveal" style="animation-delay: 0.36s">What it adds up to</h2>
+      <div class="totals reveal" style="animation-delay: 0.38s">
+        <div class="total t-build">
+          <div class="big">98</div>
+          <div class="lbl">CodeCrafters stages · ~148h across 5 builds</div>
+        </div>
+        <div class="total t-reading">
+          <div class="big">38</div>
+          <div class="lbl">chapters across 4 books (DDIA, DB Internals, OSTEP, APoSD)</div>
+        </div>
+        <div class="total t-foundations">
+          <div class="big">150</div>
+          <div class="lbl">NeetCode problems + 3 core courses (Advanced optional)</div>
+        </div>
+        <div class="total t-judgment">
+          <div class="big">8</div>
+          <div class="lbl">decision logs — the judgment artifacts that are the point</div>
+        </div>
+      </div>
+
+      <!-- ===================== Caveats ===================== -->
+      <div class="caveats reveal" style="animation-delay: 0.4s">
+        <h3>How to read this schedule</h3>
+        <ul>
+          <li><b>It's loose on dates, strict on order.</b> Build hours are CodeCrafters' own estimates — if a stage takes longer, slip the dates and keep the sequence. The order is what makes each chapter and pattern land where it explains the build.</li>
+          <li><b>Build is the spine; everything else hangs off it.</b> On any given day, most of the 2 hours is the build. Reading and NeetCode are paired to whatever milestone they illuminate, not run as separate marathons.</li>
+          <li><b>Saturday ships the artifact.</b> The decision log is the deliverable — three tracks rolling up into one defensible call. Miss a build stage and recover; don't skip the log.</li>
+          <li><b>Database Internals & OSTEP can trail the build.</b> They're deeper than the build strictly needs; DDIA and APoSD finish within the 24 weeks, the rest carries past it. <b>Advanced Algorithms</b> is explicitly optional.</li>
+          <li><b>Foundations is front-loaded.</b> The three courses cluster in the ramp + M1 so that by SQLite onward, more of each day's 2 hours can go to the build.</li>
+        </ul>
+      </div>
+
+      <footer>
+        <span>Roadmap schedule · seanthedeveloper.com/roadmap</span>
+        <span>~2h/day · Mon–Sat · Jun 22 – Dec 5, 2026</span>
+      </footer>
+    </main>
+  </body>
+</html>
