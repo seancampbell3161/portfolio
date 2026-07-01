@@ -1,0 +1,79 @@
+---
+import { reviewCards } from "../../data/review-cards";
+
+const threads = [
+  { key: "build", label: "Build" },
+  { key: "reading", label: "Reading" },
+  { key: "foundations", label: "Foundations" },
+  { key: "judgment", label: "Judgment" },
+  { key: "behavioral", label: "Behavioral" },
+] as const;
+
+// Build-time hint only; review.ts recomputes real counts against live progress.
+const authored = reviewCards.length;
+---
+
+<section class="rm-track" aria-labelledby="rm-track-retention">
+  <h2 id="rm-track-retention" class="rm-track-h">
+    <span class="rm-dot d-behavioral"></span>Retention — spaced review
+  </h2>
+  <p class="rm-track-note">
+    The other tracks ask "have I done it?" This one asks "do I still know it?" A card enters
+    rotation once its milestone is checked off, then resurfaces on an SM-2 schedule. The count
+    is public; the schedule is private.
+  </p>
+
+  <div class="rm-retention">
+    <div id="rv-rotation-summary" class="rv-summary">
+      <div class="rv-rotation">
+        <span id="rv-rotation-count" class="rv-rotation-n">0</span>
+        <span class="rv-rotation-l">
+          cards in rotation<span class="rv-of"> · {authored} authored</span>
+        </span>
+      </div>
+      <div class="rv-breakdown">
+        {
+          threads.map((t) => (
+            <span class={`rv-chip rv-chip-${t.key}`}>
+              {t.label} <b data-rv-thread-count={t.key}>0</b>
+            </span>
+          ))
+        }
+      </div>
+    </div>
+    <p id="rv-rotation-empty" class="rv-empty" hidden>
+      Complete a milestone to put its cards in rotation.
+    </p>
+
+    <!-- Review runner — revealed only when the admin token is present -->
+    <div id="rv-runner" class="rv-runner" hidden>
+      <div class="rv-runner-head">
+        <span class="rv-runner-title">Review</span>
+        <span class="rv-runner-meta">
+          <b id="rv-due-count">0</b> due · <b id="rv-streak">0</b> day streak
+          <span id="rv-save-state" class="rv-save-state" role="status" aria-live="polite"></span>
+        </span>
+      </div>
+
+      <p id="rv-runner-locked" class="rv-empty" hidden>
+        Complete a milestone to put its cards in rotation.
+      </p>
+      <p id="rv-runner-done" class="rv-empty" hidden>All caught up.</p>
+
+      <div id="rv-card" class="rv-card" hidden>
+        <span id="rv-thread" class="rv-chip rv-chip-build">build</span>
+        <p id="rv-front" class="rv-front"></p>
+        <button id="rv-reveal" type="button" class="rv-reveal">Show answer</button>
+        <p id="rv-back" class="rv-back" hidden></p>
+        <div id="rv-ratings" class="rv-ratings" hidden role="group" aria-label="Rate your recall">
+          <button type="button" class="rv-rate rv-rate-again" data-rv-rate="0">Again</button>
+          <button type="button" class="rv-rate rv-rate-hard" data-rv-rate="1">Hard</button>
+          <button type="button" class="rv-rate rv-rate-good" data-rv-rate="2">Good</button>
+          <button type="button" class="rv-rate rv-rate-easy" data-rv-rate="3">Easy</button>
+        </div>
+      </div>
+
+      <p id="rv-message" class="rm-message" role="alert" aria-live="assertive" hidden></p>
+    </div>
+  </div>
+</section>

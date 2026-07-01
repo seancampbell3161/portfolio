@@ -23,6 +23,12 @@ const s = deriveStats([]); // zeroed defaults; the island overwrites on load
     <div class="rm-n"><span id="rm-logs-done">0</span><small> / {s.logsTotal}</small></div>
     <div class="rm-l">Decision logs</div>
   </div>
+  <div class="rm-stat rm-stat-retention">
+    <div class="rm-n"><span id="rv-dash-rotation">0</span><small> in rotation</small></div>
+    <div class="rm-l">
+      Retention<span id="rv-dash-private" hidden> · <span id="rv-dash-due">0</span> due · <span id="rv-dash-streak">0</span> streak</span>
+    </div>
+  </div>
 </div>
 
 <div class="rm-controls">
@@ -31,6 +37,7 @@ const s = deriveStats([]); // zeroed defaults; the island overwrites on load
     <span><i class="rm-dot d-reading"></i><b>Reading</b> — DDIA &amp; more</span>
     <span><i class="rm-dot d-foundations"></i><b>Foundations</b> — NeetCode</span>
     <span><i class="rm-dot d-judgment"></i><b>Judgment</b> — decision log</span>
+    <span><i class="rm-dot d-behavioral"></i><b>Retention</b> — spaced review</span>
   </div>
   <div class="rm-edit-wrap">
     <span id="rm-save-state" class="rm-save-state" role="status" aria-live="polite"></span>

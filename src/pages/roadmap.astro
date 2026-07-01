@@ -6,6 +6,7 @@ import RoadmapDashboard from "../components/roadmap/RoadmapDashboard.astro";
 import Milestone from "../components/roadmap/Milestone.astro";
 import BookCard from "../components/roadmap/BookCard.astro";
 import FoundationsSection from "../components/roadmap/FoundationsSection.astro";
+import RetentionSection from "../components/roadmap/RetentionSection.astro";
 import { build, reading, foundations } from "../data/roadmap";
 ---
 
@@ -49,6 +50,8 @@ import { build, reading, foundations } from "../data/roadmap";
         <FoundationsSection foundations={foundations} />
       </section>
 
+      <RetentionSection />
+
       <p class="rm-note">
         Progress is shared — what you see is the live, saved state. The owner can unlock edit
         mode to check items off.
@@ -61,6 +64,7 @@ import { build, reading, foundations } from "../data/roadmap";
 
 <script>
   import "../scripts/roadmap.ts";
+  import "../scripts/review.ts";
 </script>
 
 <style is:global>
@@ -70,6 +74,7 @@ import { build, reading, foundations } from "../data/roadmap";
     --reading: #5fb3ac;
     --foundations: #a78bfa;
     --judgment: #d98b6f;
+    --behavioral: #d9b45f;
     position: relative;
     z-index: 1;
     padding-top: 80px;
@@ -117,7 +122,7 @@ import { build, reading, foundations } from "../data/roadmap";
   /* ---- dashboard ---- */
   .rm-dash {
     display: grid;
-    grid-template-columns: repeat(4, 1fr);
+    grid-template-columns: repeat(5, 1fr);
     gap: 1px;
     background: var(--color-border);
     border: 1px solid var(--color-border);
@@ -189,6 +194,8 @@ import { build, reading, foundations } from "../data/roadmap";
   .d-reading { background: var(--reading); }
   .d-foundations { background: var(--foundations); }
   .d-judgment { background: var(--judgment); }
+  .d-behavioral { background: var(--behavioral); }
+  .f-behavioral { background: var(--behavioral); }
 
   .rm-edit-wrap { display: flex; align-items: center; gap: 12px; }
   .rm-save-state { font-family: var(--font-mono); font-size: 11px; color: var(--color-text-faint); }
@@ -442,8 +449,122 @@ import { build, reading, foundations } from "../data/roadmap";
 
   @media (max-width: 640px) {
     .rm-dash { grid-template-columns: repeat(2, 1fr); }
+    .rm-stat-retention { grid-column: 1 / -1; }
   }
   @media (prefers-reduced-motion: reduce) {
-    .roadmap-page * { transition: none !important; }
+    .roadmap-page * { transition: none !important; animation: none !important; }
   }
+
+  /* ---- retention track ---- */
+  .rm-retention {
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    background: var(--color-bg-elevated);
+    padding: 18px 22px;
+  }
+  .rv-summary {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 10px 22px;
+    justify-content: space-between;
+  }
+  .rv-rotation { display: flex; align-items: baseline; gap: 10px; }
+  .rv-rotation-n { font-size: 28px; font-weight: 700; letter-spacing: -0.01em; }
+  .rv-rotation-l { font-size: 13px; color: var(--color-text-secondary); }
+  .rv-of { color: var(--color-text-faint); }
+  .rv-breakdown { display: flex; flex-wrap: wrap; gap: 8px; }
+  .rv-chip {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: 0.04em;
+    padding: 3px 9px;
+    border-radius: var(--radius-full);
+    border: 1px solid color-mix(in srgb, var(--chip) 40%, transparent);
+    background: color-mix(in srgb, var(--chip) 8%, transparent);
+    color: color-mix(in srgb, var(--chip) 80%, var(--color-text-primary));
+    white-space: nowrap;
+  }
+  .rv-chip b { font-weight: 700; color: var(--color-text-primary); }
+  .rv-chip-build { --chip: var(--build); }
+  .rv-chip-reading { --chip: var(--reading); }
+  .rv-chip-foundations { --chip: var(--foundations); }
+  .rv-chip-judgment { --chip: var(--judgment); }
+  .rv-chip-behavioral { --chip: var(--behavioral); }
+
+  .rv-empty {
+    font-size: 13.5px;
+    color: var(--color-text-secondary);
+    margin: 14px 0 0;
+  }
+
+  .rv-runner { margin-top: 18px; border-top: 1px solid var(--color-border); padding-top: 16px; }
+  .rv-runner-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+  .rv-runner-title {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--behavioral);
+  }
+  .rv-runner-meta { font-family: var(--font-mono); font-size: 11.5px; color: var(--color-text-secondary); }
+  .rv-runner-meta b { color: var(--color-text-primary); font-weight: 600; }
+  .rv-save-state { margin-left: 10px; color: var(--color-text-faint); }
+
+  .rv-card {
+    margin-top: 14px;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    background: var(--color-bg);
+    padding: 18px 20px;
+  }
+  .rv-card .rv-chip { --chip: var(--behavioral); display: inline-block; margin-bottom: 12px; }
+  .rv-front { font-size: 16px; font-weight: 600; line-height: 1.5; margin: 0; }
+  .rv-back {
+    font-size: 14px;
+    line-height: 1.6;
+    color: var(--color-text-secondary);
+    margin: 14px 0 0;
+    padding-top: 14px;
+    border-top: 1px dashed var(--color-border-hover);
+    animation: rv-reveal var(--transition-base);
+  }
+  @keyframes rv-reveal { from { opacity: 0; } to { opacity: 1; } }
+  .rv-reveal {
+    margin-top: 14px;
+    font-family: var(--font-mono);
+    font-size: 12px;
+    color: var(--color-accent);
+    background: none;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-full);
+    padding: 7px 18px;
+    cursor: pointer;
+    transition: all var(--transition-base);
+  }
+  .rv-reveal:hover { border-color: var(--color-accent); background: var(--color-accent-bg); }
+  .rv-ratings { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 16px; }
+  .rv-rate {
+    flex: 1 1 auto;
+    min-width: 72px;
+    font-family: var(--font-mono);
+    font-size: 12px;
+    padding: 9px 12px;
+    border-radius: var(--radius-md);
+    border: 1px solid var(--color-border);
+    background: var(--color-bg-elevated);
+    color: var(--color-text-primary);
+    cursor: pointer;
+    transition: all var(--transition-base);
+  }
+  .rv-rate:hover { border-color: var(--color-text-secondary); }
+  .rv-rate:focus-visible { outline: 2px solid var(--behavioral); outline-offset: 2px; }
+  .rv-rate-again:hover { border-color: #f4a896; color: #f4a896; }
+  .rv-rate-easy:hover { border-color: var(--reading); color: var(--reading); }
 </style>
