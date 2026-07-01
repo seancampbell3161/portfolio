@@ -1,11 +1,11 @@
 import type { CardSchedule, Rating, ReviewState } from "./types";
 
-export const todayStr = (d: Date = new Date()): string => d.toISOString().slice(0, 10);
+export const todayStr = (d: Date = new Date()): string =>
+  `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 
 export const addDays = (dateStr: string, n: number): string => {
-  const d = new Date(dateStr + "T00:00:00");
-  d.setDate(d.getDate() + n);
-  return d.toISOString().slice(0, 10);
+  const [y, m, day] = dateStr.split("-").map(Number);
+  return todayStr(new Date(y, m - 1, day + n));
 };
 
 const EASE_FLOOR = 1.3;

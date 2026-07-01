@@ -42,7 +42,7 @@ describe("schedule — Good (2) on a new card", () => {
     const first = schedule(newCard(), 2, TODAY);   // reps 1, interval 1
     const second = schedule(first, 2, TODAY);      // reps 2, interval 3
     const third = schedule(second, 2, TODAY);      // reps 3
-    expect(third.interval).toBe(Math.round(3 * second.ease)); // 3 * 2.5 = 8
+    expect(third.interval).toBe(8); // round(3 * 2.5)
     expect(third.due).toBe(addDays(TODAY, third.interval));
   });
 });
@@ -51,7 +51,7 @@ describe("schedule — Hard (1) and Easy (3)", () => {
   it("Hard lowers ease by 0.15 and keeps interval >= 1", () => {
     const s = schedule(newCard(), 1, TODAY);
     expect(s.ease).toBeCloseTo(2.35, 5);
-    expect(s.interval).toBeGreaterThanOrEqual(1);
+    expect(s.interval).toBe(1);
   });
   it("Easy grows faster than Good and raises ease", () => {
     const easy = schedule(newCard(), 3, TODAY);
