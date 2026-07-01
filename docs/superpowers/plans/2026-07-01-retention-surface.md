@@ -1004,7 +1004,7 @@ export function blobsReviewStore(): ReviewStore {
 ```ts
 import { isAuthorized } from "../tokens.js";
 import type { ReviewStore } from "../review-store.js";
-import type { ReviewState } from "../../src/lib/review/types.js";
+import type { ReviewState } from "../../../src/lib/review/types.js";
 
 export interface ReviewDeps {
   store: ReviewStore;
