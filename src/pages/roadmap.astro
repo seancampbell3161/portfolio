@@ -79,6 +79,9 @@ import { build, reading, foundations } from "../data/roadmap";
     z-index: 1;
     padding-top: 80px;
   }
+  /* The `hidden` attribute must win over the display:flex/grid rules below
+     (e.g. .rv-ratings, .rv-summary) — otherwise a toggled-off element stays visible. */
+  .roadmap-page [hidden] { display: none !important; }
   .roadmap-page .rm-wrap {
     max-width: 920px;
     margin: 0 auto;
