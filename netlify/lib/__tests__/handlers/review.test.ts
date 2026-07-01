@@ -84,6 +84,13 @@ describe("handleReview POST", () => {
     );
     expect(res.status).toBe(400);
   });
+  it("rejects an array schedules value with 400", async () => {
+    const res = await handleReview(
+      post({ schedules: [], streak: 0, lastReviewDate: null }, "Bearer secret"),
+      deps(),
+    );
+    expect(res.status).toBe(400);
+  });
 });
 
 describe("handleReview other methods", () => {

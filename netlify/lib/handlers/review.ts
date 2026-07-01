@@ -18,7 +18,7 @@ const EMPTY: ReviewState = { schedules: {}, streak: 0, lastReviewDate: null };
 function isReviewState(x: unknown): x is ReviewState {
   if (typeof x !== "object" || x === null) return false;
   const s = x as Record<string, unknown>;
-  if (typeof s.schedules !== "object" || s.schedules === null) return false;
+  if (typeof s.schedules !== "object" || s.schedules === null || Array.isArray(s.schedules)) return false;
   if (typeof s.streak !== "number") return false;
   if (!(s.lastReviewDate === null || typeof s.lastReviewDate === "string")) return false;
   return true;
