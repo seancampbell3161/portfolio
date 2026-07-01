@@ -1,4 +1,4 @@
-import { constantTimeEquals } from "../tokens.js";
+import { isAuthorized } from "../tokens.js";
 import type { ProgressBlob, RoadmapStore } from "../roadmap-store.js";
 
 export interface ProgressDeps {
@@ -14,12 +14,6 @@ const json = (status: number, body: unknown) =>
     headers: { "content-type": "application/json" },
   });
 
-function bearer(req: Request): string | null {
-  const h = req.headers.get("authorization") || "";
-  const m = h.match(/^Bearer (.+)$/);
-  return m ? m[1] : null;
-}
-
 export async function handleProgress(req: Request, deps: ProgressDeps): Promise<Response> {
   if (req.method === "GET") {
     const blob = await deps.store.getProgress();
@@ -30,8 +24,7 @@ export async function handleProgress(req: Request, deps: ProgressDeps): Promise<
   }
 
   if (req.method === "POST") {
-    const token = bearer(req);
-    if (!token || !deps.token || !constantTimeEquals(token, deps.token)) {
+    if (!isAuthorized(req, deps.token)) {
       return json(401, { error: "unauthorized" });
     }
 

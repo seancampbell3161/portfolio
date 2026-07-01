@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { generateToken, constantTimeEquals } from "../tokens.js";
+import { generateToken, constantTimeEquals, bearerToken, isAuthorized } from "../tokens.js";
 
 describe("generateToken", () => {
   it("returns a 64-char lowercase hex string (32 bytes)", () => {
@@ -25,5 +25,32 @@ describe("constantTimeEquals", () => {
 
   it("returns false for different lengths", () => {
     expect(constantTimeEquals("abc", "abcd")).toBe(false);
+  });
+});
+
+const reqWith = (auth?: string) =>
+  new Request("http://x/api/review", auth ? { headers: { authorization: auth } } : undefined);
+
+describe("bearerToken", () => {
+  it("extracts the token from a Bearer header", () => {
+    expect(bearerToken(reqWith("Bearer abc123"))).toBe("abc123");
+  });
+  it("returns null when the header is missing or malformed", () => {
+    expect(bearerToken(reqWith())).toBeNull();
+    expect(bearerToken(reqWith("Token abc"))).toBeNull();
+    expect(bearerToken(reqWith("Bearer "))).toBeNull();
+  });
+});
+
+describe("isAuthorized", () => {
+  it("is true only for the exact expected token", () => {
+    expect(isAuthorized(reqWith("Bearer secret"), "secret")).toBe(true);
+    expect(isAuthorized(reqWith("Bearer wrong"), "secret")).toBe(false);
+  });
+  it("is false when no token is provided", () => {
+    expect(isAuthorized(reqWith(), "secret")).toBe(false);
+  });
+  it("is false when the expected token is empty (writes disabled)", () => {
+    expect(isAuthorized(reqWith("Bearer anything"), "")).toBe(false);
   });
 });
