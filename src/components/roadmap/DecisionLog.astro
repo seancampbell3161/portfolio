@@ -29,6 +29,7 @@ const { log } = Astro.props;
         data-log-field="prediction"
         data-log-id={log.id}
         rows="3"
+        maxlength="4000"
         placeholder="Commit your call before the build…"
         aria-labelledby={`${log.id}-predict-label`}
         disabled></textarea>
@@ -59,6 +60,7 @@ const { log } = Astro.props;
         data-log-field="confrontation"
         data-log-id={log.id}
         rows="3"
+        maxlength="4000"
         placeholder="What actually happened? Where were you wrong?"
         aria-labelledby={`${log.id}-confront-label`}
         disabled></textarea>

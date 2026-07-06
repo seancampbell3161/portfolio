@@ -238,6 +238,17 @@ describe("handleProgress POST logEntries", () => {
     expect(store.current()?.logEntries).toEqual({});
   });
 
+  it("preserves confidence 0 and does not treat it as empty/null", async () => {
+    const store = fakeStore();
+    const zero = { prediction: "", confidence: 0, confrontation: "", verdict: null };
+    const res = await handleProgress(
+      post({ completed: [], logEntries: { "m1.w1.log": zero } }, "Bearer secret"),
+      deps({ store }),
+    );
+    expect(res.status).toBe(200);
+    expect(store.current()?.logEntries).toEqual({ "m1.w1.log": zero });
+  });
+
   it("still accepts a POST with no logEntries field", async () => {
     const store = fakeStore();
     const res = await handleProgress(post({ completed: [] }, "Bearer secret"), deps({ store }));
