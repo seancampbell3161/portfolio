@@ -11,6 +11,13 @@ export interface DecisionLog {
   intro?: string;
 }
 
+export interface LogEntry {
+  prediction: string;
+  confidence: number | null; // integer 0–100
+  confrontation: string;
+  verdict: "right" | "partly" | "wrong" | null;
+}
+
 // --- Build track ---
 export interface BuildGroup {
   id: string;
@@ -233,7 +240,7 @@ export const allIds: Set<string> = new Set([
   ...foundations.map((i) => i.id),
 ]);
 
-const logIds = build.flatMap((m) => (m.logs ?? []).map((l) => l.id));
+export const logIds = build.flatMap((m) => (m.logs ?? []).map((l) => l.id));
 
 export interface RoadmapStats {
   build: {

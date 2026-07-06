@@ -18,9 +18,10 @@ function fakeStore(initial: ProgressBlob | null = null) {
 
 const clock = () => new Date("2026-06-13T12:00:00Z");
 const validIds = new Set(["m1.w1.mon", "m1.w1.log", "m1.w2.wed"]);
+const validLogIds = new Set(["m1.w1.log"]);
 
 function deps(over: Partial<ProgressDeps> = {}): ProgressDeps {
-  return { store: fakeStore(), token: "secret", validIds, clock, ...over };
+  return { store: fakeStore(), token: "secret", validIds, validLogIds, clock, ...over };
 }
 
 const get = () => new Request("http://x/api/progress");
@@ -38,18 +39,20 @@ describe("handleProgress GET", () => {
   it("returns empty state when no blob exists", async () => {
     const res = await handleProgress(get(), deps());
     expect(res.status).toBe(200);
-    expect(await res.json()).toEqual({ completed: [], updatedAt: null });
+    expect(await res.json()).toEqual({ completed: [], logEntries: {}, updatedAt: null });
   });
 
   it("returns stored progress when present", async () => {
     const store = fakeStore({
-      version: 1,
+      version: 2,
       updatedAt: "2026-06-01T00:00:00.000Z",
       completed: ["m1.w1.mon"],
+      logEntries: {},
     });
     const res = await handleProgress(get(), deps({ store }));
     expect(await res.json()).toEqual({
       completed: ["m1.w1.mon"],
+      logEntries: {},
       updatedAt: "2026-06-01T00:00:00.000Z",
     });
   });
@@ -111,9 +114,10 @@ describe("handleProgress POST success", () => {
     const out = await res.json();
     expect(out).toEqual({ ok: true, updatedAt: "2026-06-13T12:00:00.000Z" });
     expect(store.current()).toEqual({
-      version: 1,
+      version: 2,
       updatedAt: "2026-06-13T12:00:00.000Z",
       completed: ["m1.w1.mon", "m1.w1.log"],
+      logEntries: {},
     });
   });
 
@@ -128,9 +132,10 @@ describe("handleProgress POST success", () => {
 
   it("accepts an empty completed array as a reset", async () => {
     const store = fakeStore({
-      version: 1,
+      version: 2,
       updatedAt: "2026-06-01T00:00:00.000Z",
       completed: ["m1.w1.mon"],
+      logEntries: {},
     });
     const res = await handleProgress(post({ completed: [] }, "Bearer secret"), deps({ store }));
     expect(res.status).toBe(200);
@@ -143,5 +148,34 @@ describe("handleProgress other methods", () => {
     const req = new Request("http://x/api/progress", { method: "DELETE" });
     const res = await handleProgress(req, deps());
     expect(res.status).toBe(405);
+  });
+});
+
+describe("handleProgress GET logEntries", () => {
+  it("returns stored logEntries", async () => {
+    const store = fakeStore({
+      version: 2,
+      updatedAt: "2026-06-01T00:00:00.000Z",
+      completed: [],
+      logEntries: {
+        "m1.w1.log": { prediction: "RESP", confidence: 60, confrontation: "", verdict: null },
+      },
+    });
+    const res = await handleProgress(get(), deps({ store }));
+    const out = await res.json();
+    expect(out.logEntries).toEqual({
+      "m1.w1.log": { prediction: "RESP", confidence: 60, confrontation: "", verdict: null },
+    });
+  });
+
+  it("defaults a v1 blob (no logEntries) to an empty map", async () => {
+    const store = fakeStore({
+      version: 1,
+      updatedAt: "2026-06-01T00:00:00.000Z",
+      completed: ["m1.w1.mon"],
+    } as unknown as ProgressBlob);
+    const res = await handleProgress(get(), deps({ store }));
+    const out = await res.json();
+    expect(out.logEntries).toEqual({});
   });
 });

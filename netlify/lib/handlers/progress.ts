@@ -4,7 +4,8 @@ import type { ProgressBlob, RoadmapStore } from "../roadmap-store.js";
 export interface ProgressDeps {
   store: RoadmapStore;
   token: string; // expected admin token (from env)
-  validIds: Set<string>; // allowlist derived from roadmap content
+  validIds: Set<string>; // allowlist for `completed` (all IDs)
+  validLogIds: Set<string>; // allowlist for `logEntries` keys (log IDs only)
   clock: () => Date;
 }
 
@@ -19,6 +20,7 @@ export async function handleProgress(req: Request, deps: ProgressDeps): Promise<
     const blob = await deps.store.getProgress();
     return json(200, {
       completed: blob?.completed ?? [],
+      logEntries: blob?.logEntries ?? {},
       updatedAt: blob?.updatedAt ?? null,
     });
   }
@@ -46,9 +48,10 @@ export async function handleProgress(req: Request, deps: ProgressDeps): Promise<
     }
 
     const blob: ProgressBlob = {
-      version: 1,
+      version: 2,
       updatedAt: deps.clock().toISOString(),
       completed: [...new Set(completed)],
+      logEntries: {},
     };
     await deps.store.setProgress(blob);
     return json(200, { ok: true, updatedAt: blob.updatedAt });

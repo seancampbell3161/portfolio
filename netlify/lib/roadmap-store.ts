@@ -1,9 +1,13 @@
 import { getStore } from "@netlify/blobs";
+import type { LogEntry } from "../../src/data/roadmap.js";
+
+export type { LogEntry };
 
 export interface ProgressBlob {
-  version: 1;
+  version: 2;
   updatedAt: string; // ISO
   completed: string[]; // task & log IDs
+  logEntries: Record<string, LogEntry>; // decision-log prose, keyed by log ID
 }
 
 export interface RoadmapStore {
