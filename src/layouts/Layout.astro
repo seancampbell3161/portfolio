@@ -1,14 +1,16 @@
 ---
+import { ogImagePath } from "../lib/og.mjs";
+
 interface Props {
   title: string;
   description?: string;
   image?: string;
 }
 
-const { 
-  title, 
+const {
+  title,
   description = "Software Engineer building systems that bridge complex technical challenges with real human needs.",
-  image = "/og-image.png"
+  image = ogImagePath("home")
 } = Astro.props;
 
 const canonicalURL = new URL(Astro.url.pathname, Astro.site);

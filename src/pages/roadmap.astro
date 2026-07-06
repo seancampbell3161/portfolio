@@ -8,11 +8,13 @@ import BookCard from "../components/roadmap/BookCard.astro";
 import FoundationsSection from "../components/roadmap/FoundationsSection.astro";
 import RetentionSection from "../components/roadmap/RetentionSection.astro";
 import { build, reading, foundations } from "../data/roadmap";
+import { ogImagePath } from "../lib/og.mjs";
 ---
 
 <Layout
   title="Roadmap — Building Engineering Judgment | Sean Campbell"
   description="A public learning roadmap: building real systems (CodeCrafters), reading deeply (DDIA & more), and DSA fundamentals (NeetCode) — building engineering judgment in the open."
+  image={ogImagePath("roadmap")}
 >
   <Nav />
 

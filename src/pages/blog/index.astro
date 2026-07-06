@@ -4,6 +4,7 @@ import Nav from "../../components/Nav.astro";
 import Footer from "../../components/Footer.astro";
 import Newsletter from "../../components/Newsletter.astro";
 import { getCollection } from "astro:content";
+import { ogImagePath } from "../../lib/og.mjs";
 
 const posts = (
   await getCollection("blog", ({ data }) => {
@@ -15,6 +16,7 @@ const posts = (
 <Layout
   title="Blog | Sean Campbell"
   description="Thoughts on software engineering, architecture patterns, and lessons from production systems."
+  image={ogImagePath("blog")}
 >
   <Nav />
 
