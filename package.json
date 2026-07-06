@@ -8,6 +8,7 @@
     "build": "astro build",
     "preview": "astro preview",
     "astro": "astro",
+    "og": "node scripts/og-screenshots.mjs",
     "test": "vitest run",
     "test:watch": "vitest"
   },
@@ -23,6 +24,7 @@
   "devDependencies": {
     "@netlify/functions": "^5.2.0",
     "@types/node": "^25.6.0",
+    "playwright": "^1.61.1",
     "typescript": "^5.9.3",
     "vitest": "^4.1.5"
   }
