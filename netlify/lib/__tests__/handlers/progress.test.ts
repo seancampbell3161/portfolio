@@ -179,3 +179,69 @@ describe("handleProgress GET logEntries", () => {
     expect(out.logEntries).toEqual({});
   });
 });
+
+describe("handleProgress POST logEntries", () => {
+  const okEntry = { prediction: "RESP over JSON", confidence: 60, confrontation: "", verdict: null };
+
+  it("persists a valid logEntries map and round-trips via GET", async () => {
+    const store = fakeStore();
+    const res = await handleProgress(
+      post({ completed: [], logEntries: { "m1.w1.log": okEntry } }, "Bearer secret"),
+      deps({ store }),
+    );
+    expect(res.status).toBe(200);
+    expect(store.current()?.logEntries).toEqual({ "m1.w1.log": okEntry });
+  });
+
+  it("rejects an unknown log-id key with 400", async () => {
+    const res = await handleProgress(
+      post({ completed: [], logEntries: { "m1.w1.mon": okEntry } }, "Bearer secret"),
+      deps(),
+    );
+    expect(res.status).toBe(400);
+  });
+
+  it("rejects over-length prose with 400", async () => {
+    const long = { ...okEntry, prediction: "x".repeat(4001) };
+    const res = await handleProgress(
+      post({ completed: [], logEntries: { "m1.w1.log": long } }, "Bearer secret"),
+      deps(),
+    );
+    expect(res.status).toBe(400);
+  });
+
+  it("rejects an out-of-range confidence with 400", async () => {
+    const bad = { ...okEntry, confidence: 150 };
+    const res = await handleProgress(
+      post({ completed: [], logEntries: { "m1.w1.log": bad } }, "Bearer secret"),
+      deps(),
+    );
+    expect(res.status).toBe(400);
+  });
+
+  it("rejects an invalid verdict with 400", async () => {
+    const bad = { ...okEntry, verdict: "maybe" };
+    const res = await handleProgress(
+      post({ completed: [], logEntries: { "m1.w1.log": bad } }, "Bearer secret"),
+      deps(),
+    );
+    expect(res.status).toBe(400);
+  });
+
+  it("drops an entirely-empty entry before persisting", async () => {
+    const store = fakeStore();
+    const empty = { prediction: "", confidence: null, confrontation: "", verdict: null };
+    await handleProgress(
+      post({ completed: [], logEntries: { "m1.w1.log": empty } }, "Bearer secret"),
+      deps({ store }),
+    );
+    expect(store.current()?.logEntries).toEqual({});
+  });
+
+  it("still accepts a POST with no logEntries field", async () => {
+    const store = fakeStore();
+    const res = await handleProgress(post({ completed: [] }, "Bearer secret"), deps({ store }));
+    expect(res.status).toBe(200);
+    expect(store.current()?.logEntries).toEqual({});
+  });
+});
