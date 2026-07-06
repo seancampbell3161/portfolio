@@ -389,29 +389,131 @@ import { build, reading, foundations } from "../data/roadmap";
     margin-top: 16px;
     border: 1px dashed color-mix(in srgb, var(--judgment) 45%, transparent);
     border-radius: var(--radius-md);
-    padding: 16px 18px;
     background: color-mix(in srgb, var(--judgment) 6%, transparent);
+    overflow: hidden;
   }
-  .rm-log-head {
-    font-family: var(--font-mono);
-    font-size: 11px;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-    color: var(--judgment);
+  .rm-log[open] {
+    background: color-mix(in srgb, var(--judgment) 9%, transparent);
+  }
+  .rm-log-summary {
+    list-style: none;
+    cursor: pointer;
     display: flex;
     align-items: center;
-    gap: 8px;
-    margin-bottom: 6px;
+    gap: 11px;
+    padding: 13px 15px;
   }
-  .rm-log-intro { margin: 0 0 12px; font-size: 13.5px; color: var(--color-text-secondary); }
+  .rm-log-summary::-webkit-details-marker { display: none; }
   .rm-log-prompt {
+    flex: 1;
+    min-width: 0;
     font-size: 14px;
     color: var(--color-text-primary);
     font-weight: 500;
+    line-height: 1.4;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .rm-log[open] .rm-log-prompt {
+    white-space: normal;
+    font-style: italic;
     border-left: 2px solid var(--judgment);
     padding-left: 12px;
-    margin: 0 0 14px;
   }
+  .rm-log-status {
+    flex: none;
+    font-family: var(--font-mono);
+    font-size: 10px;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+    border-radius: var(--radius-full);
+    padding: 2px 9px;
+    border: 1px solid var(--color-border);
+    color: var(--color-text-muted);
+  }
+  .rm-log-status.is-predicted { color: var(--judgment); border-color: color-mix(in srgb, var(--judgment) 35%, transparent); text-transform: none; }
+  .rm-log-status.is-right { color: var(--reading); border-color: color-mix(in srgb, var(--reading) 40%, transparent); }
+  .rm-log-status.is-partly { color: #e0b45f; border-color: color-mix(in srgb, #e0b45f 40%, transparent); }
+  .rm-log-status.is-wrong { color: #d98b8b; border-color: color-mix(in srgb, #d98b8b 40%, transparent); }
+  .rm-log-status.is-none { color: var(--color-text-faint); }
+  .rm-log-chev {
+    flex: none;
+    color: var(--color-text-muted);
+    font-size: 11px;
+    transition: transform var(--transition-base);
+  }
+  @media (prefers-reduced-motion: reduce) { .rm-log-chev { transition: none; } }
+  .rm-log[open] .rm-log-chev { transform: rotate(90deg); }
+  .rm-log-summary:focus-visible { outline: 2px solid var(--judgment); outline-offset: 2px; }
+
+  .rm-log-body {
+    padding: 4px 15px 15px;
+    border-top: 1px dashed color-mix(in srgb, var(--judgment) 25%, transparent);
+  }
+  .rm-log-intro { margin: 12px 0 0; font-size: 13.5px; color: var(--color-text-secondary); }
+  .rm-phase { margin-top: 14px; }
+  .rm-phase-label {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    margin-bottom: 7px;
+    font-family: var(--font-mono);
+    font-size: 10px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--color-text-secondary);
+  }
+  .rm-phase-num {
+    width: 16px;
+    height: 16px;
+    border-radius: var(--radius-full);
+    flex: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 9px;
+    font-weight: 700;
+    color: var(--color-bg);
+    background: var(--judgment);
+  }
+  .rm-phase-when { color: var(--color-text-muted); text-transform: none; letter-spacing: 0; }
+  .rm-prose {
+    width: 100%;
+    box-sizing: border-box;
+    resize: vertical;
+    font: inherit;
+    font-size: 13px;
+    line-height: 1.55;
+    color: var(--color-text-primary);
+    background: var(--color-bg-elevated);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-sm);
+    padding: 9px 11px;
+  }
+  .rm-prose:disabled { color: var(--color-text-secondary); resize: none; opacity: 1; -webkit-text-fill-color: var(--color-text-secondary); }
+  .rm-prose:focus-visible { outline: none; border-color: color-mix(in srgb, var(--judgment) 50%, transparent); }
+  .rm-phase-meta { margin-top: 7px; }
+  .rm-field-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-family: var(--font-mono);
+    font-size: 10.5px;
+    letter-spacing: 0.04em;
+    color: var(--color-text-muted);
+  }
+  .rm-conf { width: 54px; }
+  .rm-conf, .rm-verdict {
+    font: inherit;
+    font-size: 11px;
+    color: var(--color-text-primary);
+    background: var(--color-bg-elevated);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-sm);
+    padding: 3px 7px;
+  }
+  .rm-conf:disabled, .rm-verdict:disabled { color: var(--color-text-secondary); -webkit-text-fill-color: var(--color-text-secondary); }
   .rm-mark {
     display: inline-flex;
     align-items: center;
