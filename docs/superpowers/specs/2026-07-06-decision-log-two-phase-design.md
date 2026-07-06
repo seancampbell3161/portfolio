@@ -42,7 +42,7 @@ export interface ProgressBlob {
 
 - **Backward compatible.** A stored v1 blob has no `logEntries`; readers treat a missing map as `{}`. No migration job — the first v2 write upgrades the blob in place.
 - **`completed` is untouched.** The "Logged" checkbox still adds/removes the log's ID in `completed`, so `deriveStats` and its tests need no changes (decision **A** from design review).
-- **Empty entries are not stored.** An entry with all-empty fields is omitted from the map on save, so the blob only grows with real content.
+- **Prose-less entries are not stored.** An entry is only real if a phase has prose; one with no prediction and no confrontation text is omitted on save (a bare confidence or verdict without prose isn't a real entry). This keeps the status pill coherent — a confidence-only entry never persists as a phantom "not started" row — and the blob only grows with real content.
 
 ## 4. Content model — no change
 
@@ -84,7 +84,7 @@ Validation (all failures → `400 { error }`, mirroring the existing unknown-ID 
 - `prediction` and `confrontation`: strings, each **≤ 4000 chars** (blob-bloat guard — the same concern the original spec raised for `completed`).
 - `confidence`: integer `0–100` or `null`.
 - `verdict`: one of `"right" | "partly" | "wrong"` or `null`.
-- Entries that are entirely empty are dropped before persisting.
+- Entries with no prose (empty `prediction` and `confrontation`) are dropped before persisting, regardless of `confidence`/`verdict`.
 
 `GET` returns `logEntries` alongside `completed` and `updatedAt` (missing map → `{}`). The token gate, `updatedAt` stamping via `deps.clock()`, and the `version` field are handled exactly as today (version written as `2`).
 
@@ -92,13 +92,13 @@ Validation (all failures → `400 { error }`, mirroring the existing unknown-ID 
 
 - **On load (`load()`):** GET now also reads `logEntries`. For each log, populate the prose fields **via `textContent` / input `.value`, never `innerHTML`** (XSS-safe — the prose is owner-written but renders on a public page), set the confidence/verdict controls, and compute the status pill (§6).
 - **Edit mode:** prose fields, confidence, and verdict become editable alongside the checkboxes. Editing any of them marks state dirty and triggers the **existing debounced save** (`SAVE_DEBOUNCE_MS`), which now serializes `{ completed, logEntries }`. The current optimistic-update / revert-on-error / clear-token-on-401 flow is reused unchanged.
-- **Assembling `logEntries` for POST:** read the current field values into the map, dropping all-empty entries so we never persist blank objects.
+- **Assembling `logEntries` for POST:** read the current field values into the map, dropping prose-less entries (same rule as the server) so we never persist bare metadata.
 - Dashboard derivation is **unchanged** — `logsDone` still comes from `completed` via `deriveStats`.
 
 ## 9. Security & quality floor
 
 - **XSS:** stored prose is injected only through `textContent` / `.value`. No `innerHTML` for any stored string.
-- **Blob bloat:** per-field length caps + dropping empty entries + known-ID-only keys bound the blob's growth (single writer, last-write-wins).
+- **Blob bloat:** per-field length caps + dropping prose-less entries + known-ID-only keys bound the blob's growth (single writer, last-write-wins).
 - **Token secrecy:** write path stays token-gated; the token never enters the client bundle (unchanged).
 - **A11y / responsive:** `<details>` gives keyboard + focus behavior for free; keep visible focus rings and the existing mobile reflow; `prefers-reduced-motion` already honored for the chevron transition.
 

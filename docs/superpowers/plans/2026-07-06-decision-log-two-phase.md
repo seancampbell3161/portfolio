@@ -16,7 +16,7 @@ Copied verbatim from `docs/superpowers/specs/2026-07-06-decision-log-two-phase-d
 - **`completed[]` semantics and `deriveStats` are UNCHANGED.** `logsDone` still derives from `completed`; the "Logged" checkbox still drives it (decision A). Do not modify `deriveStats` or its tests.
 - **Validation caps:** `prediction` and `confrontation` are strings ≤ **4000 chars** each; `confidence` is an integer **0–100** or `null`; `verdict` is one of `"right" | "partly" | "wrong"` or `null`.
 - **Unknown `logEntries` keys** (not a known log ID) → `400`.
-- **Entirely-empty entries** (all fields empty/null) are dropped before persisting and never stored.
+- **Prose-less entries** (no `prediction` and no `confrontation` text) are dropped before persisting and never stored — a bare `confidence`/`verdict` without prose is not a real entry. (Refined post-implementation from the original "all fields empty" rule so the status pill stays coherent; the inline code snapshots below predate this and were superseded in-repo.)
 - **XSS:** stored prose is written to the DOM ONLY via `textContent` / input `.value` — never `innerHTML`.
 - **Single writer, last-write-wins.** The admin token stays server-side and never enters the client bundle.
 - **`LogEntry` type is defined once** in `src/data/roadmap.ts` and imported by both the server (`netlify/lib`) and the client (`src/scripts`).

@@ -238,15 +238,25 @@ describe("handleProgress POST logEntries", () => {
     expect(store.current()?.logEntries).toEqual({});
   });
 
-  it("preserves confidence 0 and does not treat it as empty/null", async () => {
+  it("preserves confidence 0 (does not coerce it to null) when the entry has prose", async () => {
     const store = fakeStore();
-    const zero = { prediction: "", confidence: 0, confrontation: "", verdict: null };
+    const zero = { prediction: "no idea yet", confidence: 0, confrontation: "", verdict: null };
     const res = await handleProgress(
       post({ completed: [], logEntries: { "m1.w1.log": zero } }, "Bearer secret"),
       deps({ store }),
     );
     expect(res.status).toBe(200);
     expect(store.current()?.logEntries).toEqual({ "m1.w1.log": zero });
+  });
+
+  it("drops a prose-less entry that has only confidence or verdict", async () => {
+    const store = fakeStore();
+    const bare = { prediction: "", confidence: 60, confrontation: "", verdict: null };
+    await handleProgress(
+      post({ completed: [], logEntries: { "m1.w1.log": bare } }, "Bearer secret"),
+      deps({ store }),
+    );
+    expect(store.current()?.logEntries).toEqual({});
   });
 
   it("still accepts a POST with no logEntries field", async () => {

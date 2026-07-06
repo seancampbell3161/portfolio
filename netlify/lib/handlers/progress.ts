@@ -47,8 +47,9 @@ function validateLogEntries(raw: unknown, validLogIds: Set<string>): LogEntriesR
     }
     if (verdict !== null && (typeof verdict !== "string" || !VERDICTS.has(verdict))) return { ok: false };
 
-    // drop entirely-empty entries so the blob never stores blanks
-    if (prediction === "" && confrontation === "" && confidence === null && verdict === null) continue;
+    // an entry is only real if a phase has prose; a bare confidence or
+    // verdict without prediction/confrontation text is not stored
+    if (prediction === "" && confrontation === "") continue;
 
     out[id] = {
       prediction,

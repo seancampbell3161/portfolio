@@ -26,7 +26,7 @@ function statusFor(e: LogEntry | undefined): { text: string; cls: string } {
   if (!e || (!e.prediction && !e.confrontation)) return { text: "not started", cls: "is-none" };
   if (e.confrontation) {
     if (e.verdict) return { text: e.verdict, cls: `is-${e.verdict}` };
-    return { text: "confronted", cls: "is-partly" };
+    return { text: "confronted", cls: "is-confronted" };
   }
   const conf = e.confidence == null ? "" : ` · ${e.confidence}%`;
   return { text: `predicted${conf}`, cls: "is-predicted" };
@@ -192,7 +192,9 @@ function onLogFieldChange(event: Event) {
 function serializableLogEntries(): Record<string, LogEntry> {
   const out: Record<string, LogEntry> = {};
   for (const [id, e] of Object.entries(logEntries)) {
-    if (!e.prediction && !e.confrontation && e.confidence == null && !e.verdict) continue;
+    // an entry is only real if a phase has prose; a bare confidence or
+    // verdict without prediction/confrontation text is not persisted
+    if (!e.prediction && !e.confrontation) continue;
     out[id] = e;
   }
   return out;
