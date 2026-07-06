@@ -460,7 +460,7 @@ const { log } = Astro.props;
     {log.intro && <p class="rm-log-intro">{log.intro}</p>}
 
     <div class="rm-phase">
-      <div class="rm-phase-label">
+      <div class="rm-phase-label" id={`${log.id}-predict-label`}>
         <span class="rm-phase-num">1</span>Prediction
         <span class="rm-phase-when">— before you read the answer</span>
       </div>
@@ -470,6 +470,7 @@ const { log } = Astro.props;
         data-log-id={log.id}
         rows="3"
         placeholder="Commit your call before the build…"
+        aria-labelledby={`${log.id}-predict-label`}
         disabled></textarea>
       <div class="rm-phase-meta">
         <label class="rm-field-label">
@@ -489,7 +490,7 @@ const { log } = Astro.props;
     </div>
 
     <div class="rm-phase">
-      <div class="rm-phase-label">
+      <div class="rm-phase-label" id={`${log.id}-confront-label`}>
         <span class="rm-phase-num">2</span>Confrontation
         <span class="rm-phase-when">— after the build</span>
       </div>
@@ -499,6 +500,7 @@ const { log } = Astro.props;
         data-log-id={log.id}
         rows="3"
         placeholder="What actually happened? Where were you wrong?"
+        aria-labelledby={`${log.id}-confront-label`}
         disabled></textarea>
       <div class="rm-phase-meta">
         <label class="rm-field-label">
