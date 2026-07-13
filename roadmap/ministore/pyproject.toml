@@ -1,0 +1,12 @@
+[project]
+name = "ministore"
+version = "0.1.0"
+description = "A line-based TCP key/value server — a Python warm-up for the CodeCrafters builds."
+requires-python = ">=3.11"
+
+# Lets `from ministore.server import ...` resolve when you run pytest from this
+# directory, and points pytest at the tests/ folder.
+[tool.pytest.ini_options]
+pythonpath = ["."]
+testpaths = ["tests"]
+addopts = "-q"
