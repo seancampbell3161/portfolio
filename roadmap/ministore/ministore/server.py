@@ -11,6 +11,7 @@ Run it with:  python -m ministore.server
 import socket
 
 from ministore import protocol
+from ministore import store
 
 HOST = "127.0.0.1"
 DEFAULT_PORT = 4000
@@ -30,6 +31,7 @@ class MiniStore:
         self._sock: socket.socket | None = None
         # TODO M3: give the server a store, e.g.  self.store = Store()
         #          (from ministore.store import Store)
+        self._store = store.Store()
 
     def listen(self) -> int:
         """Create the listening socket and start accepting. Returns the port."""
@@ -87,19 +89,26 @@ class MiniStore:
                 line = buffer[:foundIndex]
                 del buffer[:foundIndex + 1]
 
-                name, arg = protocol.parse_command(line.decode())
+                res = None
+
+                name, args = protocol.parse_command(line.decode())
                 
                 if name == "PING":
-                    conn.send(protocol.encode_reply("PONG"))
-                if name == "ECHO":
-                    text = " ".join(arg)
-                    conn.sendall(protocol.encode_reply(text))
+                    res = "PONG"
+                elif name == "ECHO":
+                    text = " ".join(args)
+                    res = text
             
             # TODO M3 — Add SET / GET / DEL backed by self.store (ministore.store).
-            #   (mirrors Redis SET/GET)
-
+            #   (mirrors Redis SET/GET)                
+                elif name == "SET":
+                    res = self._store.set(args[0], " ".join(args[1:]))
+                elif name == "GET":
+                    res = self._store.get(args[0])
+                elif name == "DEL":
+                    res = self._store.delete(args[0])
             
-            
+                conn.sendall(protocol.encode_reply(res))
             # TODO M4 — Support `SET k v EX <seconds>` and expire keys lazily on
             #   read. (mirrors Redis key expiry)
 
