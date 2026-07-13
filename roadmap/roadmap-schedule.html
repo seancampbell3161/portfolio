@@ -99,6 +99,16 @@
         padding: 72px 24px 96px;
       }
 
+      a {
+        color: var(--build);
+        text-decoration: none;
+        border-bottom: 1px solid color-mix(in srgb, var(--build) 30%, transparent);
+        transition: border-color 0.2s ease;
+      }
+      a:hover {
+        border-bottom-color: var(--build);
+      }
+
       /* ---------- Masthead ---------- */
       .kicker {
         font-family: var(--font-mono);
@@ -833,11 +843,11 @@
           </div>
           <p class="card-goal">
             Front-load the courses so CodeCrafters isn't a language fight, and set the
-            "judgment" frame. No real build yet — optionally spike a "hello, socket" at the
-            end of week 2 and wire up the Redis track.
+            "judgment" frame. Warm up with the <b>MiniStore</b> project — a line-based TCP
+            key/value server that de-risks Redis stages 1–4 — then wire up the Redis track.
           </p>
           <div class="card-stats">
-            <span class="stat">no build hours</span>
+            <span class="stat">MiniStore warm-up</span>
             <span class="stat">2 courses started</span>
             <span class="stat">repo + CodeCrafters set up</span>
           </div>
@@ -845,7 +855,7 @@
             <div>
               <div class="tcol-h h-build"><span class="dot d-build"></span>Build</div>
               <ul class="tlist">
-                <li><b>None yet.</b><span class="sub">Optional: a throwaway TCP "echo" spike to de-risk week 3.</span></li>
+                <li><b>MiniStore warm-up</b><span class="sub">A line-based TCP key/value server — sockets, bytes, concurrency, lazy expiry. → <a href="ministore/README.md">roadmap/ministore/</a></span></li>
               </ul>
             </div>
             <div>
@@ -1203,11 +1213,12 @@
           <li><b>Saturday ships the artifact.</b> The decision log is the deliverable — three tracks rolling up into one defensible call. Miss a build stage and recover; don't skip the log.</li>
           <li><b>Database Internals & OSTEP can trail the build.</b> They're deeper than the build strictly needs; DDIA and APoSD finish within the 24 weeks, the rest carries past it. <b>Advanced Algorithms</b> is explicitly optional.</li>
           <li><b>Foundations is front-loaded.</b> The three courses cluster in the ramp + M1 so that by SQLite onward, more of each day's 2 hours can go to the build.</li>
+          <li><b>On the hard days, read the field guide.</b> A companion page — how to practice, how to get unstuck, and a reminder to be patient with yourself. → <a href="study-guide.html">study-guide.html</a></li>
         </ul>
       </div>
 
       <footer>
-        <span>Roadmap schedule · seanthedeveloper.com/roadmap</span>
+        <span>Roadmap schedule · <a href="study-guide.html">field guide for the hard days →</a></span>
         <span>~2h/day · Mon–Sat · Jun 22 – Dec 5, 2026</span>
       </footer>
     </main>
