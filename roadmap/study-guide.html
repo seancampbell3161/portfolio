@@ -1,0 +1,581 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Learning hard things — a field guide</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400;1,9..40,500&family=JetBrains+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --bg: #0a0a0b;
+        --panel: rgba(255, 255, 255, 0.03);
+        --panel-2: rgba(255, 255, 255, 0.05);
+        --border: rgba(255, 255, 255, 0.06);
+        --border-2: rgba(255, 255, 255, 0.12);
+
+        --text: #e4e4e7;
+        --text-2: #a1a1aa;
+        --text-3: #71717a;
+        --text-4: #52525b;
+
+        /* Same four-thread palette as the roadmap + schedule */
+        --build: #60a5fa;
+        --reading: #5fb3ac;
+        --foundations: #a78bfa;
+        --judgment: #d98b6f;
+
+        --font-sans: "DM Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        --font-mono: "JetBrains Mono", "Fira Code", monospace;
+
+        --radius: 14px;
+        --radius-sm: 9px;
+        --readw: 720px;
+      }
+
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+
+      html {
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+        scroll-behavior: smooth;
+      }
+
+      body {
+        font-family: var(--font-sans);
+        background: var(--bg);
+        color: var(--text);
+        line-height: 1.7;
+        min-height: 100vh;
+        position: relative;
+        overflow-x: hidden;
+      }
+
+      body::before {
+        content: "";
+        position: fixed;
+        inset: 0;
+        background-image:
+          linear-gradient(rgba(255, 255, 255, 0.02) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
+        background-size: 60px 60px;
+        pointer-events: none;
+        z-index: 0;
+      }
+      /* warm glow — signals this is the gentler companion to the schedule */
+      body::after {
+        content: "";
+        position: fixed;
+        top: -18%;
+        left: 50%;
+        width: 880px;
+        height: 560px;
+        transform: translateX(-50%);
+        background: radial-gradient(
+          ellipse at center,
+          rgba(217, 139, 111, 0.1),
+          rgba(167, 139, 250, 0.05) 45%,
+          transparent 70%
+        );
+        filter: blur(22px);
+        pointer-events: none;
+        z-index: 0;
+      }
+
+      .wrap {
+        position: relative;
+        z-index: 1;
+        max-width: var(--readw);
+        margin: 0 auto;
+        padding: 84px 24px 104px;
+      }
+
+      /* ---------- Masthead ---------- */
+      .kicker {
+        font-family: var(--font-mono);
+        font-size: 12px;
+        letter-spacing: 0.22em;
+        text-transform: uppercase;
+        color: var(--judgment);
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+      .kicker::after {
+        content: "";
+        flex: 1;
+        height: 1px;
+        background: linear-gradient(90deg, color-mix(in srgb, var(--judgment) 35%, transparent), transparent);
+      }
+
+      h1 {
+        font-size: clamp(2.3rem, 5.5vw, 3.6rem);
+        font-weight: 700;
+        letter-spacing: -0.03em;
+        line-height: 1.07;
+        margin: 24px 0 0;
+      }
+      .lede {
+        margin: 22px 0 0;
+        font-size: 1.12rem;
+        color: var(--text-2);
+        line-height: 1.7;
+      }
+      .lede strong { color: var(--text); font-weight: 600; }
+
+      /* ---------- North-star callout ---------- */
+      .north {
+        margin: 40px 0 8px;
+        border: 1px solid color-mix(in srgb, var(--judgment) 32%, transparent);
+        border-left: 3px solid var(--judgment);
+        background: color-mix(in srgb, var(--judgment) 7%, transparent);
+        border-radius: var(--radius);
+        padding: 24px 26px;
+      }
+      .north .tag {
+        font-family: var(--font-mono);
+        font-size: 11px;
+        letter-spacing: 0.16em;
+        text-transform: uppercase;
+        color: var(--judgment);
+        margin-bottom: 12px;
+      }
+      .north p {
+        font-size: 1.06rem;
+        color: var(--text);
+        line-height: 1.72;
+      }
+      .north p + p { margin-top: 12px; color: var(--text-2); font-size: 1rem; }
+
+      /* ---------- Sections ---------- */
+      .section {
+        margin-top: 64px;
+        --c: var(--build);
+      }
+      .s-no {
+        font-family: var(--font-mono);
+        font-size: 12px;
+        letter-spacing: 0.1em;
+        color: var(--c);
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+      .s-no .bar {
+        width: 26px;
+        height: 2px;
+        background: var(--c);
+        border-radius: 2px;
+      }
+      .section h2 {
+        font-size: clamp(1.5rem, 3.2vw, 1.9rem);
+        font-weight: 700;
+        letter-spacing: -0.02em;
+        line-height: 1.15;
+        margin: 14px 0 0;
+      }
+      .section > .intro {
+        margin-top: 12px;
+        color: var(--text-2);
+        font-size: 1.02rem;
+      }
+
+      .tips {
+        list-style: none;
+        margin-top: 24px;
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+      }
+      .tip {
+        position: relative;
+        background: var(--panel);
+        border: 1px solid var(--border);
+        border-left: 2px solid color-mix(in srgb, var(--c) 55%, transparent);
+        border-radius: var(--radius-sm);
+        padding: 16px 20px;
+        font-size: 1rem;
+        color: var(--text-2);
+        line-height: 1.65;
+        transition: border-color 0.2s ease, background 0.2s ease, transform 0.2s ease;
+      }
+      .tip:hover {
+        background: var(--panel-2);
+        border-left-color: var(--c);
+        transform: translateX(2px);
+      }
+      .tip b {
+        color: var(--text);
+        font-weight: 600;
+      }
+      .tip code {
+        font-family: var(--font-mono);
+        font-size: 0.85em;
+        color: color-mix(in srgb, var(--c) 80%, #fff);
+        background: color-mix(in srgb, var(--c) 12%, transparent);
+        padding: 1px 6px;
+        border-radius: 5px;
+      }
+
+      .c-build { --c: var(--build); }
+      .c-reading { --c: var(--reading); }
+      .c-foundations { --c: var(--foundations); }
+      .c-judgment { --c: var(--judgment); }
+
+      /* ---------- Pull quote ---------- */
+      .pull {
+        margin: 56px 0;
+        text-align: center;
+        font-size: clamp(1.3rem, 3vw, 1.7rem);
+        font-style: italic;
+        font-weight: 500;
+        line-height: 1.4;
+        letter-spacing: -0.01em;
+        color: var(--text);
+      }
+      .pull span { color: var(--judgment); }
+
+      /* ---------- Hard-days panel ---------- */
+      .harddays {
+        margin-top: 64px;
+        background: color-mix(in srgb, var(--judgment) 6%, transparent);
+        border: 1px dashed color-mix(in srgb, var(--judgment) 40%, transparent);
+        border-radius: var(--radius);
+        padding: 28px 28px 26px;
+      }
+      .harddays h2 {
+        font-size: 1.3rem;
+        font-weight: 700;
+        letter-spacing: -0.02em;
+      }
+      .harddays p.sub {
+        color: var(--text-2);
+        font-size: 0.98rem;
+        margin: 8px 0 20px;
+      }
+      .mantras {
+        list-style: none;
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+      }
+      .mantras li {
+        display: flex;
+        align-items: flex-start;
+        gap: 11px;
+        font-size: 0.98rem;
+        color: var(--text);
+        line-height: 1.5;
+      }
+      .mantras li::before {
+        content: "";
+        flex-shrink: 0;
+        width: 7px;
+        height: 7px;
+        margin-top: 8px;
+        border-radius: 2px;
+        background: var(--judgment);
+        transform: rotate(45deg);
+      }
+
+      /* ---------- Footer ---------- */
+      footer {
+        margin-top: 72px;
+        padding-top: 24px;
+        border-top: 1px solid var(--border);
+        font-family: var(--font-mono);
+        font-size: 12px;
+        color: var(--text-4);
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: space-between;
+        gap: 8px;
+      }
+      footer a {
+        color: var(--text-3);
+        text-decoration: none;
+        border-bottom: 1px solid transparent;
+        transition: color 0.2s ease, border-color 0.2s ease;
+      }
+      footer a:hover { color: var(--text-2); border-bottom-color: var(--border-2); }
+
+      /* ---------- Motion ---------- */
+      .reveal {
+        opacity: 0;
+        transform: translateY(14px);
+        animation: rise 0.6s cubic-bezier(0.2, 0.7, 0.2, 1) forwards;
+      }
+      @keyframes rise { to { opacity: 1; transform: none; } }
+
+      @media (max-width: 600px) {
+        .wrap { padding: 56px 18px 80px; }
+        .mantras { grid-template-columns: 1fr; }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        .reveal { animation: none; opacity: 1; transform: none; }
+        html { scroll-behavior: auto; }
+        .tip:hover { transform: none; }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="wrap">
+      <!-- ===================== Masthead ===================== -->
+      <header class="reveal" style="animation-delay: 0.02s">
+        <p class="kicker">A field guide · learning hard things</p>
+        <h1>How to study this —<br />and be kind to yourself while you do.</h1>
+        <p class="lede">
+          You picked a hard road on purpose: building real systems from raw sockets, reading the
+          deep books, doing the reps in a language you're still learning. <strong>It's supposed
+          to stretch you.</strong> This is the page to open on the days it feels like too much —
+          how to learn well, and how to stay patient with yourself long enough to get good.
+        </p>
+      </header>
+
+      <!-- ===================== North star ===================== -->
+      <div class="north reveal" style="animation-delay: 0.08s">
+        <div class="tag">Read this first</div>
+        <p>
+          Being patient with yourself isn't a consolation prize for when things are hard. It's
+          the actual technique — the thing that keeps you in the chair long enough for the hard
+          stuff to become easy.
+        </p>
+        <p>
+          You are not behind. There is no schedule you're failing. There's just the next two
+          hours, and showing up for them.
+        </p>
+      </div>
+
+      <!-- ===================== 01 · The struggle is the signal ===================== -->
+      <section class="section c-reading reveal" style="animation-delay: 0.12s">
+        <div class="s-no"><span class="bar"></span>01 · The struggle is the signal</div>
+        <h2>Feeling challenged means it's working — not that you're failing.</h2>
+        <p class="intro">
+          The hardest weeks are the early ones, because everything is new at once. That difficulty
+          isn't a verdict on you. It's the cost of learning, and it drops fast.
+        </p>
+        <ul class="tips">
+          <li class="tip">
+            <b>Watching a solution feels easy; writing it from a blank screen is a different skill.</b>
+            That gap is normal — it's the <i>fluency illusion</i>. Don't mistake "I followed the
+            explanation" for "I can do it." The only proof is the blank editor.
+          </li>
+          <li class="tip">
+            <b>"Easy" on these problems is relative to every problem, not to a beginner.</b> The
+            first problem in a new pattern is the hardest you'll ever see in that pattern. By the
+            third, it's "oh — same idea."
+          </li>
+          <li class="tip">
+            <b>You're learning two things at once: the pattern and Python.</b> A lot of "I'm stuck"
+            is really "I don't know how to <i>say</i> this in Python yet" — that's a quick lookup,
+            not a judgment on your ability.
+          </li>
+          <li class="tip">
+            <b>If it felt effortless, it wouldn't be teaching you anything.</b> The discomfort is the
+            muscle working. Researchers call it a <i>desirable difficulty</i> — and it's the whole point.
+          </li>
+        </ul>
+      </section>
+
+      <p class="pull reveal" style="animation-delay: 0.14s">
+        “The discomfort isn't the obstacle to learning.<br /><span>It is the learning.</span>”
+      </p>
+
+      <!-- ===================== 02 · How to actually practice ===================== -->
+      <section class="section c-build reveal" style="animation-delay: 0.16s">
+        <div class="s-no"><span class="bar"></span>02 · How to actually practice</div>
+        <h2>A few techniques do most of the work. Use these on purpose.</h2>
+        <p class="intro">
+          These aren't motivational — they're the highest-leverage, best-evidenced ways to make
+          things stick. They feel harder than re-reading, which is exactly why they work.
+        </p>
+        <ul class="tips">
+          <li class="tip">
+            <b>Test yourself instead of re-reading.</b> Close the lesson and try to reproduce it
+            from memory. Pulling knowledge <i>out</i> of your head (retrieval) builds it far more
+            than reviewing notes that merely feel familiar.
+          </li>
+          <li class="tip">
+            <b>Re-implement from scratch.</b> Once you understand a solution, delete it and rebuild
+            it from a blank file. If you can't, you haven't learned it yet — and knowing that is
+            useful, not shameful.
+          </li>
+          <li class="tip">
+            <b>Space it out.</b> Revisit a pattern a few days later, not ten times in one sitting.
+            The small forgetting-and-re-retrieving is where durable memory comes from. Cramming
+            feels productive and mostly isn't.
+          </li>
+          <li class="tip">
+            <b>Mix it up.</b> Once you have a few patterns, practice them interleaved rather than
+            blocked. It's harder and feels worse — and it's why the skill transfers to problems you
+            haven't seen before.
+          </li>
+          <li class="tip">
+            <b>Explain it in plain words.</b> If you can't, you don't fully understand it yet. Your
+            Saturday <i>decision log</i> is built for exactly this — teaching the idea back is the
+            real test.
+          </li>
+        </ul>
+      </section>
+
+      <!-- ===================== 03 · When you're stuck ===================== -->
+      <section class="section c-foundations reveal" style="animation-delay: 0.18s">
+        <div class="s-no"><span class="bar"></span>03 · When you're stuck</div>
+        <h2>Stuck is a state to manage, not a wall to headbutt.</h2>
+        <p class="intro">
+          There's a healthy way to struggle and a demoralizing one. The difference is mostly about
+          time and diagnosis.
+        </p>
+        <ul class="tips">
+          <li class="tip">
+            <b>Time-box the fight.</b> Give a genuine <code>20–30 min</code> attempt, then look at
+            the solution. Two hours stuck on one problem isn't grit — it's slow. The learning is in
+            the attempt <i>plus</i> the review.
+          </li>
+          <li class="tip">
+            <b>Looking is allowed.</b> Attempt → study the solution until you get <i>why</i> →
+            close it → rebuild from blank. That's studying, not cheating.
+          </li>
+          <li class="tip">
+            <b>Diagnose the wall.</b> Ask: "is it the <i>approach</i>, or the <i>Python</i>?"
+            Naming which gap it is stops one stuck moment from feeling like global incompetence.
+          </li>
+          <li class="tip">
+            <b>Don't open the editor first.</b> Restate the problem in your own words, work one tiny
+            example by hand, name the pattern — <i>then</i> code. Half of "stuck" is just coding too
+            early.
+          </li>
+          <li class="tip">
+            <b>Step away on purpose.</b> When truly jammed, walk away. The answer that shows up in
+            the shower is your brain working in the background. Breaks are part of the work, not a
+            break from it.
+          </li>
+        </ul>
+      </section>
+
+      <p class="pull reveal" style="animation-delay: 0.2s">
+        “Twenty honest minutes and a good review<br /><span>beats two hours of thrashing.</span>”
+      </p>
+
+      <!-- ===================== 04 · Consistency beats intensity ===================== -->
+      <section class="section c-reading reveal" style="animation-delay: 0.22s">
+        <div class="s-no"><span class="bar"></span>04 · Consistency beats intensity</div>
+        <h2>The streak is the strategy. Protect it over any single day.</h2>
+        <p class="intro">
+          Your whole schedule is built on small daily reps — two hours, six days a week — precisely
+          because that compounds where heroics burn out.
+        </p>
+        <ul class="tips">
+          <li class="tip">
+            <b>Small daily reps win.</b> Two focused hours a day will take you further than occasional
+            marathon weekends. Steady beats heroic, every time.
+          </li>
+          <li class="tip">
+            <b>Never miss twice.</b> One skipped day is life. Two is a habit unravelling. If you miss,
+            the only rule is to show up the next day — even for twenty minutes.
+          </li>
+          <li class="tip">
+            <b>Done beats perfect.</b> Sample the problems, don't exhaust them. Ship the rough decision
+            log. A finished imperfect thing teaches more than a perfect unfinished one.
+          </li>
+          <li class="tip">
+            <b>Lower the bar on bad days.</b> "Open the editor and re-read yesterday's code" is a valid
+            session. Momentum matters more than any one day's output.
+          </li>
+        </ul>
+      </section>
+
+      <!-- ===================== 05 · Protect the engine ===================== -->
+      <section class="section c-build reveal" style="animation-delay: 0.24s">
+        <div class="s-no"><span class="bar"></span>05 · Protect the engine</div>
+        <h2>You are the machine doing the learning. Maintain it.</h2>
+        <p class="intro">
+          A surprising amount of progress happens when you're <i>not</i> at the keyboard. Treat rest
+          and record-keeping as part of the method.
+        </p>
+        <ul class="tips">
+          <li class="tip">
+            <b>Sleep is part of studying.</b> Memory consolidates while you sleep; a tired hour is
+            worth a fraction of a rested one. Trading sleep for more reps is a bad exchange.
+          </li>
+          <li class="tip">
+            <b>Take real breaks.</b> Step away every <code>45–60 min</code>. The loose, unfocused time
+            is when your brain quietly connects what you just learned.
+          </li>
+          <li class="tip">
+            <b>Track wins, not just gaps.</b> Keep a one-line "today I got X working" note. The road is
+            long; without a record, your brain only ever shows you what's left. (Your roadmap's progress
+            bar is literally this — let it.)
+          </li>
+          <li class="tip">
+            <b>Keep a stuck log.</b> Jot what blocked you and how it resolved. Future-you hits the same
+            wall and the note is gold — and it quietly shows how much you've already learned.
+          </li>
+        </ul>
+      </section>
+
+      <!-- ===================== 06 · Be patient with yourself ===================== -->
+      <section class="section c-judgment reveal" style="animation-delay: 0.26s">
+        <div class="s-no"><span class="bar"></span>06 · Be patient with yourself</div>
+        <h2>The mindset that outlasts every hard week.</h2>
+        <p class="intro">
+          This is the one to come back to. The technique above keeps you efficient; this keeps you
+          going.
+        </p>
+        <ul class="tips">
+          <li class="tip">
+            <b>"I can't do this" → add one word: "yet."</b> It's the whole difference between a verdict
+            and a waypoint.
+          </li>
+          <li class="tip">
+            <b>Compare yourself to yesterday, not to anyone online.</b> The person whose post intimidates
+            you had their own brutal week one — you just didn't get to watch it.
+          </li>
+          <li class="tip">
+            <b>Feeling like a fraud is normal, especially self-taught.</b> Impostor feelings track
+            <i>growth</i>, not lack of ability — they show up precisely because you're doing hard, new
+            things.
+          </li>
+          <li class="tip">
+            <b>Confidence comes after competence, not before.</b> You don't wait to feel ready; you act,
+            and the feeling catches up. Every engineer you admire once sat exactly where you are, fighting
+            an "easy" problem.
+          </li>
+        </ul>
+      </section>
+
+      <!-- ===================== Hard-days panel ===================== -->
+      <div class="harddays reveal" style="animation-delay: 0.28s">
+        <h2>For the hard days</h2>
+        <p class="sub">When you don't have the patience to read the whole thing — just glance at these.</p>
+        <ul class="mantras">
+          <li>The struggle is the muscle working.</li>
+          <li>Add "yet."</li>
+          <li>Twenty honest minutes counts.</li>
+          <li>Watching ≠ doing — rebuild it from blank.</li>
+          <li>Look at the solution, then close it and redo it.</li>
+          <li>Never miss twice.</li>
+          <li>You vs. yesterday — no one else.</li>
+          <li>Rest is part of the work.</li>
+          <li>Is it the approach, or the Python?</li>
+          <li>You are not behind.</li>
+        </ul>
+      </div>
+
+      <footer>
+        <span>A field guide · companion to the <a href="roadmap-schedule.html">24-week schedule</a></span>
+        <span>be patient · show up · repeat</span>
+      </footer>
+    </main>
+  </body>
+</html>
