@@ -102,7 +102,11 @@ class MiniStore:
             # TODO M3 — Add SET / GET / DEL backed by self.store (ministore.store).
             #   (mirrors Redis SET/GET)                
                 elif name == "SET":
-                    res = self._store.set(args[0], " ".join(args[1:]))
+                    if args[-2] == "EX" and args[-1].isdigit():
+                        index = len(args) - 2
+                        res = self._store.set(args[0], " ".join(args[1:index]), float(args[-1]))
+                    else:
+                        res = self._store.set(args[0], " ".join(args[1:]))
                 elif name == "GET":
                     res = self._store.get(args[0])
                 elif name == "DEL":
