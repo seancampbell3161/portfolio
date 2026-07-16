@@ -9,6 +9,7 @@ Run it with:  python -m ministore.server
 """
 
 import socket
+import threading
 
 from ministore import protocol
 from ministore import store
@@ -32,6 +33,7 @@ class MiniStore:
         # TODO M3: give the server a store, e.g.  self.store = Store()
         #          (from ministore.store import Store)
         self._store = store.Store()
+        self._buffers = {}
 
     def listen(self) -> int:
         """Create the listening socket and start accepting. Returns the port."""
@@ -53,12 +55,15 @@ class MiniStore:
         while True:
             try:
                 conn, addr = self._sock.accept()
+                thread = threading.Thread(target=self._handle, args=(conn,))
+                thread.start()
+
             except OSError:
                 # The listening socket was closed (close() called) — stop.
                 break
             # `with conn:` guarantees the client socket is closed afterward.
-            with conn:
-                self._handle(conn)
+            # with conn:
+            #     self._handle(conn)
 
     def _handle(self, conn: socket.socket) -> None:
         """Handle one connected client.
@@ -66,55 +71,56 @@ class MiniStore:
         Milestone 1: echo raw bytes back until the client disconnects.
         """
         buffer = bytearray()
-        while True:
-            data = conn.recv(4096)
-            if not data:
-                # recv() returns b"" when the client has closed the connection.
-                return
-
-
-            # TODO M2 — Speak the line protocol instead of echoing.
-            #   Replace the echo above with:
-            #     1. append `data` to a per-connection bytearray buffer
-            #     2. while the buffer contains b"\n", split off one line
-            #     3. decode the line, hand it to protocol.parse_command(...)
-            #     4. dispatch on the command name, send protocol.encode_reply(...)
-            #   Start with PING -> "PONG" and ECHO <text> -> "<text>".
-            #   (mirrors Redis stages 2-3)
-            
-            buffer += data
-
-            while b"\n" in buffer:
-                foundIndex = buffer.find(b"\n")
-                line = buffer[:foundIndex]
-                del buffer[:foundIndex + 1]
-
-                res = None
-
-                name, args = protocol.parse_command(line.decode())
+        with conn:
+            while True:
+                data = conn.recv(4096)
+                if not data:
+                    # recv() returns b"" when the client has closed the connection.
+                    return
+    
+    
+                # TODO M2 — Speak the line protocol instead of echoing.
+                #   Replace the echo above with:
+                #     1. append `data` to a per-connection bytearray buffer
+                #     2. while the buffer contains b"\n", split off one line
+                #     3. decode the line, hand it to protocol.parse_command(...)
+                #     4. dispatch on the command name, send protocol.encode_reply(...)
+                #   Start with PING -> "PONG" and ECHO <text> -> "<text>".
+                #   (mirrors Redis stages 2-3)
                 
-                if name == "PING":
-                    res = "PONG"
-                elif name == "ECHO":
-                    text = " ".join(args)
-                    res = text
-            
-            # TODO M3 — Add SET / GET / DEL backed by self.store (ministore.store).
-            #   (mirrors Redis SET/GET)                
-                elif name == "SET":
-                    if args[-2] == "EX" and args[-1].isdigit():
-                        index = len(args) - 2
-                        res = self._store.set(args[0], " ".join(args[1:index]), float(args[-1]))
-                    else:
-                        res = self._store.set(args[0], " ".join(args[1:]))
-                elif name == "GET":
-                    res = self._store.get(args[0])
-                elif name == "DEL":
-                    res = self._store.delete(args[0])
-            
-                conn.sendall(protocol.encode_reply(res))
-            # TODO M4 — Support `SET k v EX <seconds>` and expire keys lazily on
-            #   read. (mirrors Redis key expiry)
+                buffer += data
+    
+                while b"\n" in buffer:
+                    foundIndex = buffer.find(b"\n")
+                    line = buffer[:foundIndex]
+                    del buffer[:foundIndex + 1]
+    
+                    res = None
+    
+                    name, args = protocol.parse_command(line.decode())
+                    
+                    if name == "PING":
+                        res = "PONG"
+                    elif name == "ECHO":
+                        text = " ".join(args)
+                        res = text
+                
+                # TODO M3 — Add SET / GET / DEL backed by self.store (ministore.store).
+                #   (mirrors Redis SET/GET)                
+                    elif name == "SET":
+                        if args[-2] == "EX" and args[-1].isdigit():
+                            index = len(args) - 2
+                            res = self._store.set(args[0], " ".join(args[1:index]), float(args[-1]))
+                        else:
+                            res = self._store.set(args[0], " ".join(args[1:]))
+                    elif name == "GET":
+                        res = self._store.get(args[0])
+                    elif name == "DEL":
+                        res = self._store.delete(args[0])
+                
+                    conn.sendall(protocol.encode_reply(res))
+                # TODO M4 — Support `SET k v EX <seconds>` and expire keys lazily on
+                #   read. (mirrors Redis key expiry)
 
     def close(self) -> None:
         """Close the listening socket (also unblocks serve_forever())."""
@@ -136,7 +142,7 @@ def main() -> None:
         server.close()
 
     # TODO M5 — Handle many clients at once.
-    #   Right now serve_forever() handles one client fully before accept()ing the
+    #   Right now serve_forever() handles one client fully before accepting the
     #   next, so a second `nc` session blocks. Two ways to fix it:
     #     (a) threading: spawn  threading.Thread(target=self._handle, args=(conn,))
     #         per connection (don't use `with conn` then — let the thread own it).
