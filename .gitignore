@@ -33,3 +33,6 @@ deno.lock
 # Superpowers working dir — scratch only (SDD briefs, brainstorm mockups). Specs
 # live under docs/superpowers/ and stay tracked.
 .superpowers/
+
+# Local-only working notes (not part of the site build)
+roadmap/interview/
