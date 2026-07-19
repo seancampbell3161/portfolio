@@ -33,7 +33,7 @@ class MiniStore:
         # TODO M3: give the server a store, e.g.  self.store = Store()
         #          (from ministore.store import Store)
         self._store = store.Store()
-        self._buffers = {}
+        self._buffers: dict[socket.socket, bytes] = {}
 
     def listen(self) -> int:
         """Create the listening socket and start accepting. Returns the port."""
@@ -54,16 +54,26 @@ class MiniStore:
             raise RuntimeError("call listen() before serve_forever()")
         while True:
             try:
+                # need to create a new connection and store it along with it's buffer
+                # anytime data gets sent through a connection, call the handle() for that particular connection
+                # how do I simultaneously do both?
+                # 
+                print('before')
                 conn, addr = self._sock.accept()
-                thread = threading.Thread(target=self._handle, args=(conn,))
-                thread.start()
+                print('after')
+                self._buffers[conn] = bytes()
+                for c, b in self._buffers.items():
+                    if c.recv(4096) != b"":
+                        self._handle(c)
+
 
             except OSError:
                 # The listening socket was closed (close() called) — stop.
                 break
             # `with conn:` guarantees the client socket is closed afterward.
-            # with conn:
-            #     self._handle(conn)
+            with conn:
+                self._buffers.pop(conn)
+                # self._handle(conn)
 
     def _handle(self, conn: socket.socket) -> None:
         """Handle one connected client.
@@ -72,13 +82,13 @@ class MiniStore:
         """
         buffer = bytearray()
         with conn:
-            while True:
+            # while True:
                 data = conn.recv(4096)
                 if not data:
                     # recv() returns b"" when the client has closed the connection.
                     return
     
-    
+                print('hit')
                 # TODO M2 — Speak the line protocol instead of echoing.
                 #   Replace the echo above with:
                 #     1. append `data` to a per-connection bytearray buffer
@@ -150,7 +160,6 @@ def main() -> None:
     #         registering the listen socket + each client for READ readiness.
     #   (a) is the quick win; (b) is closer to how a real server is built and a
     #   great thing to have wrestled with before Redis stage 4 ("concurrent clients").
-
 
 if __name__ == "__main__":
     main()
