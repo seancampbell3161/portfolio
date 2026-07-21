@@ -39,19 +39,20 @@ def connect(port: int) -> socket.socket:
 
 # --- Milestone 1: the echo server -------------------------------------------
 
+# Retired tests
 
-def test_echoes_bytes_back(port):
-    with connect(port) as client:
-        client.sendall(b"hello world")
-        assert client.recv(1024) == b"hello world"
+# def test_echoes_bytes_back(port):
+#     with connect(port) as client:
+#         client.sendall(b"hello world")
+#         assert client.recv(1024) == b"hello world"
 
 
-def test_echoes_across_multiple_writes(port):
-    with connect(port) as client:
-        client.sendall(b"foo")
-        assert client.recv(1024) == b"foo"
-        client.sendall(b"bar")
-        assert client.recv(1024) == b"bar"
+# def test_echoes_across_multiple_writes(port):
+#     with connect(port) as client:
+#         client.sendall(b"foo")
+#         assert client.recv(1024) == b"foo"
+#         client.sendall(b"bar")
+#         assert client.recv(1024) == b"bar"
 
 
 # --- Milestones 2-4: write these as you go ----------------------------------
@@ -91,3 +92,8 @@ def test_key_expires(port):  # M4  (uses a short TTL)
         assert roundtrip(client, "GET tmp") == "v"
         time.sleep(1.1)
         assert roundtrip(client, "GET tmp") == "(nil)"
+
+def test_echo_across_multiple_writes(port):
+    with connect(port) as client:
+        client.sendall(b"PING\nECHO hi\n")
+        assert client.recv(1024) == b"PONG\nhi\n"

@@ -9,7 +9,7 @@ Run it with:  python -m ministore.server
 """
 
 import socket
-import threading
+import selectors
 
 from ministore import protocol
 from ministore import store
@@ -33,7 +33,7 @@ class MiniStore:
         # TODO M3: give the server a store, e.g.  self.store = Store()
         #          (from ministore.store import Store)
         self._store = store.Store()
-        self._buffers: dict[socket.socket, bytes] = {}
+        self.sel = selectors.DefaultSelector()
 
     def listen(self) -> int:
         """Create the listening socket and start accepting. Returns the port."""
@@ -52,85 +52,66 @@ class MiniStore:
         """Accept connections until the listening socket is closed."""
         if self._sock is None:
             raise RuntimeError("call listen() before serve_forever()")
+
+        self.sel.register(fileobj=self._sock, events=selectors.EVENT_READ)
         while True:
             try:
-                # need to create a new connection and store it along with it's buffer
-                # anytime data gets sent through a connection, call the handle() for that particular connection
-                # how do I simultaneously do both?
-                # 
-                print('before')
-                conn, addr = self._sock.accept()
-                print('after')
-                self._buffers[conn] = bytes()
-                for c, b in self._buffers.items():
-                    if c.recv(4096) != b"":
-                        self._handle(c)
+                events = self.sel.select()
 
+                for key, mask in events:
+                    if key.fileobj == self._sock: #listening socket
+                        conn, addr = self._sock.accept()
+                        conn.setblocking(False)
+                        self.sel.register(fileobj=conn, events=selectors.EVENT_READ, data=bytearray())
+                    else: # client socket
+                        if key.data == b"":
+                            self.sel.unregister(key.fileobj)
+                            
+                        self._handle(key.fileobj, key.data)
+                    
+                # thread = threading.Thread(target=self._handle, args=(conn,))
+                # thread.start()
 
             except OSError:
                 # The listening socket was closed (close() called) — stop.
                 break
             # `with conn:` guarantees the client socket is closed afterward.
-            with conn:
-                self._buffers.pop(conn)
-                # self._handle(conn)
+            # with conn:
+            #     self._handle(conn)
 
-    def _handle(self, conn: socket.socket) -> None:
-        """Handle one connected client.
+    def _handle(self, conn, buffer) -> None:
+        data = conn.recv(4096)
 
-        Milestone 1: echo raw bytes back until the client disconnects.
-        """
-        buffer = bytearray()
-        with conn:
-            # while True:
-                data = conn.recv(4096)
-                if not data:
-                    # recv() returns b"" when the client has closed the connection.
-                    return
-    
-                print('hit')
-                # TODO M2 — Speak the line protocol instead of echoing.
-                #   Replace the echo above with:
-                #     1. append `data` to a per-connection bytearray buffer
-                #     2. while the buffer contains b"\n", split off one line
-                #     3. decode the line, hand it to protocol.parse_command(...)
-                #     4. dispatch on the command name, send protocol.encode_reply(...)
-                #   Start with PING -> "PONG" and ECHO <text> -> "<text>".
-                #   (mirrors Redis stages 2-3)
-                
-                buffer += data
-    
-                while b"\n" in buffer:
-                    foundIndex = buffer.find(b"\n")
-                    line = buffer[:foundIndex]
-                    del buffer[:foundIndex + 1]
-    
-                    res = None
-    
-                    name, args = protocol.parse_command(line.decode())
-                    
-                    if name == "PING":
-                        res = "PONG"
-                    elif name == "ECHO":
-                        text = " ".join(args)
-                        res = text
-                
-                # TODO M3 — Add SET / GET / DEL backed by self.store (ministore.store).
-                #   (mirrors Redis SET/GET)                
-                    elif name == "SET":
-                        if args[-2] == "EX" and args[-1].isdigit():
-                            index = len(args) - 2
-                            res = self._store.set(args[0], " ".join(args[1:index]), float(args[-1]))
-                        else:
-                            res = self._store.set(args[0], " ".join(args[1:]))
-                    elif name == "GET":
-                        res = self._store.get(args[0])
-                    elif name == "DEL":
-                        res = self._store.delete(args[0])
-                
-                    conn.sendall(protocol.encode_reply(res))
-                # TODO M4 — Support `SET k v EX <seconds>` and expire keys lazily on
-                #   read. (mirrors Redis key expiry)
+        buffer += data
+
+        while b"\n" in buffer:
+            foundIndex = buffer.find(b"\n")
+            line = buffer[:foundIndex]
+            del buffer[:foundIndex + 1]
+
+            res = None
+
+            name, args = protocol.parse_command(line.decode())
+            
+            if name == "PING":
+                res = "PONG"
+            elif name == "ECHO":
+                text = " ".join(args)
+                res = text            
+            elif name == "SET":
+                if args[-2] == "EX" and args[-1].isdigit():
+                    index = len(args) - 2
+                    res = self._store.set(args[0], " ".join(args[1:index]), float(args[-1]))
+                else:
+                    res = self._store.set(args[0], " ".join(args[1:]))
+            elif name == "GET":
+                res = self._store.get(args[0])
+            elif name == "DEL":
+                res = self._store.delete(args[0])
+
+            conn.sendall(protocol.encode_reply(res))
+        return
+
 
     def close(self) -> None:
         """Close the listening socket (also unblocks serve_forever())."""
@@ -160,6 +141,7 @@ def main() -> None:
     #         registering the listen socket + each client for READ readiness.
     #   (a) is the quick win; (b) is closer to how a real server is built and a
     #   great thing to have wrestled with before Redis stage 4 ("concurrent clients").
+
 
 if __name__ == "__main__":
     main()
