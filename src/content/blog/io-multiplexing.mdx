@@ -1,0 +1,47 @@
+---
+title: "How Apps Like Redis Are So Efficient"
+description: "The mechanism behind handling thousand of concurrent open connections."
+pubDate: 2026-07-22
+tags: ["i/o multiplexing", "redis", "performance"]
+draft: false
+---
+
+Ever wondered how application like Redis or nginx are able to handle a huge amount of data throughput without draining a ton of resources from your server?
+
+
+
+It comes down to I/O multiplexing, and it's something I've recently been going deeper into learning.
+
+
+
+For an application like redis to receive data, there needs to be a connection established between the server's operating system and the app, usually in the form of a socket which provides a constant stream of data. But in order for the application to listen for incoming data, it needs to use a CPU thread to perform the work. This in turn will 'block' that thread from performing any other tasks that need to use a thread to perform the work.
+
+
+
+A way to solve this is to spin up a new thread for each socket connection, giving each a dedicated worker thread that will allow the application to receive incoming bytes from any of the connections and handle them concurrently. However, this creates a new problem at-scale.
+
+When we delegate a thread to a task, the operating system allocates memory for the thread. What do you think is happening most of the time that those connections are alive? Is there data constantly being exchanged every second, or are most of those connections sitting there waiting for data to arrive? Most of the time, it's the latter. Now imagine we have thousands of different connections, each on their own thread constantly listening for data. That's A LOT of memory being allocated to connections that sit idle most of the time, and therefore going to waste.
+
+
+
+I/O multiplexing allows us to listen to multiple I/O connections using a single thread. There's a few different ways to do this, these are the event notification mechanisms our operating systems give us to allow us to do this, and they're typically run in an event loop:
+
+
+
+- _select_: you essentially register what you want to watch (called a file descriptor), for example maybe a port that clients will connect to. This uses a bitmask (a sequence of bits, basically an array of ints where each bit corresponds to a fd number. If bit 5 is set to 1, it means that fd 5 is being monitored). This blocks the thread until it returns which connections are ready. The downside is that it needs to scan every descriptor it's given, and every single call, and there's usually a hard cap as to the number of these.
+
+
+
+- _poll_: similar to select, you pass in what you want to track, this time as an array of structs, so no hard limit. The problem of scanning the entire list every call still persists.
+
+
+
+- _epoll_(Linux) / _kqueue_ (macOS): the modern answer. Instead of handing the kernel a fresh list every time, you register your descriptors once, and the kernel maintains that set internally. When you call epoll_wait(), it only returns the descriptors that became ready. This is what makes it practical to watch tens of thousands of connections at once, and it's the backbone of high-concurrency servers.
+
+
+<figure>
+  <a href="/images/io_multiplexing_select_poll_epoll.png" target="_blank" rel="noopener">
+    <img src="/images/io_multiplexing_select_poll_epoll.png" alt="I/O Multiplexing Diagram" />
+  </a>
+  <figcaption>I/O Multiplexing - clients connect and send data. The chosen mechanism notifies and the app handles. Event loops.</figcaption>
+</figure>
