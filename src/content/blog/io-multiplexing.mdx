@@ -20,11 +20,11 @@ For an application like redis to receive data, there needs to be a connection es
 
 A way to solve this is to spin up a new thread for each socket connection, giving each a dedicated worker thread that will allow the application to receive incoming bytes from any of the connections and handle them concurrently. However, this creates a new problem at-scale.
 
-When we delegate a thread to a task, the operating system allocates memory for the thread. What do you think is happening most of the time that those connections are alive? Is there data constantly being exchanged every second, or are most of those connections sitting there waiting for data to arrive? Most of the time, it's the latter. Now imagine we have thousands of different connections, each on their own thread constantly listening for data. That's A LOT of memory being allocated to connections that sit idle most of the time, and therefore going to waste.
+When we delegate a thread to a task, the operating system allocates memory for the thread. What do you think is happening most of the time that those connections are alive? Is there data constantly being exchanged every second, or are most of those connections sitting there waiting for data to arrive? Most of the time, it's the latter. Now imagine we have thousands of different connections, each on their own thread constantly listening for data. That's _a lot_ of memory being allocated to connections that sit idle most of the time, and therefore going to waste.
 
 
 
-I/O multiplexing allows us to listen to multiple I/O connections using a single thread. There's a few different ways to do this, these are the event notification mechanisms our operating systems give us to allow us to do this, and they're typically run in an event loop:
+I/O multiplexing allows us to listen to multiple connections using a single thread. There's a few different ways to do this — these are the event notification mechanisms our operating systems give us to allow this, and they're typically run in an event loop:
 
 
 
