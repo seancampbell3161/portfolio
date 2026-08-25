@@ -36,3 +36,10 @@ deno.lock
 
 # Local-only working notes (not part of the site build)
 roadmap/interview/
+
+# Python artifacts (roadmap exercises, e.g. the ministore branch)
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
