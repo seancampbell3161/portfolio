@@ -43,3 +43,6 @@ __pycache__/
 .venv/
 venv/
 .pytest_cache/
+
+# Local-only working notes for in-progress blog posts (transcripts, handoffs)
+notes/
