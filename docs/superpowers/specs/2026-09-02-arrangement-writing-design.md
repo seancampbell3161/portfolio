@@ -117,7 +117,7 @@ The index rows come from `indexRows(essays, now)` in `src/lib/timeline/track.ts`
 
 ## 7. The track segment
 
-`segmentRows(essays, currentId)` in `src/lib/timeline/track.ts`. Essays are sorted newest first, ties by id. With `i` the index of the current essay and `n` the count:
+`segmentRows(essays, currentId, now)` in `src/lib/timeline/track.ts`; `now` labels the now row. Essays are sorted newest first, ties by id. With `i` the index of the current essay and `n` the count:
 
 1. When `i` is 0, a now row; otherwise a more row labelled "{i} newer, all essays" linking to `/blog` ("1 newer" in the singular).
 2. When `i` is greater than 0, the essay row for `essays[i - 1]`.
@@ -170,7 +170,7 @@ The Inspector keeps its own UTC formatting for now; moving it onto this module i
 
 New:
 
-- `src/lib/timeline/track.ts`: `TrackRow`, `indexRows`, `segmentRows`, `writtenWhile`, `readingMinutes`.
+- `src/lib/timeline/track.ts`: `Essay`, `TrackRow`, `sortEssays`, `indexRows(essays, now)`, `segmentRows(essays, currentId, now)`, `writtenWhile(items, published, now)`, `readingMinutes(body)`.
 - `src/lib/timeline/__tests__/track.test.ts`.
 - `src/lib/dates.ts` and `src/lib/__tests__/dates.test.ts`.
 - `src/components/Track.astro`.
