@@ -1,26 +1,69 @@
 ---
-import Layout from '../layouts/Layout.astro';
-import TransportBar from '../components/TransportBar.astro';
-import Hero from '../components/Hero.astro';
-import Beyond from '../components/Beyond.astro';
-import Projects from '../components/Projects.astro';
-import Testimonial from '../components/Testimonial.astro';
-import Currently from '../components/Currently.astro';
-import Contact from '../components/Contact.astro';
-import Footer from '../components/Footer.astro';
+import Layout from "../layouts/Layout.astro";
+import TransportBar from "../components/TransportBar.astro";
+import Timeline from "../components/Timeline.astro";
+import Footer from "../components/Footer.astro";
+import { getTimeline } from "../lib/timeline/astro";
+
+const { items, now } = await getTimeline();
 ---
 
 <Layout title="Sean Campbell | Software Engineer">
-  <TransportBar showZoom now={new Date()} />
-  
-  <main>
-    <Hero />
-    <Beyond />
-    <Projects />
-    <Testimonial />
-    <Currently />
-    <Contact />
+  <TransportBar showZoom now={now} />
+
+  <main class="home">
+    <section class="hero">
+      <h1>Everything I've built, written and taught, in the order it happened.</h1>
+      <p>Software engineer in Dallas. Go, Rust and .NET. Click any clip to open it.</p>
+    </section>
+
+    <Timeline items={items} now={now} />
   </main>
-  
+
   <Footer />
 </Layout>
+
+<style>
+  .home {
+    padding-top: 110px;
+    padding-bottom: var(--space-4xl);
+  }
+  .hero {
+    max-width: var(--max-width);
+    margin: 0 auto;
+    padding: 0 40px 26px;
+    display: grid;
+    grid-template-columns: 1.35fr 1fr;
+    gap: 40px;
+    align-items: end;
+  }
+  .hero h1 {
+    font-size: 62px;
+    line-height: 1;
+    margin: 0;
+    font-variation-settings: "wdth" 100, "opsz" 96;
+  }
+  .hero p {
+    max-width: 36ch;
+    margin: 0 0 4px;
+    font-size: 17px;
+    line-height: 1.5;
+    color: var(--color-text-secondary);
+  }
+  @media (max-width: 899.98px) {
+    .home {
+      padding-top: 84px;
+    }
+    .hero {
+      display: block;
+      padding: 0 18px 12px;
+    }
+    .hero h1 {
+      font-size: 28px;
+      margin-bottom: 10px;
+    }
+    .hero p {
+      font-size: 13.5px;
+    }
+  }
+</style>
