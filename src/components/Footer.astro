@@ -64,12 +64,10 @@ const socialLinks = [
   }
   
   .footer-logo {
-    font-size: 18px;
-    font-weight: 700;
-    background: linear-gradient(135deg, var(--color-accent), var(--color-accent-secondary));
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
+    font-family: var(--font-display);
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--color-text-primary);
   }
   
   .footer-text {
@@ -89,22 +87,18 @@ const socialLinks = [
   }
   
   .social-link {
-    width: 40px;
-    height: 40px;
+    width: 36px;
+    height: 36px;
     display: flex;
     align-items: center;
     justify-content: center;
     color: var(--color-text-muted);
-    background: var(--color-bg-elevated);
-    border: 1px solid var(--color-border);
     border-radius: var(--radius-md);
-    transition: all var(--transition-base);
+    transition: color var(--transition-base);
   }
-  
+
   .social-link:hover {
-    color: var(--color-accent);
-    border-color: var(--color-accent-border);
-    transform: translateY(-2px);
+    color: var(--color-text-primary);
   }
   
   .copyright {
@@ -112,7 +106,7 @@ const socialLinks = [
     color: var(--color-text-faint);
   }
   
-  @media (max-width: 768px) {
+  @media (max-width: 899.98px) {
     .footer {
       padding: 32px 20px;
     }

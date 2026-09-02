@@ -1,0 +1,282 @@
+---
+import Icon from "./Icon.astro";
+import type { Lane } from "../lib/timeline/types";
+
+interface Props {
+  /** Which section this page belongs to; underlines the link in its lane color. */
+  active?: Lane;
+  /** Show the timeline zoom control (home page only). */
+  showZoom?: boolean;
+  /** Build time; the client script replaces the label with the real date. */
+  now?: Date;
+}
+
+const { active, showZoom = false, now = new Date() } = Astro.props;
+
+const links: { key: Lane | "contact"; label: string; href: string }[] = [
+  { key: "writing", label: "Writing", href: "/blog" },
+  { key: "building", label: "Building", href: "/#lane-building" },
+  { key: "learning", label: "Learning", href: "/roadmap" },
+  { key: "community", label: "Community", href: "/#lane-community" },
+  { key: "contact", label: "Contact", href: "/#contact" },
+];
+
+const socials = [
+  { href: "https://github.com/seancampbell3161", icon: "github" as const, label: "GitHub" },
+  { href: "https://linkedin.com/in/seancampbelldev", icon: "linkedin" as const, label: "LinkedIn" },
+];
+
+const year = now.getFullYear();
+const dateLabel = now.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+---
+
+<header class="tb">
+  <div class="tb-inner">
+    <a href="/" class="tb-name">Sean Campbell</a>
+
+    <nav class="tb-nav" aria-label="Site">
+      {links.map((l) => (
+        <a
+          href={l.href}
+          class:list={["tb-link", { on: l.key === active }]}
+          style={l.key !== "contact" ? `--c: var(--lane-${l.key})` : undefined}
+          aria-current={l.key === active ? "page" : undefined}
+        >
+          {l.label}
+        </a>
+      ))}
+    </nav>
+
+    <div class="tb-right">
+      {showZoom && (
+        <div class="tb-zoom" role="group" aria-label="Timeline zoom" data-zoom-control>
+          <button type="button" data-zoom="year" aria-pressed="true">{year}</button>
+          <button type="button" data-zoom="three-years" aria-pressed="false">3 yr</button>
+          <button type="button" data-zoom="all" aria-pressed="false">All</button>
+        </div>
+      )}
+      <time class="tb-date" datetime={now.toISOString().slice(0, 10)} data-now-label>{dateLabel}</time>
+      <div class="tb-social">
+        {socials.map((s) => (
+          <a href={s.href} class="tb-social-link" target="_blank" rel="noopener noreferrer" aria-label={s.label}>
+            <Icon name={s.icon} size={18} />
+          </a>
+        ))}
+      </div>
+      <button class="tb-menu" type="button" aria-label="Menu" aria-expanded="false" aria-controls="tb-mobile">
+        <span></span><span></span>
+      </button>
+    </div>
+  </div>
+
+  <div class="tb-mobile" id="tb-mobile" hidden>
+    {links.map((l) => (
+      <a href={l.href} class="tb-mobile-link" style={l.key !== "contact" ? `--c: var(--lane-${l.key})` : undefined}>
+        <i aria-hidden="true"></i>{l.label}
+      </a>
+    ))}
+    <div class="tb-mobile-social">
+      {socials.map((s) => (
+        <a href={s.href} class="tb-mobile-link" target="_blank" rel="noopener noreferrer">
+          <Icon name={s.icon} size={18} /><span>{s.label}</span>
+        </a>
+      ))}
+    </div>
+  </div>
+</header>
+
+<script>
+  const bar = document.querySelector<HTMLElement>(".tb");
+  const toggle = bar?.querySelector<HTMLButtonElement>(".tb-menu");
+  const panel = bar?.querySelector<HTMLElement>(".tb-mobile");
+
+  function setOpen(open: boolean) {
+    if (!toggle || !panel) return;
+    toggle.setAttribute("aria-expanded", String(open));
+    panel.hidden = !open;
+    bar?.classList.toggle("menu-open", open);
+  }
+
+  toggle?.addEventListener("click", () => setOpen(toggle.getAttribute("aria-expanded") !== "true"));
+  panel?.querySelectorAll("a").forEach((a) => a.addEventListener("click", () => setOpen(false)));
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape" && toggle?.getAttribute("aria-expanded") === "true") setOpen(false);
+  });
+</script>
+
+<style>
+  .tb {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 100;
+    background: color-mix(in srgb, var(--color-bg) 92%, transparent);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border-bottom: 1px solid var(--color-border);
+    font-size: 14px;
+  }
+  .tb-inner {
+    max-width: var(--max-width);
+    margin: 0 auto;
+    padding: 14px 40px;
+    display: flex;
+    align-items: center;
+    gap: 28px;
+  }
+  .tb-name {
+    font-family: var(--font-display);
+    font-weight: 600;
+    font-size: 17px;
+    color: var(--color-text-primary);
+    white-space: nowrap;
+  }
+  .tb-nav {
+    display: flex;
+    gap: 22px;
+  }
+  .tb-link {
+    position: relative;
+    padding: 4px 0;
+    color: var(--color-text-muted);
+    transition: color var(--transition-base);
+  }
+  .tb-link:hover,
+  .tb-link.on {
+    color: var(--color-text-primary);
+  }
+  .tb-link.on::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: -2px;
+    height: 2px;
+    border-radius: 1px;
+    background: var(--c, var(--color-text-primary));
+  }
+  .tb-right {
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+  .tb-zoom {
+    display: flex;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    overflow: hidden;
+    font-family: var(--font-mono);
+    font-size: 12px;
+  }
+  .tb-zoom button {
+    padding: 5px 11px;
+    background: none;
+    border: 0;
+    border-right: 1px solid var(--color-border);
+    color: var(--color-text-muted);
+    font: inherit;
+    cursor: pointer;
+  }
+  .tb-zoom button:last-child {
+    border-right: 0;
+  }
+  .tb-zoom button[aria-pressed="true"] {
+    background: var(--color-bg-hover);
+    color: var(--color-text-primary);
+  }
+  .tb-date {
+    font-family: var(--font-mono);
+    font-size: 13px;
+    color: var(--color-text-muted);
+    white-space: nowrap;
+  }
+  .tb-social {
+    display: flex;
+    gap: 4px;
+  }
+  .tb-social-link {
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--color-text-muted);
+    border-radius: var(--radius-md);
+  }
+  .tb-social-link:hover {
+    color: var(--color-text-primary);
+  }
+  .tb-menu {
+    display: none;
+    width: 36px;
+    height: 32px;
+    padding: 9px 8px;
+    background: none;
+    border: 0;
+    cursor: pointer;
+    flex-direction: column;
+    justify-content: space-between;
+  }
+  .tb-menu span {
+    display: block;
+    height: 2px;
+    background: var(--color-text-primary);
+    border-radius: 1px;
+    transition: transform var(--transition-base);
+  }
+  .tb.menu-open .tb-menu span:first-child {
+    transform: translateY(6px) rotate(45deg);
+  }
+  .tb.menu-open .tb-menu span:last-child {
+    transform: translateY(-6px) rotate(-45deg);
+  }
+  .tb-mobile {
+    display: none;
+  }
+  .tb-mobile[hidden] {
+    display: none;
+  }
+
+  @media (max-width: 899.98px) {
+    .tb-inner {
+      padding: 14px 18px;
+      gap: 14px;
+    }
+    .tb-nav,
+    .tb-social,
+    .tb-date {
+      display: none;
+    }
+    .tb-menu {
+      display: flex;
+    }
+    .tb-mobile:not([hidden]) {
+      display: flex;
+      flex-direction: column;
+      padding: 8px 18px 18px;
+      border-top: 1px solid var(--color-border);
+      background: var(--color-bg);
+    }
+    .tb-mobile-link {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 0;
+      font-size: 15px;
+      color: var(--color-text-secondary);
+    }
+    .tb-mobile-link i {
+      width: 8px;
+      height: 8px;
+      border-radius: 2px;
+      background: var(--c, var(--color-text-muted));
+    }
+    .tb-mobile-social {
+      margin-top: 8px;
+      padding-top: 8px;
+      border-top: 1px solid var(--color-border);
+    }
+  }
+</style>
