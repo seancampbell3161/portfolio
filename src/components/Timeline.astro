@@ -26,6 +26,11 @@ const win = windowFor(zoom, now, items);
 const allWin = windowFor("all", now, items);
 const estimate = estimateLabelWidth();
 
+// An item that started before the window (e.g. a mobile row for something that
+// began years earlier) needs its year shown, since `zoom` alone would drop it.
+const when = (item: TimelineItem) =>
+  whenLabel(item.start, item.start.getTime() < win.from.getTime() ? "all" : zoom);
+
 // Arrangement positions, per lane, then indexed by item id.
 const placed = new Map<string, { lane: number; row: number; x: number; w: number; labeled: boolean }>();
 LANES.forEach((lane, laneIndex) => {
@@ -99,7 +104,7 @@ const iso = (d: Date) => d.toISOString().slice(0, 10);
             data-out={p ? undefined : ""}
             style={style}
           >
-            <span class="tl-when">{whenLabel(item.start, zoom)}</span>
+            <span class="tl-when">{when(item)}</span>
             <a class="tl-clip" href={item.href} data-item-link={item.id}>
               <span class="tl-title">{item.title}</span>
               {item.subtitle && <small class="tl-sub">{item.subtitle}</small>}
@@ -303,22 +308,23 @@ const iso = (d: Date) => d.toISOString().slice(0, 10);
   .tl-clip {
     display: block;
     box-sizing: border-box;
-    height: 32px;
-    padding: 4px 10px 0;
+    height: 34px;
+    padding: 3px 10px 0;
     border-left: 3px solid var(--c);
     border-radius: var(--radius-sm);
     background: color-mix(in srgb, var(--c) 22%, var(--color-bg-elevated));
     color: var(--color-text-primary);
     font-size: 13px;
-    line-height: 1.2;
+    line-height: 1.15;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
   }
   .tl-sub {
     display: block;
-    margin-top: 2px;
+    margin-top: 1px;
     font-size: 12px;
+    line-height: 1.15;
     color: var(--color-text-muted);
   }
   .tl-item[data-status="in-progress"] .tl-clip {
@@ -353,17 +359,23 @@ const iso = (d: Date) => d.toISOString().slice(0, 10);
     margin: 0 0 0 8px;
   }
   /* A labeled moment's clip is unclipped by default (title + subtitle run inline);
-     bound it to the stage's right edge and ellipsize so a long label near the end
-     of the window doesn't spill past the stage and get hard-clipped mid-word.
-     Arrangement layout only: below 900px, --x no longer means a horizontal
-     window fraction (the vertical graph positions items with static grid rows). */
+     ellipsize it at every width so a long label doesn't paint past its box. Needed
+     everywhere, not just desktop: mobile stacks the subtitle as its own block line
+     within a fixed-width column, and without this, the base overflow:visible above
+     (kept for the demoted/hover-reveal popout) lets that line spill past the
+     phone's viewport, widening the page. */
+  .tl-item[data-kind="moment"]:not([data-labeled="false"]) .tl-clip {
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  /* Bound the item box to the stage's right edge so the now-ellipsized clip isn't
+     instead hard-clipped mid-word by tl-stage's own overflow:hidden. Arrangement
+     layout only: below 900px, --x no longer means a horizontal window fraction
+     (the vertical graph positions items with a static grid), so this part stays
+     desktop-scoped. */
   @media (min-width: 900px) {
     .tl-item[data-kind="moment"]:not([data-labeled="false"]) {
       max-width: calc((1 - var(--x)) * 100%);
-    }
-    .tl-item[data-kind="moment"]:not([data-labeled="false"]) .tl-clip {
-      overflow: hidden;
-      text-overflow: ellipsis;
     }
   }
   /* Demoted moment: bare dot; label appears on hover or focus. */
@@ -518,6 +530,9 @@ const iso = (d: Date) => d.toISOString().slice(0, 10);
       display: block;
       margin: 2px 0 0;
       font-size: 11px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
     }
     .tl-item[data-labeled="false"] .tl-title,
     .tl-item[data-labeled="false"] .tl-sub {
