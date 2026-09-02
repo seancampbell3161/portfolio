@@ -284,3 +284,9 @@ export function graphLayout(items: readonly TimelineItem[], w: Window, now: Date
 
   return { rows, bars, dots, nowRow };
 }
+
+/** The date column in the vertical graph. */
+export function whenLabel(date: Date, zoom: Zoom): string {
+  const m = MONTHS[date.getUTCMonth()];
+  return zoom === "year" ? m : `${m} ${date.getUTCFullYear()}`;
+}

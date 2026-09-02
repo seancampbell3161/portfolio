@@ -12,6 +12,7 @@ import {
   ticksFor,
   laneSummary,
   graphLayout,
+  whenLabel,
 } from "../layout.js";
 
 const d = (s: string) => new Date(s);
@@ -266,5 +267,13 @@ describe("graphLayout", () => {
   it("excludes items outside the window", () => {
     const g2 = graphLayout([...items, mk("old", "writing", "2025-01-01")], w, NOW);
     expect(g2.rows.some((r) => r.id === "old")).toBe(false);
+  });
+});
+
+describe("whenLabel", () => {
+  it("is the month at year zoom and month plus year otherwise", () => {
+    expect(whenLabel(d("2026-03-05"), "year")).toBe("Mar");
+    expect(whenLabel(d("2026-03-05"), "three-years")).toBe("Mar 2026");
+    expect(whenLabel(d("2026-03-05"), "all")).toBe("Mar 2026");
   });
 });
