@@ -1,61 +1,65 @@
 ---
 title: "I Won't Stop Coding"
 description: "Why, in the era of Agentic Coding, I will still be coding by hand"
-pubDate: 2026-08-26
-tags: ["Coding", "AI", "Mental Health", "Ethics"]
+pubDate: 2026-09-01
+tags: ["Coding", "AI", "Mental Health", "Fuuuuture"]
 draft: true
 ---
 
 > One day we'll be considered artists with our bespoke manual code.
 
-A friend sent me that, most likely tongue-in-cheek. It stuck with me anyway.
+A throwaway text from my friend, most likely tongue-in-cheek. But it really had me thinking about our future as Software Engineers.
 
-You've probably seen the discourse about how [coding is solved](https://x.com/mattpocockuk/status/2091434155561107647) (there's a great discussion between Matt Pocock and Boris Cherny in that thread) and how Software Engineers will be living on the streets in six months. The second half of that is outside the boundaries of reality for the most part, and it's a different post.
+You've probably seen the discourse about how [coding is solved](https://x.com/mattpocockuk/status/2091434155561107647) (there's a great discussion between Matt Pocock and Boris Cherny in that thread) and how Software Engineers will be living on the streets in six months. I don't think the second part will be happening anytime soon. If you can't take my word for it, [maybe Sam Altman can convince you otherwise](https://www.youtube.com/shorts/BcOhrxugBNU).
 
 This one is part rant, part ode to what I think is becoming a lost art: coding with your hands and your brain.
 
-Most of the coding is being offloaded to agents already. I don't think that reverses — we've passed the point of no return. AI writes code faster than any person can, and too many companies care about maximizing output. (Maximizing output and maximizing profit aren't the same thing, which is a rant for another day.)
+Most of the coding is being offloaded to agents already. I don't think that reverses. We've passed the point of no return and AI writes code faster than any person can, which too many companies care about. (Maximizing output and maximizing profit aren't the same thing, which is a rant for another day.)
 
 So the question isn't whether agents write the code. They do. It's what happens to *you* while they do it.
 
-**The thing that makes you good at using AI is the same thing you stop practicing when you only use AI.**
+**The thing that makes you good at using AI is the thing you stop practicing when you only use AI.**
 
-An agent is only as good as the direction you give it and the review you put it through. If you can hold the system in your head — how the pieces fit, where the state lives, what happens when this call fails — you get better output back. You catch the answer that looks plausible and isn't. You know which of the three approaches it offered is the one you'll still be happy with later.
+An agent is only as good as the direction you give it and the review you put it through. If you can hold the system in your head (how the pieces fit, where the state lives, what happens when this call fails) you get better output back. You catch the answer that looks right but isn't, and you know which of the three options it handed you is the one you'll still be happy with in six months.
 
-And when it breaks, you're still the one debugging it. That part didn't get automated. It got moved: from code you wrote and understood, to code you skimmed and approved.
+And when it breaks, you're still the one debugging it. That part didn't get automated, it just moved. You used to debug code you wrote and understood. Now you're debugging code you skimmed and approved.
 
-## I'm not the only one landing here
+<br />
 
-Dreams of Code has a video called [Writing code by hand is now an advantage](https://www.youtube.com/watch?v=bzYziksDslU), and the story at the center of it says what I keep failing to say.
+---  
 
-He'd built the media engine for his video editor entirely with agents. It worked. It just wasn't *correct* — it kept breaking on the real, messy range of media files his users threw at it. And then comes the part that actually got me: he couldn't fix it, because he couldn't **evaluate** the fix. He had no way to tell whether the agent's next attempt was right or merely running. So he stopped, went and learned FFmpeg by building a media pipeline by hand, and rebuilt the thing.
+<br />
+<br />
+
+Dreams of Code has a video called [Writing code by hand is now an advantage](https://www.youtube.com/watch?v=bzYziksDslU), and he says it better than I've been able to.
+
+He built the media engine for his video editor entirely with agents. It worked. It just wasn't *correct*. It kept breaking on the real, messy range of media files his users threw at it.
+
+Here's the part that got me: he couldn't fix it, because he couldn't **evaluate** the fix. He had no way to tell whether the agent's next attempt was right or just running. So he stopped, went and learned FFmpeg by building a media pipeline by hand, and rebuilt the thing.
 
 That's the failure mode, and it isn't "the AI wrote bad code." The AI wrote code that ran. What he'd traded away was the ability to judge it.
 
-He has a sharper example elsewhere in the same video: an agent reached for a mutex on a real-time audio thread. Perfectly reasonable-looking code. Also wrong, because blocking that thread drops samples, and the fix is a ring buffer. He caught it only because he'd once implemented that by hand and knew the constraint existed.
+There's a sharper example later in the same video. An agent reached for a mutex on a real-time audio thread. Perfectly reasonable-looking code. Also wrong, because blocking that thread drops samples, and what you actually want is a ring buffer. He caught it because he'd implemented that by hand once and knew the constraint was there.
 
-You cannot review your way to that. You either know it or you don't.
+You can't review your way to that. You either know it or you don't.
 
-[TK: Your version. A time an agent handed you something that ran and was wrong, and you only caught it — or only fixed it — because you understood the layer underneath. This is the paragraph that makes the post yours instead of a summary of his video.]
+## What I'm Actually Doing About It
 
-## That's the practical case. It isn't the real reason.
+I'm still using AI. Refusing it on principle would make me slower at things that don't need to be slow. But there's a difference between using it to *learn* and letting it spoon-feed me answers, and I want to stay on the right side of it.
 
-The real reason is that I liked it.
+So I make it argue with me instead. Poke holes in my approach. Tell me what I'm not accounting for. Explain the part I only half understand. And then I go write the code myself. The second it hands me a finished solution I didn't reason my way to, I've traded the exact skill I'm trying to keep for a few saved minutes.
 
-I've *always* enjoyed diving into the code — typing out the solution, figuring out the optimal implementation, weighing whether the thing I just wrote is actually readable. It's tons of little puzzles that, together, manifest a result that didn't exist in the world before. It was yours. It was the culmination of everything you'd learned up to that point, and the more you did it, the better you got (to a point).
+I have projects that I vibecode, and projects that I entirely handcode. I think it's important to do both, but when vibecoding, *make note of where AI's strengths are, and where it's still weak*. Be active in taking notice of the **outcome** of your prompts. Creating and coding projects by hand is an entirely different process, but it establishes the skills and qualities that are needed for great software, especially with AI. It's definitely slower. That's the price, and I've decided I'm fine paying it.
 
-What I miss is the small stuff. Reaching for the clever bit of syntax I picked up last month. Applying the pattern I finally understood. The hit of getting something *right*.
+The other thing is I'm reading again. Books on general software principles and architecture. Deep dives into the things I've used for years and never actually opened up-database internals, mostly.
 
-[TK: One thing you wrote by hand that you were proud of. What was the problem, what did you try, what made the final version good? Even a few sentences.]
+That's the foundation underneath the code I'd otherwise just be rubber-stamping. It's also the layer that lets you look at something that runs and know it's wrong.
 
-## Where he and I part ways
 
-He gets to the same place I do, in the end — his last reason for writing code by hand, and the one he calls the most important, is simply that he enjoys it. Wasting time on something you enjoy, he figures, isn't wasted time. He calls what he's doing re-embracing it.
+## Where Do We Go From Here?
 
-I can't quite get there. I believe every word of the practical case, and I'd make it in a room full of people who disagreed with me. But it isn't why I'm doing this, and I don't want to dress it up as a strategy.
+There's an argument that manual coding has an expiration date on it somewhere. Maybe the models get good enough that holding the system in your head stops being the main differentiator. I doubt it, but it's possible.
 
-The practical case has an expiration date. Maybe the models get good enough that holding the system in your head stops paying for itself. I doubt it, but maybe.
+But, just like everything disruptive before it, people will adapt. Jobs will change, sure, but the decisions behind the outcomes are still entirely driven by humans (at least the outcomes that last), and I don't think that will entirely go away. Furthermore, doing something you genuinely enjoy will never be a waste of time.
 
-The other reason doesn't expire. I'm not going to stop, and I'm not going to pretend it's a productivity decision.
-
-[TK: What does this look like on a Tuesday? Do you hand-write at work, or is this a side-project thing? The reader wants to know what you're actually committing to.]
+Maybe one day I'll be considered an artist for my bespoke manual code, but for now, I aim to just be a better Software Engineer.
