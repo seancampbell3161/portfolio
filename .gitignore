@@ -46,3 +46,6 @@ venv/
 
 # Local-only working notes for in-progress blog posts (transcripts, handoffs)
 notes/
+
+# Claude Code worktrees
+.claude/worktrees/
