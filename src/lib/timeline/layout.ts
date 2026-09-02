@@ -151,3 +151,136 @@ export function packLane(
   }
   return packRows(placed, estimate, maxRows);
 }
+
+// ---------- ruler ticks (spec §4: months / quarters / years) ----------
+
+export interface Tick {
+  label: string;
+  x: number;
+}
+
+const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+
+function periodStart(zoom: Zoom, d: Date): Date {
+  if (zoom === "year") return new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), 1));
+  if (zoom === "three-years") {
+    return new Date(Date.UTC(d.getUTCFullYear(), Math.floor(d.getUTCMonth() / 3) * 3, 1));
+  }
+  return new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
+}
+
+function nextPeriod(zoom: Zoom, d: Date): Date {
+  if (zoom === "year") return new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth() + 1, 1));
+  if (zoom === "three-years") return new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth() + 3, 1));
+  return new Date(Date.UTC(d.getUTCFullYear() + 1, 0, 1));
+}
+
+function periodLabel(zoom: Zoom, d: Date): string {
+  if (zoom === "year") return MONTHS[d.getUTCMonth()];
+  if (zoom === "three-years") return `Q${Math.floor(d.getUTCMonth() / 3) + 1} ${d.getUTCFullYear()}`;
+  return String(d.getUTCFullYear());
+}
+
+/** First tick is the period containing `from`, at x = 0; then every period boundary up to `to`. */
+export function ticksFor(zoom: Zoom, w: Window): Tick[] {
+  const first = periodStart(zoom, w.from);
+  const ticks: Tick[] = [{ label: periodLabel(zoom, first), x: 0 }];
+  for (let d = nextPeriod(zoom, first); d.getTime() <= w.to.getTime(); d = nextPeriod(zoom, d)) {
+    ticks.push({ label: periodLabel(zoom, d), x: fraction(d, w) });
+  }
+  return ticks;
+}
+
+// ---------- lane head summaries (spec §4) ----------
+
+function plural(n: number, noun: string): string {
+  return `${n} ${noun}${n === 1 ? "" : "s"}`;
+}
+
+export function laneSummary(lane: Lane, items: readonly TimelineItem[], w: Window, now: Date): string {
+  const inWindow = items.filter((i) => i.lane === lane && positionIn(i, w, now) !== null);
+  const n = inWindow.length;
+  if (n === 0) return "nothing yet";
+  const inProgress = inWindow.filter((i) => i.status === "in-progress").length;
+  switch (lane) {
+    case "writing":
+      return plural(n, "essay");
+    case "building": {
+      const live = inWindow.filter((i) => i.status === "live").length;
+      const parts: string[] = [];
+      if (live) parts.push(`${live} live`);
+      if (inProgress) parts.push(`${inProgress} in progress`);
+      return parts.length ? parts.join(", ") : plural(n, "project");
+    }
+    case "learning":
+      return inProgress ? `${inProgress} in progress` : plural(n, "item");
+    case "community":
+      return plural(n, "appearance");
+  }
+}
+
+// ---------- vertical graph for phones (spec §8) ----------
+
+export interface GraphBar {
+  id: string;
+  lane: Lane;
+  slot: 0 | 1;
+  fromRow: number;
+  /** null: runs to the now line */
+  toRow: number | null;
+}
+
+export interface GraphDot {
+  id: string;
+  lane: Lane;
+  row: number;
+}
+
+export interface GraphLayout {
+  rows: TimelineItem[];
+  bars: GraphBar[];
+  dots: GraphDot[];
+  /** index of the row after which the now line is drawn */
+  nowRow: number;
+}
+
+/**
+ * Rows are the in-window items in start order. A span's bar runs from its row
+ * down to the last row whose start is not after the span's end, or to the now
+ * line when ongoing. Each lane has two slots so two concurrent spans don't
+ * overlap; a third concurrent span shares slot 1.
+ */
+export function graphLayout(items: readonly TimelineItem[], w: Window, now: Date): GraphLayout {
+  const rows = items
+    .filter((i) => positionIn(i, w, now) !== null)
+    .sort((a, b) => a.start.getTime() - b.start.getTime() || a.id.localeCompare(b.id));
+  const nowRow = rows.filter((i) => i.start.getTime() <= now.getTime()).length;
+
+  const slotEnds: Record<Lane, [number, number]> = {
+    writing: [-1, -1],
+    building: [-1, -1],
+    learning: [-1, -1],
+    community: [-1, -1],
+  };
+  const bars: GraphBar[] = [];
+  const dots: GraphDot[] = [];
+
+  rows.forEach((item, idx) => {
+    if (item.kind === "moment") {
+      dots.push({ id: item.id, lane: item.lane, row: idx });
+      return;
+    }
+    let toRow: number | null = null;
+    if (item.end) {
+      let j = idx;
+      while (j + 1 < rows.length && rows[j + 1].start.getTime() <= item.end.getTime()) j++;
+      toRow = j;
+    }
+    const ends = slotEnds[item.lane];
+    const slot: 0 | 1 = ends[0] < idx ? 0 : 1;
+    ends[slot] = toRow ?? nowRow;
+    bars.push({ id: item.id, lane: item.lane, slot, fromRow: idx, toRow });
+  });
+
+  return { rows, bars, dots, nowRow };
+}

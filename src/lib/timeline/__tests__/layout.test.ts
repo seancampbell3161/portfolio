@@ -9,6 +9,9 @@ import {
   packLane,
   estimateLabelWidth,
   DOT_WIDTH,
+  ticksFor,
+  laneSummary,
+  graphLayout,
 } from "../layout.js";
 
 const d = (s: string) => new Date(s);
@@ -170,5 +173,98 @@ describe("packLane", () => {
     ];
     const rows = packLane(items, "writing", w, NOW, estimateLabelWidth());
     expect(rows.map((r) => r.item.id)).toEqual(["a"]);
+  });
+});
+
+describe("ticksFor", () => {
+  it("year: twelve month ticks starting at 0", () => {
+    const w = windowFor("year", NOW, []);
+    const t = ticksFor("year", w);
+    expect(t).toHaveLength(12);
+    expect(t[0]).toEqual({ label: "Jan", x: 0 });
+    expect(t[11].label).toBe("Dec");
+    expect(t[6].x).toBeCloseTo(181 / 365, 2);
+  });
+  it("three-years: first tick is the quarter containing from, then every quarter", () => {
+    const w = windowFor("three-years", NOW, []);
+    const t = ticksFor("three-years", w);
+    expect(t[0]).toEqual({ label: "Q3 2023", x: 0 });
+    expect(t[1].label).toBe("Q4 2023");
+    expect(t[t.length - 1].label).toBe("Q4 2026");
+  });
+  it("all: first tick is from's year at 0, then each January", () => {
+    const w = windowFor("all", NOW, [mk("a", "learning", "2021-01-15")]);
+    const t = ticksFor("all", w);
+    expect(t.map((x) => x.label)).toEqual(["2021", "2022", "2023", "2024", "2025", "2026"]);
+    expect(t[0].x).toBe(0);
+    expect(t[1].x).toBeGreaterThan(0);
+  });
+});
+
+describe("laneSummary", () => {
+  const w = windowFor("year", NOW, []);
+  it("counts essays", () => {
+    const items = [mk("a", "writing", "2026-05-01"), mk("b", "writing", "2026-07-01"), mk("z", "writing", "2025-01-01")];
+    expect(laneSummary("writing", items, w, NOW)).toBe("2 essays");
+    expect(laneSummary("writing", items.slice(0, 1), w, NOW)).toBe("1 essay");
+  });
+  it("describes building by status", () => {
+    const items = [
+      mk("a", "building", "2026-01-01", { end: "2026-06-01", status: "live" }),
+      mk("b", "building", "2026-06-01", { status: "in-progress" }),
+    ];
+    expect(laneSummary("building", items, w, NOW)).toBe("1 live, 1 in progress");
+  });
+  it("says nothing yet for an empty lane", () => {
+    expect(laneSummary("community", [], w, NOW)).toBe("nothing yet");
+  });
+  it("counts learning in progress and community appearances", () => {
+    expect(laneSummary("learning", [mk("a", "learning", "2026-01-01", { status: "in-progress" })], w, NOW)).toBe("1 in progress");
+    expect(laneSummary("community", [mk("a", "community", "2026-03-01"), mk("b", "community", "2026-08-01")], w, NOW)).toBe("2 appearances");
+  });
+});
+
+describe("graphLayout", () => {
+  const w = windowFor("year", NOW, []);
+  const items = [
+    mk("roaming", "building", "2026-01-01", { end: "2026-06-30", status: "live" }),
+    mk("ddia", "learning", "2026-01-01", { status: "in-progress" }),
+    mk("talk1", "community", "2026-03-01"),
+    mk("frontend", "writing", "2026-05-16"),
+    mk("daw", "building", "2026-06-01", { status: "in-progress" }),
+    mk("redis", "learning", "2026-06-01", { status: "in-progress" }),
+    mk("redis-essay", "writing", "2026-07-22"),
+    mk("wont-stop", "writing", "2026-09-01"),
+  ];
+  const g = graphLayout(items, w, NOW);
+
+  it("orders rows by start then id", () => {
+    expect(g.rows.map((r) => r.id)).toEqual([
+      "ddia", "roaming", "talk1", "frontend", "daw", "redis", "redis-essay", "wont-stop",
+    ]);
+  });
+  it("puts the now line after the last row that has started", () => {
+    expect(g.nowRow).toBe(8);
+  });
+  it("draws a finished span down to the last row starting on or before its end", () => {
+    const roaming = g.bars.find((b) => b.id === "roaming")!;
+    expect(roaming.fromRow).toBe(1);
+    expect(roaming.toRow).toBe(5); // redis starts 2026-06-01, before the 06-30 end
+  });
+  it("draws an ongoing span to the now line", () => {
+    expect(g.bars.find((b) => b.id === "daw")!.toRow).toBeNull();
+  });
+  it("gives concurrent spans in one lane different slots", () => {
+    expect(g.bars.find((b) => b.id === "ddia")!.slot).toBe(0);
+    expect(g.bars.find((b) => b.id === "redis")!.slot).toBe(1);
+    expect(g.bars.find((b) => b.id === "roaming")!.slot).toBe(0);
+    expect(g.bars.find((b) => b.id === "daw")!.slot).toBe(1);
+  });
+  it("lists moments as dots with their row", () => {
+    expect(g.dots.find((x) => x.id === "wont-stop")!.row).toBe(7);
+  });
+  it("excludes items outside the window", () => {
+    const g2 = graphLayout([...items, mk("old", "writing", "2025-01-01")], w, NOW);
+    expect(g2.rows.some((r) => r.id === "old")).toBe(false);
   });
 });
