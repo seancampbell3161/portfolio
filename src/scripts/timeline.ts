@@ -113,7 +113,9 @@ function init(root: HTMLElement) {
     const windowLabel = root.querySelector("[data-window-label]");
     if (windowLabel) {
       windowLabel.textContent =
-        zoom === "year" ? String(win.from.getFullYear()) : `${win.from.getFullYear()} to ${win.to.getFullYear()}`;
+        zoom === "year"
+          ? String(win.from.getUTCFullYear())
+          : `${win.from.getUTCFullYear()} to ${win.to.getUTCFullYear()}`;
     }
     const ticksEl = root.querySelector<HTMLElement>("[data-ticks]");
     if (ticksEl) {
