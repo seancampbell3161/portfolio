@@ -1,0 +1,25 @@
+---
+title: "Roaming.Camp"
+description: "A geospatial campsite discovery platform that unifies NPS, weather, cell coverage, and reservation data into a single interactive map."
+start: 2025-03-01 # placeholder
+end: 2026-06-30 # placeholder
+status: live
+stack: ["Next.js", "Go", "PostGIS", "Mapbox", "Docker"]
+url: "https://roaming.camp"
+---
+
+## Problem
+
+Planning outdoor trips requires juggling multiple disconnected sources — NPS, Recreation.gov, weather services, cell coverage maps — with no unified way to discover and evaluate campsites.
+
+## Solution
+
+Built a full-stack geospatial platform with a Next.js frontend backed by 4 Go microservices that aggregate NPS, RIDB, NWS, and FCC data into an interactive Mapbox map with site details, weather, and cell coverage.
+
+## Tradeoffs
+
+Chose microservices over a monolith — each service (places, weather, coverage, reservations) scales and deploys independently, but adds orchestration complexity. PostGIS handles spatial queries correctly (Earth curvature) at the cost of a heavier database dependency.
+
+## Impact
+
+Consolidates 4+ data sources into a single map-based interface. Background sync keeps data fresh without blocking users, and the BFF pattern keeps internal services unexposed.
