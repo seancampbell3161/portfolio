@@ -2,10 +2,12 @@
 import Layout from "../layouts/Layout.astro";
 import TransportBar from "../components/TransportBar.astro";
 import Timeline from "../components/Timeline.astro";
+import Inspector from "../components/Inspector.astro";
+import ContactBlock from "../components/ContactBlock.astro";
 import Footer from "../components/Footer.astro";
 import { getTimeline } from "../lib/timeline/astro";
 
-const { items, now } = await getTimeline();
+const { items, now, projects } = await getTimeline();
 ---
 
 <Layout title="Sean Campbell | Software Engineer">
@@ -18,6 +20,8 @@ const { items, now } = await getTimeline();
     </section>
 
     <Timeline items={items} now={now} />
+    <Inspector items={items} projects={projects} />
+    <ContactBlock />
   </main>
 
   <Footer />

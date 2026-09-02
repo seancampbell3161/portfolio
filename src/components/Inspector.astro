@@ -1,0 +1,265 @@
+---
+import type { CollectionEntry } from "astro:content";
+import type { Lane, TimelineItem } from "../lib/timeline/types";
+
+interface Props {
+  items: TimelineItem[];
+  projects: CollectionEntry<"projects">[];
+}
+
+const { items, projects } = Astro.props;
+
+// Case-study bodies, rendered once, keyed by slug (which is the item id).
+const caseStudies = new Map<string, any>();
+for (const p of projects) {
+  const { Content } = await p.render();
+  caseStudies.set(p.slug, Content);
+}
+
+const laneName = (lane: Lane) => lane[0].toUpperCase() + lane.slice(1);
+const monthYear = (d: Date) => d.toLocaleDateString("en-US", { month: "long", year: "numeric", timeZone: "UTC" });
+const longDate = (d: Date) =>
+  d.toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric", timeZone: "UTC" });
+
+function statusText(item: TimelineItem): string {
+  switch (item.status) {
+    case "in-progress":
+      return `in progress since ${monthYear(item.start)}`;
+    case "live":
+      return "live";
+    case "planned":
+      return "planned";
+    default:
+      return item.end ? `${monthYear(item.start)} to ${monthYear(item.end)}` : longDate(item.start);
+  }
+}
+
+const capitalized = (s: string) => (s === "in-progress" ? "In progress" : s[0].toUpperCase() + s.slice(1));
+---
+
+<div class="inspector">
+  {items.map((item) => {
+    const b = item.body;
+    const CaseStudy = item.lane === "building" ? caseStudies.get(item.id) : undefined;
+    return (
+      <section
+        class="insp"
+        id={`item-${item.id}`}
+        tabindex="-1"
+        role="region"
+        aria-labelledby={`item-${item.id}-title`}
+        style={`--c:var(--lane-${item.lane})`}
+      >
+        <div class="insp-main">
+          <p class="insp-k"><i aria-hidden="true"></i>{laneName(item.lane)}, {statusText(item)}</p>
+          <h2 id={`item-${item.id}-title`}>{item.title}</h2>
+          {b && <p class="insp-desc">{b.description}</p>}
+          {b?.lane === "learning" && b.testimonial && (
+            <figure class="insp-quote">
+              <blockquote>{b.testimonial.quote}</blockquote>
+              <figcaption>{b.testimonial.author}, {b.testimonial.role}</figcaption>
+            </figure>
+          )}
+          {CaseStudy && (
+            <div class="insp-body">
+              <CaseStudy />
+            </div>
+          )}
+          <div class="insp-links">
+            {b?.lane === "writing" && <a href={b.href}>Read the essay</a>}
+            {b?.lane === "building" && b.url && (
+              <a href={b.url} target="_blank" rel="noopener noreferrer">Visit the site</a>
+            )}
+            {b?.lane === "building" && b.source && (
+              <a href={b.source} target="_blank" rel="noopener noreferrer">Source on GitHub</a>
+            )}
+            {b?.lane === "learning" && <a href={b.roadmapHref}>See it on the roadmap</a>}
+            {b?.lane === "community" && b.url && (
+              <a href={b.url} target="_blank" rel="noopener noreferrer">Details</a>
+            )}
+            <a href="#" class="insp-close" data-inspector-close>Close</a>
+          </div>
+        </div>
+        <aside class="insp-side">
+          {b?.lane === "building" && (
+            <dl class="insp-facts">
+              <dt>Stack</dt><dd>{b.stack.join(", ")}</dd>
+              <dt>Started</dt><dd>{monthYear(b.started)}</dd>
+              <dt>Status</dt><dd>{capitalized(b.status)}</dd>
+            </dl>
+          )}
+          {b?.lane === "writing" && (
+            <dl class="insp-facts">
+              <dt>Published</dt><dd>{longDate(b.published)}</dd>
+            </dl>
+          )}
+          {b?.lane === "community" && (
+            <dl class="insp-facts">
+              <dt>With</dt><dd>{b.org}</dd>
+            </dl>
+          )}
+          {b?.lane === "learning" && (
+            <dl class="insp-facts">
+              <dt>When</dt>
+              <dd>{item.end ? `${monthYear(item.start)} to ${monthYear(item.end)}` : `since ${monthYear(item.start)}`}</dd>
+            </dl>
+          )}
+        </aside>
+      </section>
+    );
+  })}
+</div>
+
+<style>
+  .inspector {
+    max-width: var(--max-width);
+    margin: 0 auto;
+    padding: 0 40px;
+  }
+  .insp {
+    display: none;
+    grid-template-columns: 1.4fr 1fr;
+    margin-top: 20px;
+    border: 1px solid var(--color-border);
+    border-top: 3px solid var(--c);
+    border-radius: var(--radius-md);
+    background: var(--color-bg-elevated);
+  }
+  /* Without JavaScript the URL hash shows a panel; with it, the script owns the state
+     (see src/scripts/timeline.ts, which adds the js class). */
+  html:not(.js) .insp:target,
+  .insp[data-open] {
+    display: grid;
+  }
+  .insp:focus {
+    outline: none;
+  }
+  .insp-main {
+    padding: 24px 28px 26px;
+  }
+  .insp-side {
+    padding: 24px 28px;
+    border-left: 1px solid var(--color-border);
+  }
+  .insp-k {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 0 0 8px;
+    font-size: 13px;
+    color: var(--color-text-muted);
+  }
+  .insp-k i {
+    width: 8px;
+    height: 8px;
+    border-radius: 2px;
+    background: var(--c);
+  }
+  .insp h2 {
+    margin: 0 0 12px;
+    font-size: 34px;
+    line-height: 1.05;
+  }
+  .insp-desc {
+    margin: 0;
+    max-width: 52ch;
+    font-size: 15.5px;
+    line-height: 1.55;
+    color: var(--color-text-secondary);
+  }
+  .insp-quote {
+    margin: 18px 0 0;
+    padding: 2px 0 2px 18px;
+    border-left: 3px solid var(--c);
+  }
+  .insp-quote blockquote {
+    margin: 0;
+    font-size: 15.5px;
+    line-height: 1.55;
+    font-style: italic;
+    color: var(--color-text-primary);
+  }
+  .insp-quote figcaption {
+    margin-top: 8px;
+    font-size: 13px;
+    color: var(--color-text-muted);
+  }
+  .insp-body {
+    margin-top: 18px;
+    max-width: 62ch;
+    font-size: 15px;
+    line-height: 1.6;
+    color: var(--color-text-secondary);
+  }
+  .insp-body :global(h2) {
+    margin: 18px 0 6px;
+    font-family: var(--font-sans);
+    font-size: 16px;
+    font-weight: 600;
+    letter-spacing: 0;
+    color: var(--color-text-primary);
+  }
+  .insp-body :global(p) {
+    margin: 0 0 10px;
+  }
+  .insp-links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+    margin-top: 18px;
+    font-size: 14px;
+  }
+  .insp-links a {
+    padding-bottom: 1px;
+    color: var(--c);
+    border-bottom: 1px solid color-mix(in srgb, var(--c) 40%, transparent);
+  }
+  .insp-links .insp-close {
+    margin-left: auto;
+    color: var(--color-text-muted);
+    border-bottom-color: transparent;
+  }
+  .insp-facts {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 8px 18px;
+    margin: 0;
+    font-size: 13.5px;
+  }
+  .insp-facts dt {
+    color: var(--color-text-muted);
+  }
+  .insp-facts dd {
+    margin: 0;
+  }
+
+  @media (max-width: 899.98px) {
+    .inspector {
+      padding: 0;
+    }
+    /* Bottom sheet (spec §9). */
+    .insp {
+      position: fixed;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      z-index: 90;
+      max-height: 72vh;
+      overflow: auto;
+      margin: 0;
+      grid-template-columns: 1fr;
+      border-radius: 16px 16px 0 0;
+      box-shadow: 0 -12px 30px rgba(0, 0, 0, 0.35);
+    }
+    .insp-main {
+      padding: 18px 18px 8px;
+    }
+    .insp-side {
+      padding: 0 18px 18px;
+      border-left: 0;
+    }
+    .insp h2 {
+      font-size: 22px;
+    }
+  }
+</style>
