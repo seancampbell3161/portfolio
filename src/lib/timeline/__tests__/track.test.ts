@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
-import { readingMinutes, sortEssays, indexRows, segmentRows } from "../track.js";
+import { readingMinutes, sortEssays, indexRows, segmentRows, writtenWhile } from "../track.js";
 import type { Essay, TrackRow } from "../track.js";
+import type { TimelineItem } from "../types.js";
 
 const d = (s: string) => new Date(s);
 const words = (n: number) => Array.from({ length: n }, (_, i) => `w${i}`).join(" ");
@@ -125,5 +126,63 @@ describe("segmentRows (spec §7)", () => {
   });
   it("throws for an unknown id", () => {
     expect(() => segmentRows(five, "essay-zzz", now)).toThrow("Unknown essay: essay-zzz");
+  });
+});
+
+describe("writtenWhile (spec §8)", () => {
+  const now = d("2026-09-02");
+  const published = d("2026-09-01");
+
+  const item = (o: Partial<TimelineItem> & Pick<TimelineItem, "id" | "lane" | "start" | "kind">): TimelineItem => ({
+    title: o.id,
+    status: "done",
+    href: `/#item-${o.id}`,
+    ...o,
+  });
+
+  const daw = item({ id: "daw-engine", lane: "building", start: d("2026-06-01"), kind: "span", status: "in-progress" });
+  const roaming = item({ id: "roaming-camp", lane: "building", start: d("2025-03-01"), end: d("2026-06-30"), kind: "span", status: "live" });
+  const endsDayBefore = item({ id: "ends-before", lane: "building", start: d("2026-01-01"), end: d("2026-08-31"), kind: "span" });
+  const ddia = item({ id: "ddia", lane: "learning", start: d("2026-01-10"), kind: "span", status: "in-progress" });
+  const planned = item({ id: "planned", lane: "learning", start: d("2026-10-01"), end: d("2026-12-01"), kind: "span", status: "planned" });
+  const talk14before = item({ id: "talk-14-before", lane: "community", start: d("2026-08-18"), kind: "moment" });
+  const talk15before = item({ id: "talk-15-before", lane: "community", start: d("2026-08-17"), kind: "moment" });
+  const talk14after = item({ id: "talk-14-after", lane: "community", start: d("2026-09-15"), kind: "moment" });
+  const essay = item({ id: "essay-other", lane: "writing", start: d("2026-09-01"), kind: "moment", href: "/blog/other" });
+
+  const all = [essay, talk14after, talk15before, talk14before, planned, ddia, endsDayBefore, roaming, daw];
+
+  it("includes spans that contain the date, including in-progress spans with no end", () => {
+    const ids = writtenWhile(all, published, now).map((i) => i.id);
+    expect(ids).toContain("daw-engine");
+    expect(ids).toContain("ddia");
+  });
+  it("excludes spans that ended before the date or start after it", () => {
+    const ids = writtenWhile(all, published, now).map((i) => i.id);
+    expect(ids).not.toContain("roaming-camp");
+    expect(ids).not.toContain("ends-before");
+    expect(ids).not.toContain("planned");
+  });
+  it("treats a span's start and end as inclusive", () => {
+    expect(writtenWhile([roaming], d("2026-06-30"), now).map((i) => i.id)).toEqual(["roaming-camp"]);
+    expect(writtenWhile([roaming], d("2025-03-01"), now).map((i) => i.id)).toEqual(["roaming-camp"]);
+  });
+  it("includes moments within 14 days either side, inclusive, and excludes the 15th day", () => {
+    const ids = writtenWhile(all, published, now).map((i) => i.id);
+    expect(ids).toContain("talk-14-before");
+    expect(ids).toContain("talk-14-after");
+    expect(ids).not.toContain("talk-15-before");
+  });
+  it("never includes the writing lane", () => {
+    expect(writtenWhile(all, published, now).map((i) => i.lane)).not.toContain("writing");
+  });
+  it("orders building, learning, community, then by start, then by id", () => {
+    const ids = writtenWhile(all, published, now).map((i) => i.id);
+    expect(ids).toEqual(["daw-engine", "ddia", "talk-14-before", "talk-14-after"]);
+    const both = writtenWhile([daw, roaming], d("2026-06-15"), now).map((i) => i.id);
+    expect(both).toEqual(["roaming-camp", "daw-engine"]);
+  });
+  it("returns an empty list when nothing overlaps", () => {
+    expect(writtenWhile(all, d("2020-01-01"), now)).toEqual([]);
   });
 });

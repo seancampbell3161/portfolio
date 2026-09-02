@@ -3,6 +3,8 @@
 // the index and the essay sidebar render, plus reading time. Pure: no Astro,
 // no DOM, so Vitest loads it and the pages call it at build time.
 import { monthDayYear } from "../dates.js";
+import type { Lane, TimelineItem } from "./types.js";
+import { effectiveEnd } from "./layout.js";
 
 /** An essay as both the blog collection and the timeline's writing lane can supply it. */
 export interface Essay {
@@ -100,4 +102,34 @@ export function segmentRows(essays: readonly Essay[], currentId: string, now: Da
   if (older > 0) rows.push({ kind: "more", label: `${older} older, all essays`, href: INDEX_HREF });
 
   return rows;
+}
+
+const WHILE_LANES: readonly Lane[] = ["building", "learning", "community"];
+export const MOMENT_WINDOW_DAYS = 14;
+const DAY_MS = 86_400_000;
+
+/**
+ * Spec §8: items from the other lanes that overlap the publish date. A span
+ * counts when it starts on or before the date and its effective end (its end,
+ * or now while in progress) is on or after it. A moment counts within 14 days
+ * either side, inclusive. Building, then learning, then community; within a
+ * lane by start, then id.
+ */
+export function writtenWhile(items: readonly TimelineItem[], published: Date, now: Date): TimelineItem[] {
+  const p = published.getTime();
+  const overlaps = (item: TimelineItem): boolean => {
+    if (!WHILE_LANES.includes(item.lane)) return false;
+    if (item.kind === "span") {
+      return item.start.getTime() <= p && effectiveEnd(item, now).getTime() >= p;
+    }
+    return Math.abs(item.start.getTime() - p) <= MOMENT_WINDOW_DAYS * DAY_MS;
+  };
+  return items
+    .filter(overlaps)
+    .sort(
+      (a, b) =>
+        WHILE_LANES.indexOf(a.lane) - WHILE_LANES.indexOf(b.lane) ||
+        a.start.getTime() - b.start.getTime() ||
+        a.id.localeCompare(b.id),
+    );
 }
