@@ -6,7 +6,7 @@ This folder contains images for the portfolio site.
 - **File**: `profile.jpg` (or `.png`, `.webp`)
 - **Location**: `/public/images/profile.jpg`
 - **Recommended size**: 640x760px (or similar aspect ratio)
-- **Used in**: Hero section
+- **Used in**: Contact block on the home page
 
 ## Image Optimization
 

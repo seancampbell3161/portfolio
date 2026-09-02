@@ -5,7 +5,7 @@ import type { Lane } from "../lib/timeline/types";
 interface Props {
   /** Which section this page belongs to; underlines the link in its lane color. */
   active?: Lane;
-  /** Show the timeline zoom control (home page only). */
+  /** Show the timeline zoom control and today's date (home page only). */
   showZoom?: boolean;
   /** Build time; the client script replaces the label with the real date. */
   now?: Date;
@@ -55,7 +55,9 @@ const dateLabel = now.toLocaleDateString("en-US", { month: "short", day: "numeri
           <button type="button" data-zoom="all" aria-pressed="false">All</button>
         </div>
       )}
-      <time class="tb-date" datetime={now.toISOString().slice(0, 10)} data-now-label>{dateLabel}</time>
+      {showZoom && (
+        <time class="tb-date" datetime={now.toISOString().slice(0, 10)} data-now-label>{dateLabel}</time>
+      )}
       <div class="tb-social">
         {socials.map((s) => (
           <a href={s.href} class="tb-social-link" target="_blank" rel="noopener noreferrer" aria-label={s.label}>

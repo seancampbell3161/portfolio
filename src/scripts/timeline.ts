@@ -8,6 +8,7 @@ import {
   graphLayout,
   laneSummary,
   packLane,
+  positionIn,
   ticksFor,
   whenLabel,
   windowFor,
@@ -45,6 +46,8 @@ function init(root: HTMLElement) {
     nowLabel.textContent = now.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
     nowLabel.dateTime = now.toISOString().slice(0, 10);
   }
+  const yearButton = document.querySelector<HTMLButtonElement>('[data-zoom-control] button[data-zoom="year"]');
+  if (yearButton) yearButton.textContent = String(now.getUTCFullYear());
 
   // ---- measured label widths (spec §7) ----
   function makeMeasurer(): WidthEstimator {
@@ -112,10 +115,12 @@ function init(root: HTMLElement) {
 
     const windowLabel = root.querySelector("[data-window-label]");
     if (windowLabel) {
-      windowLabel.textContent =
+      const label =
         zoom === "year"
           ? String(win.from.getUTCFullYear())
           : `${win.from.getUTCFullYear()} to ${win.to.getUTCFullYear()}`;
+      windowLabel.textContent = label;
+      root.setAttribute("aria-label", `Timeline, ${label}`);
     }
     const ticksEl = root.querySelector<HTMLElement>("[data-ticks]");
     if (ticksEl) {
@@ -216,6 +221,7 @@ function init(root: HTMLElement) {
   root.addEventListener("click", (e) => {
     const a = (e.target as Element).closest<HTMLAnchorElement>("a[data-item-link]");
     if (!a) return;
+    if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button !== 0) return;
     e.preventDefault();
     open(a.dataset.itemLink ?? "", { scroll: true });
   });
@@ -229,7 +235,16 @@ function init(root: HTMLElement) {
   });
 
   const deepLink = location.hash.match(/^#item-([a-z0-9-]+)$/);
-  if (deepLink && panelFor(deepLink[1])) open(deepLink[1], { scroll: true, focus: false });
+  if (deepLink && panelFor(deepLink[1])) {
+    // Widen the zoom (without remembering it) until the linked item is on screen.
+    const item = itemById.get(deepLink[1]);
+    if (item) {
+      const current = root.dataset.zoom as Zoom;
+      const needed = ZOOMS.find((z) => positionIn(item, windowFor(z, now, items), now) !== null) ?? current;
+      if (ZOOMS.indexOf(needed) > ZOOMS.indexOf(current)) apply(needed);
+    }
+    open(deepLink[1], { scroll: true, focus: false });
+  }
 
   // ---- one motion on load: the playhead draws in (spec §9) ----
   const playhead = root.querySelector<HTMLElement>("[data-playhead]");

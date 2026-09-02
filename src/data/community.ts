@@ -15,35 +15,19 @@ const raw = [
     status: "done",
   },
   {
-    id: "dsd-talk-2024",
+    id: "dsd-talk-architecture",
     title: "Talk: architecture patterns",
     org: "Dallas Software Developers",
     description: "Backend and frontend architecture patterns, for the Dallas Software Developers meetup.",
-    start: "2024-06-01", // placeholder
+    start: "2025-04-01", // placeholder: confirm the talk and its month
     status: "done",
   },
   {
-    id: "dsd-talk-2025",
+    id: "dsd-talk-productivity",
     title: "Talk: developer productivity",
     org: "Dallas Software Developers",
     description: "Developer productivity, for the Dallas Software Developers meetup.",
-    start: "2025-04-01", // placeholder
-    status: "done",
-  },
-  {
-    id: "dsd-talk-2026-03",
-    title: "Talk: architecture patterns",
-    org: "Dallas Software Developers",
-    description: "Architecture patterns, for the Dallas Software Developers meetup.",
-    start: "2026-03-01", // placeholder
-    status: "done",
-  },
-  {
-    id: "dsd-talk-2026-08",
-    title: "Talk: developer productivity",
-    org: "Dallas Software Developers",
-    description: "Developer productivity, for the Dallas Software Developers meetup.",
-    start: "2026-08-01", // placeholder
+    start: "2026-03-01", // placeholder: confirm the talk and its month
     status: "done",
   },
 ];
