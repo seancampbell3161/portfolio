@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { readingMinutes, sortEssays, indexRows } from "../track.js";
+import { readingMinutes, sortEssays, indexRows, segmentRows } from "../track.js";
 import type { Essay, TrackRow } from "../track.js";
 
 const d = (s: string) => new Date(s);
@@ -79,5 +79,51 @@ describe("indexRows (spec §6)", () => {
   });
   it("yields only the now row when there are no essays", () => {
     expect(indexRows([], d("2026-09-02"))).toEqual([{ kind: "now", label: "Sep 2, 2026" }]);
+  });
+});
+
+describe("segmentRows (spec §7)", () => {
+  const now = d("2026-09-02");
+  const five: Essay[] = [
+    { id: "essay-a", href: "/blog/a", title: "A", date: d("2025-12-21") },
+    { id: "essay-b", href: "/blog/b", title: "B", date: d("2025-12-30") },
+    { id: "essay-c", href: "/blog/c", title: "C", date: d("2026-05-16") },
+    { id: "essay-d", href: "/blog/d", title: "D", date: d("2026-07-22") },
+    { id: "essay-e", href: "/blog/e", title: "E", date: d("2026-09-01") },
+  ];
+
+  it("newest essay: now head, itself, the older neighbour, an older tail", () => {
+    expect(shape(segmentRows(five, "essay-e", now))).toEqual(["now", "essay-e*", "essay-d", "3 older, all essays"]);
+    expect(segmentRows(five, "essay-e", now)[0]).toEqual({ kind: "now", label: "Sep 2, 2026" });
+  });
+  it("second essay: singular newer head", () => {
+    expect(shape(segmentRows(five, "essay-d", now))).toEqual([
+      "1 newer, all essays", "essay-e", "essay-d*", "essay-c", "2 older, all essays",
+    ]);
+  });
+  it("middle essay: both neighbours and both counts", () => {
+    expect(shape(segmentRows(five, "essay-c", now))).toEqual([
+      "2 newer, all essays", "essay-d", "essay-c*", "essay-b", "1 older, all essays",
+    ]);
+  });
+  it("oldest essay: newer head, the newer neighbour, itself, no tail", () => {
+    expect(shape(segmentRows(five, "essay-a", now))).toEqual(["4 newer, all essays", "essay-b", "essay-a*"]);
+  });
+  it("a single essay: now and itself", () => {
+    expect(shape(segmentRows([five[0]], "essay-a", now))).toEqual(["now", "essay-a*"]);
+  });
+  it("more rows link to the index", () => {
+    const rows = segmentRows(five, "essay-c", now);
+    expect(rows[0]).toEqual({ kind: "more", label: "2 newer, all essays", href: "/blog" });
+    expect(rows[4]).toEqual({ kind: "more", label: "1 older, all essays", href: "/blog" });
+  });
+  it("segment essay rows carry id, href, title, date only", () => {
+    const rich: Essay[] = [{ ...five[4], description: "x", tags: ["t"], minutes: 9 }];
+    expect(segmentRows(rich, "essay-e", now)[1]).toEqual({
+      kind: "essay", id: "essay-e", href: "/blog/e", title: "E", date: d("2026-09-01"), current: true,
+    });
+  });
+  it("throws for an unknown id", () => {
+    expect(() => segmentRows(five, "essay-zzz", now)).toThrow("Unknown essay: essay-zzz");
   });
 });

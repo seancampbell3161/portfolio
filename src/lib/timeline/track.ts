@@ -72,3 +72,32 @@ export function indexRows(essays: readonly Essay[], now: Date): TrackRow[] {
   }
   return rows;
 }
+
+const INDEX_HREF = "/blog";
+
+const briefRow = (e: Essay): EssayRow => ({ kind: "essay", id: e.id, href: e.href, title: e.title, date: e.date });
+
+/**
+ * Spec §7: the current essay ringed between its neighbours. The head is now
+ * for the newest essay, otherwise "{n} newer"; the tail is "{n} older" when
+ * any remain. It doubles as previous and next.
+ */
+export function segmentRows(essays: readonly Essay[], currentId: string, now: Date): TrackRow[] {
+  const sorted = sortEssays(essays);
+  const i = sorted.findIndex((e) => e.id === currentId);
+  if (i < 0) throw new Error(`Unknown essay: ${currentId}`);
+  const n = sorted.length;
+  const rows: TrackRow[] = [];
+
+  if (i === 0) rows.push({ kind: "now", label: monthDayYear(now) });
+  else rows.push({ kind: "more", label: `${i} newer, all essays`, href: INDEX_HREF });
+
+  if (i > 0) rows.push(briefRow(sorted[i - 1]));
+  rows.push({ ...briefRow(sorted[i]), current: true });
+  if (i < n - 1) rows.push(briefRow(sorted[i + 1]));
+
+  const older = n - i - 2;
+  if (older > 0) rows.push({ kind: "more", label: `${older} older, all essays`, href: INDEX_HREF });
+
+  return rows;
+}
