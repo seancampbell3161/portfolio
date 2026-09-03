@@ -11,13 +11,14 @@ import { isoDay, shortDate, shortDay } from "../lib/dates";
 interface Props {
   rows: TrackRow[];
   density: "index" | "segment";
+  label?: string;
 }
 
-const { rows, density } = Astro.props;
+const { rows, density, label } = Astro.props;
 const index = density === "index";
 ---
 
-<ol class:list={["track", `track-${density}`]}>
+<ol class:list={["track", `track-${density}`]} aria-label={label}>
   {
     rows.map((row) => {
       if (row.kind === "now") {

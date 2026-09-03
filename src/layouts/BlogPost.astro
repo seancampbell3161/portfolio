@@ -64,14 +64,14 @@ const STATUS_WORD: Record<Status, string> = {
         <i class="sq"></i>
         <span>Writing</span>
       </p>
-      <Track rows={segment} density="segment" />
+      <Track rows={segment} density="segment" label="Nearby essays" />
       {writtenWhile.length > 0 && (
         <section class="while">
           <p class="kicker">
             <i class="sq sq-muted"></i>
             <span>Written while</span>
           </p>
-          <ul class="while-list">
+          <ul class="while-list" aria-label="Written while">
             {writtenWhile.map((item) => (
               <li style={`--c: var(--lane-${item.lane})`}>
                 <i class="dot"></i>
@@ -139,6 +139,7 @@ const STATUS_WORD: Record<Status, string> = {
     color: var(--color-text-muted);
     margin: 0 0 36px;
   }
+  /* When there are no tags the standfirst is the last <p> before the body and takes the tags line's bottom margin, so the gap to the body stays 36px either way. */
   .standfirst:last-of-type {
     margin-bottom: 36px;
   }
@@ -159,7 +160,7 @@ const STATUS_WORD: Record<Status, string> = {
   }
   .body :global(p) {
     margin: 0 0 22px;
-    max-width: 64ch;
+    max-width: 60ch;
   }
   .body :global(h2) {
     font-size: 26px;
@@ -199,6 +200,10 @@ const STATUS_WORD: Record<Status, string> = {
     padding: 24px;
     overflow-x: auto;
     margin: 0 0 22px;
+  }
+  /* Shiki inlines the theme background on <pre>; only !important beats an inline style. */
+  .body :global(pre.astro-code) {
+    background-color: var(--color-bg-elevated) !important;
   }
   .body :global(pre code) {
     background: none;

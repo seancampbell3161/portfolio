@@ -185,4 +185,14 @@ describe("writtenWhile (spec §8)", () => {
   it("returns an empty list when nothing overlaps", () => {
     expect(writtenWhile(all, d("2020-01-01"), now)).toEqual([]);
   });
+  it("uses now as the end of an in-progress span", () => {
+    // Published after now: the span has not reached the date yet.
+    expect(writtenWhile([daw], d("2026-09-01"), d("2026-08-15"))).toEqual([]);
+    expect(writtenWhile([daw], d("2026-08-15"), d("2026-08-15")).map((i) => i.id)).toEqual(["daw-engine"]);
+  });
+  it("breaks ties within a lane by id", () => {
+    const b = item({ id: "talk-b", lane: "community", start: d("2026-09-01"), kind: "moment" });
+    const a = item({ id: "talk-a", lane: "community", start: d("2026-09-01"), kind: "moment" });
+    expect(writtenWhile([b, a], published, now).map((i) => i.id)).toEqual(["talk-a", "talk-b"]);
+  });
 });

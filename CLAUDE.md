@@ -7,7 +7,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - `npm run dev` — Start Astro dev server with hot reload
 - `npm run build` — Production build (outputs to `dist/`)
 - `npm run preview` — Preview production build locally
-- `npm run shots` — Full-page screenshots of the home page, the writing index, and one essay at desktop and phone widths (`screenshots/`, gitignored). Needs `npm run preview` running.
+- `npm run shots` — Full-page screenshots of the home page, the writing index, and two essays (one with code blocks) at desktop and phone widths (`screenshots/`, gitignored). Needs `npm run preview` running.
 - `npm test` — Run the Vitest unit suite
 
 ## Architecture

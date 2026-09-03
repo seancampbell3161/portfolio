@@ -1,7 +1,8 @@
 // scripts/screenshots.mjs
-// Full-page screenshots of the home page, the writing index, and one essay at
-// desktop and phone widths, for review. Run against `npm run preview`
-// (default) or SHOT_BASE_URL. Output goes to screenshots/ (gitignored).
+// Full-page screenshots of the home page, the writing index, and two essays
+// (one with code blocks) at desktop and phone widths, for review. Run against
+// `npm run preview` (default) or SHOT_BASE_URL. Output goes to screenshots/
+// (gitignored).
 import { chromium } from "playwright";
 import { mkdir } from "node:fs/promises";
 
@@ -11,6 +12,7 @@ const PAGES = [
   { name: "home", path: "/" },
   { name: "writing", path: "/blog" },
   { name: "essay", path: "/blog/i-wont-stop-coding" },
+  { name: "essay-code", path: "/blog/composition-over-inheritance-angular" },
 ];
 const WIDTHS = [
   { name: "1280", width: 1280, height: 900 },

@@ -50,5 +50,5 @@ notes/
 # Claude Code worktrees
 .claude/worktrees/
 
-# Home page review screenshots (scripts/home-screenshots.mjs)
+# Review screenshots (scripts/screenshots.mjs)
 screenshots/

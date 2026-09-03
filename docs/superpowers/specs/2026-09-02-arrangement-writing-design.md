@@ -66,7 +66,7 @@ The sidebar, top to bottom:
 1. A kicker "Writing" with a gold square, then the track segment (§7).
 2. A kicker "Written while" with a muted square, then the list (§8). The whole block is omitted when the list is empty.
 
-Body typography. A new token `--color-text-reading: #DDDBD4` is added to `src/styles/global.css` for long-form text; it sits between primary and secondary. The body is Instrument Sans at 17.5px, line height 1.65, in that colour, with paragraphs on a 64ch measure and 22px below. Headings inside the body use the display face: h2 at 26px with 48px above and 16px below, h3 at 20px with 32px above and 12px below, both in `--color-text-primary`. Links are `--lane-writing` with a 1px bottom border at 40% of that colour, turning to `--color-text-primary` on hover. Inline code is mono at 0.9em on `--color-bg-elevated` with 3px radius. Code blocks sit on `--color-bg-elevated` with a 1px `--color-border`, 4px radius, 24px padding, horizontal scroll. Blockquotes have a 3px `--lane-writing` left border, 20px left padding, 19px italic text in `--color-text-primary`. Lists keep 32px left padding. Images and video take 4px radius and full width. A horizontal rule is a 1px `--color-border` line with 32px above and below. Strong text is `--color-text-primary`.
+Body typography. A new token `--color-text-reading: #DDDBD4` is added to `src/styles/global.css` for long-form text; it sits between primary and secondary. The body is Instrument Sans at 17.5px, line height 1.65, in that colour, with paragraphs on a 60ch measure and 22px below. Headings inside the body use the display face: h2 at 26px with 48px above and 16px below, h3 at 20px with 32px above and 12px below, both in `--color-text-primary`. Links are `--lane-writing` with a 1px bottom border at 40% of that colour, turning to `--color-text-primary` on hover. Inline code is mono at 0.9em on `--color-bg-elevated` with 3px radius. Code blocks sit on `--color-bg-elevated` (overriding Shiki's inline theme background) with a 1px `--color-border`, 4px radius, 24px padding; long lines wrap, as the site's Shiki config already chose. Blockquotes have a 3px `--lane-writing` left border, 20px left padding, 19px italic text in `--color-text-primary`. Lists keep 32px left padding. Images and video take 4px radius and full width. A horizontal rule is a 1px `--color-border` line with 32px above and below. Strong text is `--color-text-primary`.
 
 ## 6. The track
 
@@ -205,7 +205,7 @@ Vitest, in `src/lib/timeline/__tests__/track.test.ts`:
 
 `src/lib/__tests__/dates.test.ts`: each formatter on `2026-09-01T00:00:00Z` and `2025-12-31T00:00:00Z`, which must print 1 September and 31 December in every time zone.
 
-Build: `npm run build` succeeds and `npm run shots` writes six images against the preview server. The newsletter form is checked by hand in the preview: its request still goes to `/api/subscribe`.
+Build: `npm run build` succeeds and `npm run shots` writes eight images against the preview server. The newsletter form is checked by hand in the preview: its request still goes to `/api/subscribe`.
 
 ## 15. Inputs needed during implementation
 
