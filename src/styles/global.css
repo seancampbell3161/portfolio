@@ -30,6 +30,12 @@
     --lane-learning: #60A5FA;
     --lane-community: #A78BFA;
 
+    /* Roadmap tracks (spec §6). Build equals the learning lane: the roadmap is
+       the Learning lane up close. */
+    --track-build: #60A5FA;
+    --track-reading: #5FB3AC;
+    --track-foundations: #9DB4D6;
+
     /* Typography */
     --font-display: "Bricolage Grotesque", "Instrument Sans", -apple-system, BlinkMacSystemFont, sans-serif;
     --font-sans: "Instrument Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;

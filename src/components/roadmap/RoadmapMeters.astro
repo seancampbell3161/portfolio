@@ -1,0 +1,42 @@
+---
+// Three progress meters + the owner's edit controls (spec §6). Numbers render
+// zeroed; src/scripts/roadmap.ts fills them by the ids below. Those ids are a
+// contract with that script — do not rename them.
+import { deriveStats } from "../../data/roadmap";
+const s = deriveStats([]); // zeroed; the script overwrites on load
+---
+
+<div class="rm-meters">
+  <div class="rm-meter" style="--c: var(--track-build)">
+    <div class="rm-meter-head">
+      <b><i class="rm-mdot"></i>Build</b>
+      <small><span id="rm-build-stages">0</span>/{s.build.stagesTotal} stages ·
+        <span id="rm-build-courses">0</span>/{s.build.coursesTotal} courses ·
+        <span id="rm-logs-done">0</span>/{s.logsTotal} logs</small>
+    </div>
+    <div class="rm-bar"><i id="rm-build-bar"></i></div>
+  </div>
+
+  <div class="rm-meter" style="--c: var(--track-reading)">
+    <div class="rm-meter-head">
+      <b><i class="rm-mdot"></i>Reading</b>
+      <small><span id="rm-read-ch">0</span>/{s.reading.chaptersTotal} chapters ·
+        <span id="rm-read-books">0</span>/{s.reading.booksTotal} books</small>
+    </div>
+    <div class="rm-bar"><i id="rm-read-bar"></i></div>
+  </div>
+
+  <div class="rm-meter" style="--c: var(--track-foundations)">
+    <div class="rm-meter-head">
+      <b><i class="rm-mdot"></i>Foundations</b>
+      <small><span id="rm-fnd-done">0</span>/{s.foundations.itemsTotal} items</small>
+    </div>
+    <div class="rm-bar"><i id="rm-fnd-bar"></i></div>
+  </div>
+</div>
+
+<div class="rm-controls">
+  <span id="rm-save-state" class="rm-save-state" role="status" aria-live="polite"></span>
+  <button id="rm-edit" type="button" class="rm-edit-btn">Edit</button>
+</div>
+<p id="rm-message" class="rm-message" role="alert" aria-live="assertive" hidden></p>

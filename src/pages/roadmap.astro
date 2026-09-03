@@ -2,12 +2,10 @@
 import Layout from "../layouts/Layout.astro";
 import TransportBar from "../components/TransportBar.astro";
 import Footer from "../components/Footer.astro";
-import RoadmapDashboard from "../components/roadmap/RoadmapDashboard.astro";
-import Milestone from "../components/roadmap/Milestone.astro";
-import BookCard from "../components/roadmap/BookCard.astro";
-import FoundationsSection from "../components/roadmap/FoundationsSection.astro";
+import RoadmapMeters from "../components/roadmap/RoadmapMeters.astro";
+import RoadmapArrangement from "../components/roadmap/RoadmapArrangement.astro";
+import RoadmapInspector from "../components/roadmap/RoadmapInspector.astro";
 import RetentionSection from "../components/roadmap/RetentionSection.astro";
-import { build, reading, foundations } from "../data/roadmap";
 import { ogImagePath } from "../lib/og.mjs";
 ---
 
@@ -28,30 +26,9 @@ import { ogImagePath } from "../lib/og.mjs";
         the open for anyone to see.
       </p>
 
-      <RoadmapDashboard />
-
-      <section class="rm-track" aria-labelledby="rm-track-build">
-        <h2 id="rm-track-build" class="rm-track-h"><span class="rm-dot d-build"></span>Build — CodeCrafters</h2>
-        <p class="rm-track-note">One milestone per course, taken to (pragmatic) completion, in order. Sub-checkpoints are the CodeCrafters stage-groups; each milestone ends in a capstone decision log.</p>
-        <div class="rm-milestones">
-          {build.map((m, i) => <Milestone milestone={m} open={i === 0} />)}
-        </div>
-      </section>
-
-      <section class="rm-track" aria-labelledby="rm-track-reading">
-        <h2 id="rm-track-reading" class="rm-track-h"><span class="rm-dot d-reading"></span>Reading — interleaved</h2>
-        <p class="rm-track-note">Read ~1–2 chapters/week, interleaved with the builds: one "anchor" chapter (DDIA / Database Internals) plus one "light" read (A Philosophy of Software Design, then OSTEP). DDIA + APoSD finish within the build; the rest carries past it.</p>
-        <div class="rm-books">
-          {reading.map((b, i) => <BookCard book={b} open={i === 0} />)}
-        </div>
-      </section>
-
-      <section class="rm-track" aria-labelledby="rm-track-foundations">
-        <h2 id="rm-track-foundations" class="rm-track-h"><span class="rm-dot d-foundations"></span>Foundations — NeetCode</h2>
-        <p class="rm-track-note">Course-first, then problems: finish the courses, then work NeetCode 150 pattern by pattern. The patterns line up with the builds (shown as ↔ hints).</p>
-        <FoundationsSection foundations={foundations} />
-      </section>
-
+      <RoadmapMeters />
+      <RoadmapArrangement />
+      <RoadmapInspector />
       <RetentionSection />
 
       <p class="rm-note">
@@ -66,15 +43,19 @@ import { ogImagePath } from "../lib/og.mjs";
 
 <script>
   import "../scripts/roadmap.ts";
+  import "../scripts/roadmap-arrangement.ts";
   import "../scripts/review.ts";
 </script>
 
 <style is:global>
-  /* ---- four-thread palette (site-native) ---- */
+  /* ---- palette + page frame ----
+     The local --build/--reading/--foundations now alias the global --track-*
+     tokens (Task 8 §1); --judgment/--behavioral stay local threads used by the
+     carried-over decision-log and retention styles. */
   .roadmap-page {
-    --build: #60a5fa;
-    --reading: #5fb3ac;
-    --foundations: #a78bfa;
+    --build: var(--track-build);
+    --reading: var(--track-reading);
+    --foundations: var(--track-foundations);
     --judgment: #d98b6f;
     --behavioral: #d9b45f;
     position: relative;
@@ -82,7 +63,8 @@ import { ogImagePath } from "../lib/og.mjs";
     padding-top: 80px;
   }
   /* The `hidden` attribute must win over the display:flex/grid rules below
-     (e.g. .rv-ratings, .rv-summary) — otherwise a toggled-off element stays visible. */
+     (e.g. .rv-ratings, .rv-summary, #rm-message) — otherwise a toggled-off
+     element stays visible. The review runner relies on it. */
   .roadmap-page [hidden] { display: none !important; }
   .roadmap-page .rm-wrap {
     max-width: 920px;
@@ -124,90 +106,82 @@ import { ogImagePath } from "../lib/og.mjs";
     margin: 0;
   }
 
-  /* ---- dashboard ---- */
-  .rm-dash {
+  /* ---- meters (spec §6) ---- */
+  .rm-meters {
     display: grid;
-    grid-template-columns: repeat(5, 1fr);
+    grid-template-columns: repeat(3, 1fr);
     gap: 1px;
     background: var(--color-border);
     border: 1px solid var(--color-border);
     border-radius: var(--radius-lg);
     overflow: hidden;
-    margin: 44px 0 14px;
+    margin: 44px 0 0;
   }
-  .rm-stat {
+  .rm-meter {
     background: var(--color-bg-elevated);
-    padding: 18px 20px;
+    padding: 16px 20px;
   }
-  .rm-n {
-    font-size: 24px;
-    font-weight: 700;
+  .rm-meter-head {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    margin-bottom: 12px;
+  }
+  .rm-meter-head b {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    font-size: 15px;
+    font-weight: 600;
     letter-spacing: -0.01em;
   }
-  .rm-n small {
-    font-size: 13px;
-    color: var(--color-text-faint);
-    font-weight: 500;
-  }
-  .rm-l {
-    font-family: var(--font-mono);
-    font-size: 10.5px;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
+  .rm-meter-head small {
+    font-size: 12px;
     color: var(--color-text-muted);
-    margin-top: 6px;
+    padding-left: 19px;
+    line-height: 1.5;
+  }
+  .rm-mdot {
+    width: 10px;
+    height: 10px;
+    border-radius: 2px;
+    background: var(--c);
+    flex: none;
+    display: inline-block;
   }
   .rm-bar {
     height: 4px;
     background: var(--color-bg-hover);
     border-radius: var(--radius-full);
     overflow: hidden;
-    margin-top: 12px;
   }
   .rm-bar > i {
     display: block;
     height: 100%;
     width: 0;
+    background: var(--c);
     border-radius: var(--radius-full);
     transition: width var(--transition-slow);
   }
-  .f-build { background: var(--build); }
-  .f-reading { background: var(--reading); }
-  .f-foundations { background: var(--foundations); }
 
-  /* ---- controls / legend ---- */
+  /* ---- owner controls ---- */
   .rm-controls {
     display: flex;
     flex-wrap: wrap;
-    gap: 16px;
-    justify-content: space-between;
+    gap: 12px;
+    justify-content: flex-end;
     align-items: center;
-    margin: 26px 0 8px;
+    margin: 16px 0 0;
   }
-  .rm-legend {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 10px 22px;
+  .rm-save-state {
     font-family: var(--font-mono);
-    font-size: 11.5px;
-    color: var(--color-text-secondary);
+    font-size: 11px;
+    color: var(--color-text-faint);
   }
-  .rm-legend span { display: inline-flex; align-items: center; gap: 8px; }
-  .rm-legend b { color: var(--color-text-primary); font-weight: 500; }
-  .rm-dot { width: 9px; height: 9px; border-radius: var(--radius-full); flex: none; display: inline-block; }
-  .d-build { background: var(--build); }
-  .d-reading { background: var(--reading); }
-  .d-foundations { background: var(--foundations); }
-  .d-judgment { background: var(--judgment); }
-  .d-behavioral { background: var(--behavioral); }
-  .f-behavioral { background: var(--behavioral); }
-
-  .rm-edit-wrap { display: flex; align-items: center; gap: 12px; }
-  .rm-save-state { font-family: var(--font-mono); font-size: 11px; color: var(--color-text-faint); }
   .rm-edit-btn {
     font-family: var(--font-mono);
     font-size: 12px;
-    color: var(--color-accent);
+    color: var(--track-build);
     background: none;
     border: 1px solid var(--color-border);
     border-radius: var(--radius-full);
@@ -215,113 +189,278 @@ import { ogImagePath } from "../lib/og.mjs";
     cursor: pointer;
     transition: all var(--transition-base);
   }
-  .rm-edit-btn:hover { border-color: var(--color-accent); background: var(--color-accent-bg); }
+  .rm-edit-btn:hover {
+    border-color: var(--track-build);
+    background: color-mix(in srgb, var(--track-build) 12%, transparent);
+  }
   .rm-message { font-size: 13px; color: #f4a896; margin: 12px 0 0; }
 
-  /* ---- track sections ---- */
-  .rm-track { margin-top: var(--space-3xl); }
-  .rm-track-h {
+  /* ---- arrangement (900px and up) ---- */
+  .rm-arr {
+    --head-w: 160px;
+    --ruler-h: 32px;
+    --lane-h: 108px;
+    --row-pitch: 46px;
+    --row-top: 12px;
+    --clip-h: 40px;
+    --div: 8;
+    position: relative;
+    margin-top: 24px;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    background: var(--color-bg-elevated);
+    overflow: hidden;
+  }
+  .rm-arr-head {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--color-border);
+  }
+  .rm-zoom { display: inline-flex; gap: 4px; }
+  .rm-zoom button {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--color-text-secondary);
+    background: none;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-full);
+    padding: 5px 12px;
+    cursor: pointer;
+    transition: all var(--transition-base);
+  }
+  .rm-zoom button:hover { border-color: var(--color-border-hover); }
+  .rm-zoom button[aria-pressed="true"] {
+    color: var(--color-text-primary);
+    border-color: var(--color-border-hover);
+    background: var(--color-bg-hover);
+  }
+  /* The ruler and lanes share one coordinate space: the ruler is offset by the
+     head width so its 0% aligns with the clips' 0% (the 1fr region). */
+  .rm-arr-body { position: relative; }
+  .rm-ruler {
+    position: relative;
+    height: var(--ruler-h);
+    margin-left: var(--head-w);
+    border-bottom: 1px solid var(--color-border);
+    font-family: var(--font-mono);
+    font-size: 12px;
+    color: var(--color-text-muted);
+  }
+  .rm-tick {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    /* left is set inline (build) and by the script (zoom) */
+    border-left: 1px solid var(--color-border);
+    padding: 8px 0 0 7px;
+    white-space: nowrap;
+  }
+  .rm-lane {
+    display: grid;
+    grid-template-columns: var(--head-w) 1fr;
+    height: var(--lane-h);
+    border-bottom: 1px solid var(--color-border);
+  }
+  .rm-lane:last-of-type { border-bottom: 0; }
+  .rm-lane-head {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 3px;
+    padding: 0 16px;
+    border-right: 1px solid var(--color-border);
+  }
+  .rm-lane-head h3 {
     display: flex;
     align-items: center;
     gap: 10px;
-    font-size: 20px;
-    font-weight: 600;
-    letter-spacing: -0.01em;
-    margin: 0 0 6px;
-  }
-  .rm-track-h .rm-dot { width: 11px; height: 11px; }
-  .rm-track-note {
-    color: var(--color-text-secondary);
+    margin: 0;
+    font-weight: 500;
     font-size: 14px;
-    margin: 0 0 14px;
-    max-width: 70ch;
+    scroll-margin-top: 76px;
+  }
+  .rm-lane-head small {
+    font-size: 12px;
+    color: var(--color-text-muted);
+    padding-left: 20px;
+  }
+  .rm-clips {
+    position: relative;
+    background-image: linear-gradient(90deg, var(--color-border) 1px, transparent 1px);
+    background-size: calc(100% / var(--div)) 100%;
+  }
+  /* Base clip = the "done" treatment (spec §6; mockup .b-clip). */
+  .rm-clip {
+    position: absolute;
+    left: var(--x);
+    width: var(--w);
+    top: calc(var(--row-top) + var(--y) * var(--row-pitch));
+    height: var(--clip-h);
+    box-sizing: border-box;
+    padding: 5px 10px 0;
+    border-left: 3px solid var(--c);
+    border-radius: var(--radius-sm);
+    background: color-mix(in srgb, var(--c) 22%, var(--color-bg-elevated));
+    color: var(--color-text-primary);
+    font-size: 13px;
+    line-height: 1.2;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    text-decoration: none;
+  }
+  .rm-clip.is-in-progress {
+    background: repeating-linear-gradient(
+      -45deg,
+      color-mix(in srgb, var(--c) 10%, var(--color-bg-elevated)) 0 6px,
+      color-mix(in srgb, var(--c) 26%, var(--color-bg-elevated)) 6px 12px
+    );
+    border-right: 2px dashed var(--c);
+  }
+  .rm-clip.is-planned {
+    background: transparent;
+    border: 1px dashed color-mix(in srgb, var(--c) 60%, transparent);
+    border-left: 3px solid color-mix(in srgb, var(--c) 60%, transparent);
+    color: var(--color-text-secondary);
+  }
+  .rm-clip:hover { outline: 1px solid color-mix(in srgb, var(--c) 50%, transparent); }
+  .rm-clip:focus-visible { outline: 2px solid var(--c); outline-offset: 2px; }
+  .rm-clip-title { display: block; overflow: hidden; text-overflow: ellipsis; }
+  .rm-clip-sub {
+    display: block;
+    margin-top: 3px;
+    font-size: 11px;
+    color: var(--color-text-muted);
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .rm-playhead {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: calc(var(--head-w) + (100% - var(--head-w)) * var(--ph));
+    width: 2px;
+    background: var(--color-text-primary);
+    pointer-events: none;
+    z-index: 2;
+  }
+  .rm-playhead span {
+    position: absolute;
+    top: 7px;
+    right: 6px;
+    padding: 1px 5px;
+    border-radius: 2px;
+    background: var(--color-text-primary);
+    color: var(--color-bg);
+    font-family: var(--font-mono);
+    font-size: 11px;
+    line-height: 1.4;
   }
 
-  /* ---- milestone / book cards (shared) ---- */
-  .rm-m, .rm-book {
-    border: 1px solid var(--color-border);
-    border-radius: var(--radius-lg);
-    background: var(--color-bg-elevated);
-    margin-top: 12px;
-    overflow: hidden;
-  }
-  .rm-m > summary, .rm-book > summary {
-    list-style: none;
-    cursor: pointer;
-    padding: 20px 22px;
+  /* ---- legend ---- */
+  .rm-legend {
     display: flex;
-    align-items: flex-start;
-    gap: 16px;
-    outline: none;
+    flex-wrap: wrap;
+    gap: 8px 20px;
+    margin-top: 12px;
+    font-family: var(--font-mono);
+    font-size: 11.5px;
+    color: var(--color-text-secondary);
   }
-  .rm-m > summary::-webkit-details-marker,
-  .rm-book > summary::-webkit-details-marker { display: none; }
-  .rm-m > summary:focus-visible,
-  .rm-book > summary:focus-visible { box-shadow: inset 0 0 0 2px var(--reading); }
-  .rm-m-no {
+  .rm-legend span { display: inline-flex; align-items: center; gap: 8px; }
+  .rm-legend i {
+    --c: var(--color-text-secondary);
+    width: 26px;
+    height: 13px;
+    border-radius: 2px;
+    flex: none;
+    box-sizing: border-box;
+  }
+  .rm-legend .l-done {
+    background: color-mix(in srgb, var(--c) 28%, var(--color-bg-elevated));
+    border-left: 3px solid var(--c);
+  }
+  .rm-legend .l-prog {
+    background: repeating-linear-gradient(
+      -45deg,
+      color-mix(in srgb, var(--c) 12%, var(--color-bg-elevated)) 0 4px,
+      color-mix(in srgb, var(--c) 30%, var(--color-bg-elevated)) 4px 8px
+    );
+    border-right: 2px dashed var(--c);
+  }
+  .rm-legend .l-plan {
+    background: transparent;
+    border: 1px dashed color-mix(in srgb, var(--c) 60%, transparent);
+    border-left: 3px solid color-mix(in srgb, var(--c) 60%, transparent);
+  }
+
+  /* ---- mobile graph (below 900px): the same clips, date-ordered ---- */
+  .rm-graph { display: none; }
+
+  /* ---- inspector panels (spec §6): shown by :target with no JavaScript ---- */
+  .rm-inspector { margin-top: 4px; }
+  .rm-insp {
+    display: none;
+    margin-top: 20px;
+    border: 1px solid var(--color-border);
+    border-top: 3px solid var(--c);
+    border-radius: var(--radius-md);
+    background: var(--color-bg-elevated);
+    padding: 22px 24px 24px;
+    scroll-margin-top: 76px;
+  }
+  /* Native anchor navigation drives this in every mode — the arrangement script
+     does not take over inspector state (unlike the home timeline.ts), so the
+     :target rule is not gated on the js class. */
+  .rm-insp:target,
+  .rm-insp[data-open] { display: block; }
+  .rm-insp-k {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 0 0 8px;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--color-text-muted);
+  }
+  .rm-insp-k i {
+    width: 8px;
+    height: 8px;
+    border-radius: 2px;
+    background: var(--c);
+    flex: none;
+  }
+  .rm-insp-title {
+    margin: 0 0 10px;
+    font-size: clamp(22px, 4vw, 30px);
+    line-height: 1.08;
+  }
+  .rm-insp-goal {
+    margin: 0 0 10px;
+    max-width: 68ch;
+    font-size: 14.5px;
+    line-height: 1.55;
+    color: var(--color-text-secondary);
+  }
+  .rm-insp-facts {
+    margin: 0 0 16px;
     font-family: var(--font-mono);
     font-size: 12px;
     color: var(--color-text-faint);
-    padding-top: 4px;
-    min-width: 28px;
-    letter-spacing: 0.05em;
   }
-  .rm-m-mid { flex: 1; min-width: 0; }
-  .rm-m-title, .rm-book-title {
-    font-size: 18px;
-    font-weight: 600;
-    letter-spacing: -0.01em;
-    margin: 0 0 4px;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-  }
-  .rm-m-goal {
-    color: var(--color-text-secondary);
-    font-size: 14px;
-    margin: 0;
-  }
-  .rm-m-goal::before {
-    content: "Goal — ";
-    color: var(--judgment);
+  .rm-insp-checks { margin-bottom: 4px; }
+  .rm-insp-close { margin: 16px 0 0; }
+  .rm-insp-close a {
     font-family: var(--font-mono);
-    font-size: 11px;
-    letter-spacing: 0.04em;
-    text-transform: uppercase;
+    font-size: 12px;
+    color: var(--color-text-muted);
   }
-  .rm-book-author { color: var(--color-text-muted); font-size: 13px; margin: 0; }
-  .rm-badge {
-    font-family: var(--font-mono);
-    font-size: 10px;
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
-    color: var(--reading);
-    border: 1px solid color-mix(in srgb, var(--reading) 40%, transparent);
-    border-radius: var(--radius-sm);
-    padding: 1px 6px;
-  }
-  .rm-threads { display: flex; gap: 6px; margin-top: 12px; }
-  .rm-threads .rm-dot { width: 7px; height: 7px; opacity: 0.9; }
-  .rm-m-right { display: flex; flex-direction: column; align-items: flex-end; gap: 8px; padding-top: 2px; }
-  .rm-pct {
-    font-family: var(--font-mono);
-    font-size: 13px;
-    color: var(--color-text-secondary);
-    min-width: 44px;
-    text-align: right;
-    white-space: nowrap;
-  }
-  .rm-ring {
-    font-family: var(--font-mono);
-    color: var(--color-text-faint);
-    font-size: 18px;
-    transition: transform var(--transition-base);
-  }
-  .rm-m[open] > summary .rm-ring,
-  .rm-book[open] > summary .rm-ring { transform: rotate(45deg); }
-  .rm-m-body { padding: 4px 22px 22px; border-top: 1px solid var(--color-border); }
 
-  /* ---- checkable rows (shared by all tracks) ---- */
+  /* ---- checkable rows (shared by CheckItem across all tracks) ---- */
   .rm-check {
     display: flex;
     gap: 11px;
@@ -330,7 +469,6 @@ import { ogImagePath } from "../lib/og.mjs";
     border-top: 1px solid var(--color-border);
   }
   .rm-check:first-child { border-top: none; }
-  .rm-track-sub + .rm-check { border-top: none; }
   /* checkbox styling shared by track rows (.rm-check) and decision logs (.rm-mark) */
   .rm-check input,
   .rm-mark input {
@@ -387,6 +525,18 @@ import { ogImagePath } from "../lib/og.mjs";
   }
 
   /* ---- decision log (the signature) ---- */
+  .rm-dot {
+    width: 9px;
+    height: 9px;
+    border-radius: var(--radius-full);
+    flex: none;
+    display: inline-block;
+  }
+  .d-build { background: var(--build); }
+  .d-reading { background: var(--reading); }
+  .d-foundations { background: var(--foundations); }
+  .d-judgment { background: var(--judgment); }
+  .d-behavioral { background: var(--behavioral); }
   .rm-log {
     margin-top: 16px;
     border: 1px dashed color-mix(in srgb, var(--judgment) 45%, transparent);
@@ -530,40 +680,24 @@ import { ogImagePath } from "../lib/og.mjs";
   }
   .roadmap-page.rm-editing .rm-mark { cursor: pointer; }
 
-  /* ---- foundations ---- */
-  .rm-foundations {
-    border: 1px solid var(--color-border);
-    border-radius: var(--radius-lg);
-    background: var(--color-bg-elevated);
-    padding: 6px 22px 18px;
+  /* ---- retention track (spec §6) ---- */
+  .rm-track { margin-top: var(--space-3xl); }
+  .rm-track-h {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 20px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    margin: 0 0 6px;
   }
-  .rm-track-sub {
-    font-family: var(--font-mono);
-    font-size: 11px;
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
-    color: var(--color-text-faint);
-    margin: 18px 0 4px;
+  .rm-track-h .rm-dot { width: 11px; height: 11px; }
+  .rm-track-note {
+    color: var(--color-text-secondary);
+    font-size: 14px;
+    margin: 0 0 14px;
+    max-width: 70ch;
   }
-
-  .rm-note {
-    font-size: 12.5px;
-    color: var(--color-text-faint);
-    text-align: center;
-    margin-top: 46px;
-    font-family: var(--font-mono);
-    line-height: 1.7;
-  }
-
-  @media (max-width: 640px) {
-    .rm-dash { grid-template-columns: repeat(2, 1fr); }
-    .rm-stat-retention { grid-column: 1 / -1; }
-  }
-  @media (prefers-reduced-motion: reduce) {
-    .roadmap-page * { transition: none !important; animation: none !important; }
-  }
-
-  /* ---- retention track ---- */
   .rm-retention {
     border: 1px solid var(--color-border);
     border-radius: var(--radius-lg);
@@ -648,7 +782,7 @@ import { ogImagePath } from "../lib/og.mjs";
     margin-top: 14px;
     font-family: var(--font-mono);
     font-size: 12px;
-    color: var(--color-accent);
+    color: var(--track-build);
     background: none;
     border: 1px solid var(--color-border);
     border-radius: var(--radius-full);
@@ -656,7 +790,7 @@ import { ogImagePath } from "../lib/og.mjs";
     cursor: pointer;
     transition: all var(--transition-base);
   }
-  .rv-reveal:hover { border-color: var(--color-accent); background: var(--color-accent-bg); }
+  .rv-reveal:hover { border-color: var(--track-build); background: color-mix(in srgb, var(--track-build) 12%, transparent); }
   .rv-ratings { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 16px; }
   .rv-rate {
     flex: 1 1 auto;
@@ -675,4 +809,64 @@ import { ogImagePath } from "../lib/og.mjs";
   .rv-rate:focus-visible { outline: 2px solid var(--behavioral); outline-offset: 2px; }
   .rv-rate-again:hover { border-color: #f4a896; color: #f4a896; }
   .rv-rate-easy:hover { border-color: var(--reading); color: var(--reading); }
+
+  /* ---- footer note ---- */
+  .rm-note {
+    font-size: 12.5px;
+    color: var(--color-text-faint);
+    text-align: center;
+    margin-top: 46px;
+    font-family: var(--font-mono);
+    line-height: 1.7;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .roadmap-page * { transition: none !important; animation: none !important; }
+  }
+
+  /* ---- vertical graph (below 900px) ---- */
+  @media (max-width: 899.98px) {
+    .rm-arr { display: none; }
+    .rm-graph {
+      display: block;
+      list-style: none;
+      margin: 20px 0 0;
+      padding: 0;
+    }
+    .rm-graph-row {
+      position: relative;
+      padding-left: 16px;
+      border-top: 1px solid var(--color-border);
+    }
+    .rm-graph-row:first-child { border-top: 0; }
+    .rm-graph-row.t-build { --c: var(--track-build); }
+    .rm-graph-row.t-reading { --c: var(--track-reading); }
+    .rm-graph-row.t-foundations { --c: var(--track-foundations); }
+    .rm-graph-row::before {
+      content: "";
+      position: absolute;
+      left: 0;
+      top: 12px;
+      bottom: 12px;
+      width: 3px;
+      border-radius: 2px;
+      background: var(--c);
+    }
+    .rm-graph-row.is-planned::before { background: color-mix(in srgb, var(--c) 55%, transparent); }
+    .rm-graph-row a {
+      display: block;
+      padding: 12px 0;
+      color: var(--color-text-primary);
+      text-decoration: none;
+    }
+    .rm-graph-row b { display: block; font-size: 14px; font-weight: 600; line-height: 1.3; }
+    .rm-graph-row small { display: block; margin-top: 3px; font-size: 12px; color: var(--color-text-muted); }
+    .rm-graph-row.is-planned a b { color: var(--color-text-secondary); }
+    .rm-insp { scroll-margin-top: 64px; }
+  }
+
+  /* Stack the three meters on phones so the labels and stats stay readable. */
+  @media (max-width: 620px) {
+    .rm-meters { grid-template-columns: 1fr; }
+  }
 </style>

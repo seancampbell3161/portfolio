@@ -1,0 +1,92 @@
+---
+// The roadmap as an arrangement (spec §6): a quarter ruler, three tracks with
+// positioned span clips, a playhead, a legend, and a date-ordered mobile graph.
+// Positions are computed at build time for the default "span" window with the
+// shared timeline math (as the home Timeline.astro does); the arrangement script
+// (src/scripts/roadmap-arrangement.ts) re-lays them for the "All" zoom in the
+// browser, reading the clip list embedded as JSON in #rm-clip-data.
+import { roadmapClips, roadmapWindow, quarterTicks, type Track } from "../../lib/roadmap/arrange";
+import { positionIn, packRows, estimateLabelWidth, fraction } from "../../lib/timeline/layout";
+
+const now = new Date();
+const clips = roadmapClips(new Set<string>(), now); // zeroed; live progress fills numbers, not positions
+const win = roadmapWindow("span", now, clips);
+const ticks = quarterTicks(win);
+const estimate = estimateLabelWidth();
+const nowX = fraction(now, win); // 0..1 within the window
+
+const TRACKS: { key: Track; label: string; note: string }[] = [
+  { key: "build", label: "Build", note: "CodeCrafters, in order" },
+  { key: "reading", label: "Reading", note: "anchor + light" },
+  { key: "foundations", label: "Foundations", note: "NeetCode" },
+];
+
+// Per track: position its clips in the window, then pack into rows.
+// packRows returns RowPlaced<RoadmapClip>[] — each has .item (the clip), .x, .w, .row.
+const lanes = TRACKS.map((t) => {
+  const placed = clips.filter((c) => c.track === t.key).flatMap((c) => positionIn(c, win, now) ?? []);
+  return { ...t, rows: packRows(placed, estimate) };
+});
+
+// Serialize for the client script so it can re-lay for the "All" zoom.
+const clipData = clips.map((c) => ({
+  id: c.id, track: c.track, title: c.title, sublabel: c.sublabel,
+  start: c.start.toISOString(), end: c.end.toISOString(), status: c.status, href: c.href,
+}));
+---
+
+<div class="rm-arr" data-window-from={win.from.toISOString()} data-window-to={win.to.toISOString()}>
+  <div class="rm-arr-head">
+    <div class="rm-zoom" role="group" aria-label="Zoom">
+      <button type="button" data-rm-zoom="span" aria-pressed="true">2026–2027</button>
+      <button type="button" data-rm-zoom="all" aria-pressed="false">All</button>
+    </div>
+  </div>
+
+  <div class="rm-arr-body">
+    <div class="rm-ruler" aria-hidden="true">
+      {ticks.map((t) => <span class="rm-tick" style={`left:${t.x * 100}%`}>{t.label}</span>)}
+    </div>
+
+    {lanes.map((lane) => (
+      <div class="rm-lane" style={`--c: var(--track-${lane.key})`}>
+        <div class="rm-lane-head">
+          <h3 id={`rm-track-${lane.key}`}><i class="rm-mdot"></i>{lane.label}</h3>
+          <small>{lane.note}</small>
+        </div>
+        <div class="rm-clips" data-track={lane.key}>
+          {lane.rows.map((p) => (
+            <a
+              class:list={["rm-clip", `is-${p.item.status}`]}
+              href={p.item.href}
+              data-clip-id={p.item.id}
+              style={`--x:${p.x * 100}%; --w:${p.w * 100}%; --y:${p.row}`}
+            >
+              <span class="rm-clip-title">{p.item.title}</span>
+              {p.item.sublabel && <small class="rm-clip-sub">{p.item.sublabel}</small>}
+            </a>
+          ))}
+        </div>
+      </div>
+    ))}
+
+    <div class="rm-playhead" style={`--ph:${nowX}`} data-rm-playhead><span>now</span></div>
+  </div>
+</div>
+
+{/* Mobile graph: the same clips, date-ordered, shown below 900px (spec §6). */}
+<ol class="rm-graph" aria-label="Roadmap, by date">
+  {[...clips].sort((a, b) => a.start.getTime() - b.start.getTime()).map((c) => (
+    <li class:list={["rm-graph-row", `t-${c.track}`, `is-${c.status}`]}>
+      <a href={c.href}><b>{c.title}</b><small>{c.sublabel}</small></a>
+    </li>
+  ))}
+</ol>
+
+<script type="application/json" id="rm-clip-data" set:html={JSON.stringify(clipData)}></script>
+
+<div class="rm-legend" aria-hidden="true">
+  <span><i class="l-done"></i>done</span>
+  <span><i class="l-prog"></i>in progress</span>
+  <span><i class="l-plan"></i>planned</span>
+</div>
