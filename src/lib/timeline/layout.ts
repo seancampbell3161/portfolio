@@ -1,7 +1,7 @@
 // Pure layout math (spec §7). No DOM: runs at build time in Astro and again in
 // the browser (src/scripts/timeline.ts) for zoom changes.
 // All calendar math is UTC: content dates parse from YYYY-MM-DD strings, which are UTC midnight.
-import type { Lane, TimelineItem } from "./types.js";
+import type { Kind, Lane, TimelineItem } from "./types.js";
 
 export type Zoom = "year" | "three-years" | "all";
 export const ZOOMS: readonly Zoom[] = ["year", "three-years", "all"];
@@ -43,14 +43,24 @@ export function fraction(date: Date, w: Window): number {
 
 const clamp01 = (n: number): number => Math.min(1, Math.max(0, n));
 
+/** The subset of fields positioning and packing read, so non-TimelineItem shapes (e.g. RoadmapClip) can flow through too. */
+export interface Positionable {
+  id: string;
+  title: string;
+  subtitle?: string;
+  start: Date;
+  end?: Date;
+  kind: Kind;
+}
+
 /** Where an item stops: its end, or now for an ongoing span, or its start for a moment. */
-export function effectiveEnd(item: TimelineItem, now: Date): Date {
+export function effectiveEnd(item: Positionable, now: Date): Date {
   if (item.end) return item.end;
   return item.kind === "span" ? now : item.start;
 }
 
-export interface Placed {
-  item: TimelineItem;
+export interface Placed<T extends Positionable = TimelineItem> {
+  item: T;
   /** left edge, fraction of window width, clamped to [0, 1] */
   x: number;
   /** width, fraction of window width; 0 for a moment */
@@ -58,7 +68,7 @@ export interface Placed {
 }
 
 /** Null when the item lies entirely outside the window. */
-export function positionIn(item: TimelineItem, w: Window, now: Date): Placed | null {
+export function positionIn<T extends Positionable>(item: T, w: Window, now: Date): Placed<T> | null {
   const end = effectiveEnd(item, now);
   if (end.getTime() < w.from.getTime() || item.start.getTime() > w.to.getTime()) return null;
   const x = clamp01(fraction(item.start, w));
@@ -67,7 +77,7 @@ export function positionIn(item: TimelineItem, w: Window, now: Date): Placed | n
 }
 
 /** Returns the horizontal extent a moment's label occupies, as a fraction of the window width. */
-export type WidthEstimator = (item: TimelineItem) => number;
+export type WidthEstimator = (item: Positionable) => number;
 
 /**
  * Build-time estimate: 7px per character of title plus subtitle, plus 30px for
@@ -82,13 +92,16 @@ export function estimateLabelWidth(referenceWidthPx = 1040): WidthEstimator {
 /** A bare dot's extent (a demoted moment). */
 export const DOT_WIDTH = 14 / 1040;
 
-export interface RowPlaced extends Placed {
+export interface RowPlaced<T extends Positionable = TimelineItem> extends Placed<T> {
   row: number;
   /** false when a moment has been demoted to a bare dot */
   labeled: boolean;
 }
 
-function assignRows(sorted: readonly Placed[], extentOf: (p: Placed) => number): { rows: number[]; maxRow: number } {
+function assignRows(
+  sorted: readonly Placed<Positionable>[],
+  extentOf: (p: Placed<Positionable>) => number,
+): { rows: number[]; maxRow: number } {
   const rowEnds: number[] = [];
   const rows: number[] = [];
   let maxRow = -1;
@@ -112,12 +125,16 @@ function assignRows(sorted: readonly Placed[], extentOf: (p: Placed) => number):
  * a time, until the packing fits. Spans are never demoted; if spans alone need
  * more rows, the extra rows are returned as computed.
  */
-export function packRows(placed: readonly Placed[], estimate: WidthEstimator, maxRows = 3): RowPlaced[] {
+export function packRows<T extends Positionable>(
+  placed: readonly Placed<T>[],
+  estimate: WidthEstimator,
+  maxRows = 3,
+): RowPlaced<T>[] {
   const sorted = [...placed].sort(
     (a, b) => a.x - b.x || b.w - a.w || a.item.id.localeCompare(b.item.id),
   );
   const demoted = new Set<string>();
-  const extentOf = (p: Placed): number =>
+  const extentOf = (p: Placed<Positionable>): number =>
     p.item.kind === "moment"
       ? p.x + (demoted.has(p.item.id) ? DOT_WIDTH : estimate(p.item))
       : p.x + p.w;
