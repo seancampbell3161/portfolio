@@ -9,7 +9,7 @@
     "preview": "astro preview",
     "astro": "astro",
     "og": "node scripts/og-screenshots.mjs",
-    "shots": "node scripts/home-screenshots.mjs",
+    "shots": "node scripts/screenshots.mjs",
     "test": "vitest run",
     "test:watch": "vitest"
   },
