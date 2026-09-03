@@ -1,0 +1,25 @@
+---
+title: "Songle"
+description: "A daily music guessing game where players identify songs from isolated audio stems — vocals, drums, bass, or instrumentation."
+start: 2023-06-01 # placeholder
+end: 2024-02-01 # placeholder
+status: live
+stack: ["Angular", ".NET", "Python", "PostgreSQL", "Docker"]
+url: "https://songle.lol"
+---
+
+## Problem
+
+Music trivia games rely on playing full tracks, making it too easy to identify songs. There's no game that challenges players with isolated stems — just vocals, drums, or bass — for a genuinely difficult guessing experience.
+
+## Solution
+
+Built a daily Wordle-style music guessing game where players identify songs from isolated audio stems. A .NET API orchestrates Python ML models (Spleeter/Demucs) to separate uploaded tracks into vocals, drums, bass, and instrumentation.
+
+## Tradeoffs
+
+Audio separation runs Python ML models invoked via subprocess from .NET rather than porting to native code. This adds deployment complexity (multi-container Docker setup) but leverages battle-tested models that would take months to reimplement.
+
+## Impact
+
+Players get 4 attempts with scoring based on speed (100/75/50/25 points). A daily background job auto-selects the Song of the Day, and the hybrid .NET/Python pipeline processes tracks end-to-end from YouTube URL to separated stems stored in cloud storage.

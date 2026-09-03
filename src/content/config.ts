@@ -1,4 +1,5 @@
 import { defineCollection, z } from 'astro:content';
+import { projectFrontmatterSchema } from '../lib/timeline/types';
 
 const blog = defineCollection({
   type: 'content',
@@ -13,4 +14,11 @@ const blog = defineCollection({
   }),
 });
 
-export const collections = { blog };
+// Case studies. Frontmatter rules live in src/lib/timeline/types.ts so the
+// same schema validates in Vitest (spec §12).
+const projects = defineCollection({
+  type: 'content',
+  schema: projectFrontmatterSchema,
+});
+
+export const collections = { blog, projects };

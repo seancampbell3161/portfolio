@@ -1,0 +1,25 @@
+---
+title: "RSWebTWAIN"
+description: "An open-source, headless Rust/Tauri desktop agent that bridges web browsers to TWAIN document scanners, replacing expensive proprietary libraries."
+start: 2024-09-01 # placeholder
+end: 2025-04-01 # placeholder
+status: done
+stack: ["Rust", "Tauri v2", "WebSocket", "Angular", "FFI"]
+source: "https://github.com/seancampbell3161/WebTWAIN"
+---
+
+## Problem
+
+Enterprise web apps need browser-based document scanning, but the go-to commercial library is expensive and can't handle legacy 32-bit-only scanner drivers on modern 64-bit systems.
+
+## Solution
+
+Built a headless Tauri v2 system-tray agent that exposes a WebSocket API on localhost for browser-to-scanner communication. Uses a typestate pattern for the TWAIN state machine — seven state transitions verified at compile time — and spawns a 32-bit sidecar process to bridge the architecture gap for legacy drivers.
+
+## Tradeoffs
+
+Chose Rust's typestate pattern to make invalid TWAIN state transitions compile-time errors instead of runtime bugs. This added upfront design complexity but eliminated an entire class of scanner communication failures. A 32-bit sidecar over JSON-line IPC was simpler than forcing the whole app to 32-bit, at the cost of cross-process coordination.
+
+## Impact
+
+Eliminates per-seat licensing costs for commercial scanning SDKs. Supports both modern 64-bit and legacy 32-bit TWAIN drivers in a single install — critical for enterprise deployments with mixed hardware. DPAPI-encrypted auth and origin validation secure the localhost WebSocket without TLS certificate complexity.

@@ -1,0 +1,83 @@
+---
+import Icon from "./Icon.astro";
+
+const email = "sean@seanthedeveloper.com";
+---
+
+<section id="contact" class="contact">
+  <img src="/images/profile.jpg" alt="Sean Campbell" class="contact-photo" width="96" height="114" loading="lazy" />
+  <div>
+    <h2>Get in touch</h2>
+    <p>
+      Whether you're looking for a software engineer who can hit the ground running, or you just want to
+      talk shop about architecture patterns, I'd love to hear from you.
+    </p>
+    <p class="contact-links">
+      <a href={`mailto:${email}`}>{email}</a>
+      <a href="https://github.com/seancampbell3161" target="_blank" rel="noopener noreferrer"><Icon name="github" size={16} />GitHub</a>
+      <a href="https://linkedin.com/in/seancampbelldev" target="_blank" rel="noopener noreferrer"><Icon name="linkedin" size={16} />LinkedIn</a>
+    </p>
+  </div>
+</section>
+
+<style>
+  .contact {
+    max-width: var(--max-width);
+    margin: var(--space-4xl) auto 0;
+    padding: 0 40px;
+    display: grid;
+    grid-template-columns: 96px 1fr;
+    gap: 28px;
+    align-items: start;
+    scroll-margin-top: 76px;
+  }
+  .contact-photo {
+    width: 96px;
+    height: 114px;
+    object-fit: cover;
+    object-position: 50% 20%;
+    border-radius: var(--radius-md);
+  }
+  .contact h2 {
+    margin: 0 0 10px;
+    font-size: 34px;
+    line-height: 1.05;
+  }
+  .contact p {
+    margin: 0;
+    max-width: 52ch;
+    font-size: 17px;
+    line-height: 1.5;
+    color: var(--color-text-secondary);
+  }
+  .contact-links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 22px;
+    margin-top: 16px;
+    font-size: 15px;
+  }
+  .contact-links a {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--color-text-primary);
+    border-bottom: 1px solid var(--color-border-hover);
+  }
+
+  @media (max-width: 899.98px) {
+    .contact {
+      margin-top: var(--space-3xl);
+      padding: 0 18px;
+      grid-template-columns: 72px 1fr;
+      gap: 16px;
+    }
+    .contact-photo {
+      width: 72px;
+      height: 86px;
+    }
+    .contact h2 {
+      font-size: 26px;
+    }
+  }
+</style>

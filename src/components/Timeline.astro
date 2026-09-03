@@ -1,0 +1,632 @@
+---
+import type { TimelineItem } from "../lib/timeline/types";
+import { LANES } from "../lib/timeline/types";
+import {
+  estimateLabelWidth,
+  fraction,
+  graphLayout,
+  laneSummary,
+  packLane,
+  positionIn,
+  ticksFor,
+  whenLabel,
+  windowFor,
+  type Zoom,
+} from "../lib/timeline/layout";
+
+interface Props {
+  items: TimelineItem[];
+  now: Date;
+  zoom?: Zoom;
+}
+
+const { items, now, zoom = "year" } = Astro.props;
+
+const win = windowFor(zoom, now, items);
+const allWin = windowFor("all", now, items);
+const estimate = estimateLabelWidth();
+
+// An item that started before the window (e.g. a mobile row for something that
+// began years earlier) needs its year shown, since `zoom` alone would drop it.
+const when = (item: TimelineItem) =>
+  whenLabel(item.start, item.start.getTime() < win.from.getTime() ? "all" : zoom);
+
+// Arrangement positions, per lane, then indexed by item id.
+const placed = new Map<string, { lane: number; row: number; x: number; w: number; labeled: boolean }>();
+LANES.forEach((lane, laneIndex) => {
+  for (const p of packLane(items, lane, win, now, estimate)) {
+    placed.set(p.item.id, { lane: laneIndex, row: p.row, x: p.x, w: p.w, labeled: p.labeled });
+  }
+});
+
+// Vertical graph.
+const graph = graphLayout(items, win, now);
+const byId = new Map(items.map((i) => [i.id, i]));
+const laneIndex = (lane: string) => LANES.indexOf(lane as (typeof LANES)[number]);
+
+const ticks = ticksFor(zoom, win);
+const allTicks = ticksFor("all", allWin);
+const summaries = LANES.map((lane) => laneSummary(lane, items, win, now));
+const windowLabel =
+  zoom === "year" ? String(win.from.getUTCFullYear()) : `${win.from.getUTCFullYear()} to ${win.to.getUTCFullYear()}`;
+const nowX = fraction(now, win);
+const ovX = fraction(win.from, allWin);
+const ovW = fraction(win.to, allWin) - ovX;
+const overview = LANES.map((lane) =>
+  items.filter((i) => i.lane === lane).flatMap((i) => positionIn(i, allWin, now) ?? []),
+);
+const iso = (d: Date) => d.toISOString().slice(0, 10);
+---
+
+<section class="tl" data-timeline data-now={now.toISOString()} data-zoom={zoom} aria-label={`Timeline, ${windowLabel}`}>
+  <div class="tl-ov" aria-hidden="true">
+    {allTicks.map((t) => <span class="tl-ov-yr" style={`--x:${t.x}`}>{t.label}</span>)}
+    {LANES.map((lane, li) => (
+      <div class="tl-ov-row" style={`--lane:${li};--c:var(--lane-${lane})`}>
+        {overview[li].map((p) => <i style={`--x:${p.x};--w:${p.w}`}></i>)}
+      </div>
+    ))}
+    <div class="tl-ov-win" data-ov-window style={`--x:${ovX};--w:${ovW}`}></div>
+  </div>
+
+  <div class="tl-stage">
+    <div class="tl-ruler" aria-hidden="true">
+      <span class="tl-corner" data-window-label>{windowLabel}</span>
+      <div class="tl-ticks" data-ticks>
+        {ticks.map((t) => <span style={`--x:${t.x}`}>{t.label}</span>)}
+      </div>
+    </div>
+
+    <ul class="tl-heads">
+      {LANES.map((lane, li) => (
+        <li class="tl-head" id={`lane-${lane}`} style={`--lane:${li};--c:var(--lane-${lane})`}>
+          <b><i aria-hidden="true"></i>{lane[0].toUpperCase() + lane.slice(1)}</b>
+          <small data-lane-summary={lane}>{summaries[li]}</small>
+        </li>
+      ))}
+    </ul>
+
+    <div class="tl-rows">
+    <ol class="tl-items">
+      {items.map((item) => {
+        const p = placed.get(item.id);
+        const style = p ? `--lane:${p.lane};--row:${p.row};--x:${p.x};--w:${p.w};--c:var(--lane-${item.lane})` : `--c:var(--lane-${item.lane})`;
+        return (
+          <li
+            class="tl-item"
+            data-id={item.id}
+            data-lane={item.lane}
+            data-kind={item.kind}
+            data-status={item.status}
+            data-start={iso(item.start)}
+            data-end={item.end ? iso(item.end) : undefined}
+            data-labeled={p ? String(p.labeled) : "true"}
+            data-out={p ? undefined : ""}
+            style={style}
+          >
+            <span class="tl-when">{when(item)}</span>
+            <a class="tl-clip" href={item.href} data-item-link={item.id}>
+              <span class="tl-sr">{item.lane[0].toUpperCase() + item.lane.slice(1)}: </span>
+              <span class="tl-title">{item.title}</span>
+              {item.subtitle && <small class="tl-sub">{item.subtitle}</small>}
+            </a>
+          </li>
+        );
+      })}
+    </ol>
+
+    <div class="tl-gutter" aria-hidden="true" data-gutter>
+      {graph.bars.map((b) => (
+        <i
+          class:list={["tl-bar", { live: byId.get(b.id)?.status === "in-progress", "to-now": b.toRow === null }]}
+          style={`--lane:${laneIndex(b.lane)};--slot:${b.slot};--from:${b.fromRow};--to:${b.toRow ?? graph.nowRow};--c:var(--lane-${b.lane})`}
+        ></i>
+      ))}
+      {graph.dots.map((d) => (
+        <i class="tl-dot" style={`--lane:${laneIndex(d.lane)};--row:${d.row};--c:var(--lane-${d.lane})`}></i>
+      ))}
+    </div>
+    <div class="tl-nowline" aria-hidden="true" data-nowline style={`--row:${graph.nowRow}`}><span>now</span></div>
+    </div>
+
+    <div class="tl-playhead" aria-hidden="true" data-playhead style={`--x:${nowX}`}><span>now</span></div>
+  </div>
+</section>
+
+<style is:global>
+  .tl {
+    --lane-h: 120px;
+    --row-pitch: 36px;
+    --row-top: 12px;
+    --head-w: 160px;
+    --ruler-h: 32px;
+    --row-h: 50px;
+    max-width: var(--max-width);
+    margin: 0 auto;
+    padding: 0 40px;
+  }
+
+  /* ---------- overview strip ---------- */
+  .tl-ov {
+    position: relative;
+    height: 60px;
+    margin: 0 0 10px var(--head-w);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    background: var(--color-bg-elevated);
+    overflow: hidden;
+    font-family: var(--font-mono);
+    font-size: 10px;
+    color: var(--color-text-muted);
+  }
+  .tl-ov-yr {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: calc(var(--x) * 100%);
+    border-left: 1px solid var(--color-border);
+    padding: 3px 0 0 5px;
+  }
+  .tl-ov-row {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: calc(18px + var(--lane) * 10px);
+    height: 6px;
+  }
+  .tl-ov-row i {
+    position: absolute;
+    top: 0;
+    height: 6px;
+    left: calc(var(--x) * 100%);
+    width: max(6px, calc(var(--w) * 100%));
+    border-radius: 2px;
+    background: var(--c);
+  }
+  .tl-ov-win {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: calc(var(--x) * 100%);
+    width: calc(var(--w) * 100%);
+    border: 1px solid var(--color-text-primary);
+    background: rgba(236, 234, 228, 0.07);
+  }
+
+  /* ---------- arrangement (900px and up) ---------- */
+  .tl-stage {
+    position: relative;
+    display: grid;
+    grid-template-columns: var(--head-w) 1fr;
+    grid-template-rows: var(--ruler-h) repeat(4, var(--lane-h));
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    background: var(--color-bg-elevated);
+    overflow: hidden;
+  }
+  .tl-ruler {
+    grid-column: 1 / 3;
+    grid-row: 1;
+    display: grid;
+    grid-template-columns: var(--head-w) 1fr;
+    border-bottom: 1px solid var(--color-border);
+    font-family: var(--font-mono);
+    font-size: 12px;
+    color: var(--color-text-muted);
+  }
+  .tl-corner {
+    border-right: 1px solid var(--color-border);
+    padding: 8px 16px;
+    color: var(--color-text-primary);
+  }
+  .tl-ticks {
+    position: relative;
+  }
+  .tl-ticks span {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: calc(var(--x) * 100%);
+    border-left: 1px solid var(--color-border);
+    padding: 8px 0 0 7px;
+    white-space: nowrap;
+  }
+  .tl-heads {
+    display: contents;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+  .tl-head {
+    grid-column: 1;
+    grid-row: calc(var(--lane) + 2);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 3px;
+    padding: 0 16px;
+    border-right: 1px solid var(--color-border);
+    border-bottom: 1px solid var(--color-border);
+    scroll-margin-top: 76px;
+  }
+  .tl-head:last-child {
+    border-bottom: 0;
+  }
+  .tl-head b {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-weight: 500;
+    font-size: 14px;
+  }
+  .tl-head b i {
+    width: 10px;
+    height: 10px;
+    border-radius: 2px;
+    background: var(--c);
+  }
+  .tl-head small {
+    font-size: 12px;
+    color: var(--color-text-muted);
+    padding-left: 20px;
+  }
+  /* Wraps tl-items, tl-gutter and tl-nowline so the gutter overlay shares tl-items'
+     coordinate space. display:contents makes this wrapper invisible to the grid, so
+     tl-items keeps its own grid placement below unchanged; the mobile media query
+     turns it into the real positioned box the gutter/nowline measure "top" against. */
+  .tl-rows {
+    display: contents;
+  }
+  .tl-items {
+    grid-column: 2;
+    grid-row: 2 / 6;
+    position: relative;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    background-image: linear-gradient(var(--color-border) 1px, transparent 1px);
+    background-size: 100% var(--lane-h);
+    background-position: 0 -1px;
+  }
+  .tl-item {
+    position: absolute;
+    left: calc(var(--x) * 100%);
+    width: calc(var(--w) * 100%);
+    top: calc(var(--lane) * var(--lane-h) + var(--row-top) + var(--row) * var(--row-pitch));
+    margin: 0;
+  }
+  /* !important: an out-of-window item must stay hidden in both layouts. Without
+     it, the mobile media query's same-specificity `.tl-item[data-kind="moment"]`
+     rule (later in source order) would win the tie and re-show it. */
+  .tl-item[data-out] {
+    display: none !important;
+  }
+  .tl-item[data-kind="moment"] {
+    width: auto;
+  }
+  .tl-when {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: -1px;
+    padding: 0;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+    border: 0;
+  }
+  .tl-sr {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: -1px;
+    padding: 0;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+    border: 0;
+  }
+  .tl-clip {
+    display: block;
+    box-sizing: border-box;
+    height: 34px;
+    padding: 3px 10px 0;
+    border-left: 3px solid var(--c);
+    border-radius: var(--radius-sm);
+    background: color-mix(in srgb, var(--c) 22%, var(--color-bg-elevated));
+    color: var(--color-text-primary);
+    font-size: 13px;
+    line-height: 1.15;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .tl-sub {
+    display: block;
+    margin-top: 1px;
+    font-size: 12px;
+    line-height: 1.15;
+    color: var(--color-text-muted);
+  }
+  .tl-item[data-status="in-progress"] .tl-clip {
+    background: repeating-linear-gradient(
+      -45deg,
+      color-mix(in srgb, var(--c) 10%, var(--color-bg-elevated)) 0 6px,
+      color-mix(in srgb, var(--c) 26%, var(--color-bg-elevated)) 6px 12px
+    );
+    border-right: 2px dashed var(--c);
+  }
+  .tl-item[data-kind="moment"] .tl-clip {
+    position: relative;
+    height: 20px;
+    padding: 0 0 0 16px;
+    border-left: 0;
+    background: transparent;
+    line-height: 20px;
+    overflow: visible;
+  }
+  .tl-item[data-kind="moment"] .tl-clip::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 5px;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: var(--c);
+  }
+  .tl-item[data-kind="moment"] .tl-sub {
+    display: inline;
+    margin: 0 0 0 8px;
+  }
+  /* A labeled moment's clip is unclipped by default (title + subtitle run inline);
+     ellipsize it at every width so a long label doesn't paint past its box. Needed
+     everywhere, not just desktop: mobile stacks the subtitle as its own block line
+     within a fixed-width column, and without this, the base overflow:visible above
+     (kept for the demoted/hover-reveal popout) lets that line spill past the
+     phone's viewport, widening the page. */
+  .tl-item[data-kind="moment"]:not([data-labeled="false"]) .tl-clip {
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  /* Bound the item box to the stage's right edge so the now-ellipsized clip isn't
+     instead hard-clipped mid-word by tl-stage's own overflow:hidden. Arrangement
+     layout only: below 900px, --x no longer means a horizontal window fraction
+     (the vertical graph positions items with a static grid), so this part stays
+     desktop-scoped. */
+  @media (min-width: 900px) {
+    .tl-item[data-kind="moment"]:not([data-labeled="false"]) {
+      max-width: calc((1 - var(--x)) * 100%);
+    }
+  }
+  /* Demoted moment: bare dot; label appears on hover or focus. */
+  .tl-item[data-labeled="false"] .tl-title,
+  .tl-item[data-labeled="false"] .tl-sub {
+    position: absolute;
+    left: -9999px;
+  }
+  .tl-item[data-labeled="false"] .tl-clip:is(:hover, :focus-visible) .tl-title {
+    position: absolute;
+    left: 16px;
+    top: 0;
+    z-index: 3;
+    padding: 0 6px;
+    border-radius: var(--radius-sm);
+    background: var(--color-bg);
+  }
+  .tl-item[data-selected] .tl-clip {
+    outline: 2px solid var(--c);
+    outline-offset: -1px;
+  }
+  .tl-clip:focus-visible {
+    outline: 2px solid var(--c);
+    outline-offset: 2px;
+  }
+  .tl-playhead {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: calc(var(--head-w) + (100% - var(--head-w)) * var(--x));
+    width: 2px;
+    background: var(--color-text-primary);
+    pointer-events: none;
+    z-index: 2;
+  }
+  .tl-playhead span {
+    position: absolute;
+    top: 7px;
+    right: 6px;
+    padding: 1px 5px;
+    border-radius: 2px;
+    background: var(--color-text-primary);
+    color: var(--color-bg);
+    font-family: var(--font-mono);
+    font-size: 11px;
+    line-height: 1.4;
+  }
+  .tl-gutter,
+  .tl-nowline {
+    display: none;
+  }
+
+  /* ---------- vertical graph (below 900px) ---------- */
+  @media (max-width: 899.98px) {
+    .tl {
+      padding: 0 18px;
+    }
+    .tl-ov {
+      margin-left: 0;
+      height: 40px;
+      font-size: 9px;
+    }
+    .tl-ov-row {
+      top: calc(13px + var(--lane) * 7px);
+      height: 4px;
+    }
+    .tl-ov-row i {
+      height: 4px;
+      width: max(4px, calc(var(--w) * 100%));
+    }
+    .tl-stage {
+      display: block;
+      border: 0;
+      background: none;
+      overflow: visible;
+    }
+    .tl-ruler,
+    .tl-playhead {
+      display: none;
+    }
+    .tl-heads {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin: 0 0 6px;
+      font-size: 10.5px;
+      color: var(--color-text-muted);
+    }
+    .tl-head {
+      display: flex;
+      flex-direction: row;
+      align-items: center;
+      gap: 5px;
+      padding: 0;
+      border: 0;
+    }
+    .tl-head b {
+      font-size: inherit;
+      font-weight: 400;
+      gap: 5px;
+    }
+    .tl-head b i {
+      width: 8px;
+      height: 8px;
+    }
+    .tl-head small {
+      display: none;
+    }
+    .tl-rows {
+      display: block;
+      position: relative;
+    }
+    .tl-items {
+      position: relative;
+      background: none;
+    }
+    .tl-item,
+    .tl-item[data-kind="moment"] {
+      position: static;
+      display: grid;
+      grid-template-columns: 30px 74px 1fr;
+      gap: 0 10px;
+      width: auto;
+      height: var(--row-h);
+      align-items: start;
+      padding-top: 8px;
+      border-top: 1px solid var(--color-border);
+    }
+    .tl-when {
+      display: block;
+      position: static;
+      width: auto;
+      height: auto;
+      margin: 0;
+      overflow: visible;
+      clip: auto;
+      padding-top: 3px;
+      font-family: var(--font-mono);
+      font-size: 10px;
+      color: var(--color-text-muted);
+    }
+    .tl-clip,
+    .tl-item[data-kind="moment"] .tl-clip,
+    .tl-item[data-status="in-progress"] .tl-clip {
+      grid-column: 3;
+      height: auto;
+      padding: 0;
+      border: 0;
+      background: none;
+      font-size: 13.5px;
+      line-height: 1.25;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .tl-item[data-kind="moment"] .tl-clip::before {
+      display: none;
+    }
+    .tl-sub,
+    .tl-item[data-kind="moment"] .tl-sub {
+      display: block;
+      margin: 2px 0 0;
+      font-size: 11px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .tl-item[data-labeled="false"] .tl-title,
+    .tl-item[data-labeled="false"] .tl-sub {
+      position: static;
+    }
+    .tl-gutter {
+      display: block;
+      position: absolute;
+      left: 40px;
+      top: 0;
+      width: 74px;
+      height: 100%;
+      pointer-events: none;
+    }
+    .tl-bar {
+      position: absolute;
+      display: block;
+      width: 6px;
+      border-radius: 3px;
+      background: var(--c);
+      left: calc(var(--lane) * 20px + var(--slot) * 8px);
+      top: calc(var(--from) * var(--row-h) + 11px);
+      height: calc((var(--to) - var(--from)) * var(--row-h) + 8px);
+    }
+    .tl-bar.to-now {
+      height: calc((var(--to) - var(--from)) * var(--row-h) - 11px);
+    }
+    .tl-bar.live {
+      background: repeating-linear-gradient(
+        -45deg,
+        color-mix(in srgb, var(--c) 40%, var(--color-bg-elevated)) 0 3px,
+        var(--c) 3px 6px
+      );
+    }
+    .tl-dot {
+      position: absolute;
+      display: block;
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--c);
+      left: calc(var(--lane) * 20px - 1px);
+      top: calc(var(--row) * var(--row-h) + 10px);
+    }
+    .tl-nowline {
+      display: block;
+      position: absolute;
+      left: -18px;
+      right: -18px;
+      top: calc(var(--row) * var(--row-h));
+      height: 2px;
+      background: var(--color-text-primary);
+      pointer-events: none;
+    }
+    .tl-nowline span {
+      position: absolute;
+      left: 18px;
+      top: -9px;
+      padding: 0 5px;
+      border-radius: 2px;
+      background: var(--color-text-primary);
+      color: var(--color-bg);
+      font-family: var(--font-mono);
+      font-size: 9px;
+      line-height: 1.7;
+    }
+  }
+</style>

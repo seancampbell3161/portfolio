@@ -6,16 +6,7 @@ This folder contains images for the portfolio site.
 - **File**: `profile.jpg` (or `.png`, `.webp`)
 - **Location**: `/public/images/profile.jpg`
 - **Recommended size**: 640x760px (or similar aspect ratio)
-- **Used in**: Hero section
-
-## Beyond the Code Images
-Place these in `/public/images/beyond/`:
-
-- **speaking.jpg** - Photo from a conference talk or meetup
-- **mentoring.jpg** - Photo of team collaboration, pair programming, or teaching
-- **opensource.jpg** - Could be a screenshot of GitHub contributions, code, or a creative representation
-
-**Recommended size**: 800x500px (or similar 16:10 aspect ratio)
+- **Used in**: Contact block on the home page
 
 ## Image Optimization
 

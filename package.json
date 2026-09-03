@@ -9,6 +9,7 @@
     "preview": "astro preview",
     "astro": "astro",
     "og": "node scripts/og-screenshots.mjs",
+    "shots": "node scripts/home-screenshots.mjs",
     "test": "vitest run",
     "test:watch": "vitest"
   },
@@ -19,7 +20,8 @@
     "@netlify/blobs": "^10.7.4",
     "astro": "^5.16.6",
     "fast-xml-parser": "^5.7.2",
-    "resend": "^6.12.2"
+    "resend": "^6.12.2",
+    "zod": "3.25.76"
   },
   "devDependencies": {
     "@netlify/functions": "^5.2.0",

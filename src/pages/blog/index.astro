@@ -1,6 +1,6 @@
 ---
 import Layout from "../../layouts/Layout.astro";
-import Nav from "../../components/Nav.astro";
+import TransportBar from "../../components/TransportBar.astro";
 import Footer from "../../components/Footer.astro";
 import Newsletter from "../../components/Newsletter.astro";
 import { getCollection } from "astro:content";
@@ -18,7 +18,7 @@ const posts = (
   description="Thoughts on software engineering, architecture patterns, and lessons from production systems."
   image={ogImagePath("blog")}
 >
-  <Nav />
+  <TransportBar active="writing" />
 
   <main class="blog-index">
     <header class="page-header">
