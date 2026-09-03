@@ -15,6 +15,9 @@
     --color-text-muted: #9A9C98;
     --color-text-faint: #7A7D7A;
 
+    /* Long-form body text (writing spec §5): between primary and secondary. */
+    --color-text-reading: #DDDBD4;
+
     /* Accent is the learning blue; kept for pages not yet redesigned. */
     --color-accent: #60A5FA;
     --color-accent-secondary: #A78BFA;

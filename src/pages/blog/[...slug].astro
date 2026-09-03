@@ -1,22 +1,40 @@
 ---
-import { type CollectionEntry, getCollection } from 'astro:content';
-import BlogPost from '../../layouts/BlogPost.astro';
+// src/pages/blog/[...slug].astro
+// One page per published essay. The sidebar's segment and written-while list
+// come from the same timeline the home page renders (writing spec §5, §12).
+import { type CollectionEntry, getCollection } from "astro:content";
+import BlogPost from "../../layouts/BlogPost.astro";
+import { getTimeline } from "../../lib/timeline/astro";
+import { readingMinutes, segmentRows, writtenWhile } from "../../lib/timeline/track";
+import type { Essay } from "../../lib/timeline/track";
 
 export async function getStaticPaths() {
-  const posts = await getCollection('blog', ({ data }) => {
+  const posts = await getCollection("blog", ({ data }) => {
     return import.meta.env.PROD ? !data.draft : true;
   });
   return posts.map((post) => ({
     params: { slug: post.slug },
-    props: post,
+    props: { entry: post },
   }));
 }
-type Props = CollectionEntry<'blog'>;
 
-const post = Astro.props;
-const { Content } = await post.render();
+interface Props {
+  entry: CollectionEntry<"blog">;
+}
+
+const { entry } = Astro.props;
+const { Content } = await entry.render();
+
+const { items, now } = await getTimeline();
+const essays: Essay[] = items
+  .filter((item) => item.lane === "writing")
+  .map((item) => ({ id: item.id, href: item.href, title: item.title, date: item.start }));
+
+const segment = segmentRows(essays, `essay-${entry.slug}`, now);
+const around = writtenWhile(items, entry.data.pubDate, now);
+const minutes = readingMinutes(entry.body);
 ---
 
-<BlogPost {...post.data}>
+<BlogPost entry={entry} minutes={minutes} segment={segment} writtenWhile={around}>
   <Content />
 </BlogPost>
