@@ -11,6 +11,7 @@ const OUT_DIR = "screenshots";
 const PAGES = [
   { name: "home", path: "/" },
   { name: "writing", path: "/blog" },
+  { name: "roadmap", path: "/roadmap" },
   { name: "essay", path: "/blog/i-wont-stop-coding" },
   { name: "essay-code", path: "/blog/composition-over-inheritance-angular" },
 ];
