@@ -1,7 +1,8 @@
 // Adapters from each content source to TimelineItem (spec §6). Pure: they take
 // plain arrays so Vitest can test them; src/lib/timeline/astro.ts feeds them.
-import type { CommunityEntry, LearningEntry, ProjectFrontmatter, TimelineItem } from "./types.js";
+import type { CommunityEntry, ProjectFrontmatter, TimelineItem } from "./types.js";
 import { assertUniqueIds, deriveKind } from "./types.js";
+import { threadSpans } from "../roadmap/arrange.js";
 
 /** The part of CollectionEntry<'blog'> this adapter reads. */
 export interface BlogLike {
@@ -75,24 +76,9 @@ export function fromCommunity(entries: readonly CommunityEntry[]): TimelineItem[
   }));
 }
 
-export function fromLearning(entries: readonly LearningEntry[]): TimelineItem[] {
-  return entries.map((e) => ({
-    id: e.id,
-    lane: "learning",
-    title: e.title,
-    subtitle: e.subtitle,
-    start: e.start,
-    end: e.end,
-    status: e.status,
-    href: `/#item-${e.id}`,
-    kind: deriveKind(e.status, e.end),
-    body: {
-      lane: "learning",
-      description: e.description,
-      roadmapHref: e.roadmapHref,
-      testimonial: e.testimonial,
-    },
-  }));
+/** Spec §10: the home Learning lane is derived from the roadmap. */
+export function fromRoadmap(now: Date): TimelineItem[] {
+  return threadSpans(now);
 }
 
 /** One chronological list. Throws on duplicate ids (spec §12). */

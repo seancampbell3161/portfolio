@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { fromBlog, fromProjects, fromCommunity, fromLearning, mergeTimeline } from "../sources.js";
+import { fromBlog, fromProjects, fromCommunity, fromRoadmap, mergeTimeline } from "../sources.js";
 import type { BlogLike, ProjectLike } from "../sources.js";
 
 const d = (s: string) => new Date(s);
@@ -56,7 +56,7 @@ describe("fromProjects", () => {
   });
 });
 
-describe("fromCommunity and fromLearning", () => {
+describe("fromCommunity", () => {
   it("community uses org as the subtitle when none is given", () => {
     const [talk] = fromCommunity([
       { id: "dsd-talk", title: "Talk", description: "d", org: "Dallas Software Developers", start: d("2026-03-01"), status: "done" },
@@ -67,14 +67,14 @@ describe("fromCommunity and fromLearning", () => {
     expect(talk.href).toBe("/#item-dsd-talk");
     expect(talk.body).toEqual({ lane: "community", org: "Dallas Software Developers", description: "d", url: undefined });
   });
-  it("learning carries the roadmap link and testimonial", () => {
-    const [item] = fromLearning([
-      { id: "100devs", title: "100Devs", description: "d", start: d("2021-01-15"), end: d("2022-01-15"), status: "done",
-        roadmapHref: "/roadmap", testimonial: { quote: "q", author: "Leon Noel", role: "r" } },
-    ]);
-    expect(item.lane).toBe("learning");
-    expect(item.kind).toBe("span");
-    expect(item.body).toEqual({ lane: "learning", description: "d", roadmapHref: "/roadmap", testimonial: { quote: "q", author: "Leon Noel", role: "r" } });
+});
+
+describe("fromRoadmap", () => {
+  const now = new Date("2026-09-02T00:00:00Z");
+  it("produces the three learning-lane thread spans", () => {
+    const items = fromRoadmap(now);
+    expect(items.map((i) => i.id)).toEqual(["roadmap-build", "roadmap-reading", "roadmap-foundations"]);
+    expect(items.every((i) => i.lane === "learning")).toBe(true);
   });
 });
 
