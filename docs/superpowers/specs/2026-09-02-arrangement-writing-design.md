@@ -185,7 +185,7 @@ Changed:
 
 - `src/components/Newsletter.astro`: styles only.
 - `src/styles/global.css`: adds `--color-text-reading`.
-- `scripts/home-screenshots.mjs` becomes `scripts/screenshots.mjs` and shoots `/`, `/blog`, and `/blog/i-wont-stop-coding` at 1280 and 390 wide. The `shots` npm script points at it.
+- `scripts/home-screenshots.mjs` becomes `scripts/screenshots.mjs` and shoots `/`, `/blog`, `/blog/i-wont-stop-coding`, and `/blog/composition-over-inheritance-angular` (an essay with code blocks) at 1280 and 390 wide. The `shots` npm script points at it.
 - `CLAUDE.md`: the architecture section describes the writing pages and the track.
 
 The essay id produced by `fromBlog` is `essay-<slug>`; the route uses it to find the current essay.
