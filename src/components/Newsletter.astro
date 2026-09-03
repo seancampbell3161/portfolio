@@ -76,39 +76,56 @@ const {
 </script>
 
 <style>
+  /* Writing spec §9. The markup order is heading, blurb, form, message; the
+     grid areas put the form beside the text at desktop and keep the status
+     line under both. */
   .newsletter {
-    max-width: var(--content-width);
-    margin: var(--space-2xl) auto;
-    padding: var(--space-2xl);
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-template-areas:
+      "heading form"
+      "blurb form"
+      "message message";
+    column-gap: 32px;
+    align-items: center;
+    padding: 26px 28px;
     background: var(--color-bg-elevated);
     border: 1px solid var(--color-border);
-    border-radius: var(--radius-xl);
+    border-left: 3px solid var(--lane-writing);
+    border-radius: var(--radius-md);
   }
 
   .newsletter-heading {
-    font-size: 22px;
-    margin-bottom: var(--space-sm);
+    grid-area: heading;
+    align-self: end;
+    font-family: var(--font-display);
+    font-size: 24px;
+    font-weight: 600;
+    letter-spacing: -0.015em;
+    line-height: 1.2;
+    margin-bottom: 6px;
     color: var(--color-text-primary);
   }
 
   .newsletter-blurb {
+    grid-area: blurb;
+    align-self: start;
     font-size: 15px;
+    line-height: 1.5;
     color: var(--color-text-secondary);
-    margin-bottom: var(--space-lg);
-    line-height: 1.6;
   }
 
   .newsletter-form {
+    grid-area: form;
     display: flex;
-    gap: var(--space-md);
-    flex-wrap: wrap;
+    gap: 10px;
   }
 
   .newsletter-input {
-    flex: 1 1 240px;
-    padding: 12px 16px;
-    font-size: 15px;
-    font-family: inherit;
+    flex: 1 1 160px;
+    min-width: 0;
+    padding: 11px 14px;
+    font: 15px var(--font-sans);
     color: var(--color-text-primary);
     background: var(--color-bg);
     border: 1px solid var(--color-border);
@@ -118,25 +135,32 @@ const {
   }
 
   .newsletter-input:focus {
-    border-color: var(--color-accent);
+    border-color: var(--lane-writing);
+  }
+
+  .newsletter-input:focus-visible {
+    outline: 2px solid var(--lane-writing);
+    outline-offset: 2px;
   }
 
   .newsletter-button {
-    padding: 12px 22px;
-    font-size: 15px;
-    font-weight: 600;
-    font-family: inherit;
+    padding: 11px 18px;
+    font: 500 15px var(--font-sans);
     color: var(--color-bg);
-    background: var(--color-accent);
-    border: none;
+    background: var(--lane-writing);
+    border: 0;
     border-radius: var(--radius-md);
     cursor: pointer;
-    transition: background var(--transition-base), transform var(--transition-base);
+    transition: background var(--transition-base);
   }
 
   .newsletter-button:hover:not(:disabled) {
-    background: #7ab8fc;
-    transform: translateY(-2px);
+    background: color-mix(in srgb, var(--lane-writing) 88%, white);
+  }
+
+  .newsletter-button:focus-visible {
+    outline: 2px solid var(--lane-writing);
+    outline-offset: 2px;
   }
 
   .newsletter-button:disabled {
@@ -144,27 +168,43 @@ const {
     cursor: not-allowed;
   }
 
+  /* Stays in flow while empty (zero height, no margin) so the aria-live
+     region is in the accessibility tree before the script fills it. */
   .newsletter-message {
-    margin-top: var(--space-md);
+    grid-area: message;
     font-size: 14px;
+    line-height: 1.4;
     color: var(--color-text-muted);
-    min-height: 1.4em;
+  }
+
+  .newsletter-message:not(:empty) {
+    margin-top: 12px;
   }
 
   .newsletter-message[data-state="success"] {
-    color: var(--color-accent);
+    color: var(--lane-writing);
   }
 
   .newsletter-message[data-state="error"] {
     color: #ff7676;
   }
 
-  @media (max-width: 640px) {
+  @media (max-width: 899.98px) {
     .newsletter {
-      padding: var(--space-xl);
+      grid-template-columns: 1fr;
+      grid-template-areas:
+        "heading"
+        "blurb"
+        "form"
+        "message";
+      padding: 22px 20px;
     }
     .newsletter-form {
       flex-direction: column;
+      margin-top: 16px;
+    }
+    .newsletter-input {
+      flex-basis: auto;
     }
   }
 </style>
