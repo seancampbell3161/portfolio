@@ -109,6 +109,14 @@ const index = density === "index";
     grid-template-columns: 28px 1fr;
     padding-bottom: 18px;
   }
+  /* Same reasoning as the index-density rule above: the gutter's
+     ::before/::after are position: absolute and never occupy a grid
+     track, so tr-body (the only real child at segment density — these
+     rows never render tr-meta) needs an explicit column to land in the
+     1fr track instead of the 28px one. Covers now, more, and essay rows. */
+  .track-segment .tr-body {
+    grid-column: 2;
+  }
   .track-segment .tr:last-child {
     padding-bottom: 0;
   }
