@@ -33,6 +33,9 @@ export function clipStatus(done: number, total: number, start: Date, now: Date):
 const countDone = (ids: readonly string[], completed: ReadonlySet<string>): number =>
   ids.filter((id) => completed.has(id)).length;
 
+/** "1 checkpoint" / "4 checkpoints" — the sublabels read as English, not as a template. */
+const plural = (n: number, word: string): string => `${n} ${word}${n === 1 ? "" : "s"}`;
+
 export function roadmapClips(completed: ReadonlySet<string>, now: Date): RoadmapClip[] {
   const clips: RoadmapClip[] = [];
 
@@ -43,7 +46,7 @@ export function roadmapClips(completed: ReadonlySet<string>, now: Date): Roadmap
       id: m.id,
       track: "build",
       title: m.course,
-      sublabel: `${done} of ${ids.length} checkpoints`,
+      sublabel: `${done} of ${plural(ids.length, "checkpoint")}`,
       start: m.start,
       end: m.end,
       kind: "span",
@@ -59,7 +62,7 @@ export function roadmapClips(completed: ReadonlySet<string>, now: Date): Roadmap
       id: b.id,
       track: "reading",
       title: b.title,
-      sublabel: `${done} of ${ids.length} chapters`,
+      sublabel: `${done} of ${plural(ids.length, "chapter")}`,
       start: b.start,
       end: b.end,
       kind: "span",
@@ -97,13 +100,20 @@ const TRACK_DESC: Record<Track, string> = {
 export function threadSpans(now: Date): TimelineItem[] {
   const clips = roadmapClips(new Set<string>(), now);
   const tracks: Track[] = ["build", "reading", "foundations"];
-  return tracks.map((track) => {
+  // A track with no clips is skipped rather than given a zero-length span: an
+  // empty `own` would make Math.min(...[]) return Infinity and the span an
+  // Invalid Date, which would poison the whole home-page timeline window.
+  return tracks.flatMap((track) => {
     const own = clips.filter((c) => c.track === track);
+    if (own.length === 0) return [];
     const start = new Date(Math.min(...own.map((c) => c.start.getTime())));
     const end = new Date(Math.max(...own.map((c) => c.end.getTime())));
+    // Invariant: this page is built statically with an empty completed set, so
+    // `allDone` can only be true once completion is supplied at build time.
+    // Today every thread therefore renders as in-progress.
     const allDone = own.every((c) => c.status === "done");
     const id = `roadmap-${track}`;
-    return {
+    return [{
       id,
       lane: "learning",
       title: track[0].toUpperCase() + track.slice(1),
@@ -117,7 +127,7 @@ export function threadSpans(now: Date): TimelineItem[] {
         description: TRACK_DESC[track],
         roadmapHref: `/roadmap#rm-track-${track}`,
       },
-    };
+    }];
   });
 }
 
@@ -152,7 +162,11 @@ export function quarterTicks(w: Window): Tick[] {
   for (let guard = 0; guard < 64; guard++) {
     const d = utc(year, q * 3, 1);
     if (d.getTime() > w.to.getTime()) break;
-    ticks.push({ label: q === 0 ? String(year) : QUARTER_LABELS[q], x: fraction(d, w) });
+    const x = fraction(d, w);
+    // A window whose `from` is not itself a quarter boundary starts mid-quarter,
+    // so the first candidate tick falls before it. Skip it rather than draw a
+    // label off the left edge of the ruler.
+    if (x >= 0) ticks.push({ label: q === 0 ? String(year) : QUARTER_LABELS[q], x });
     q += 1;
     if (q > 3) {
       q = 0;

@@ -133,6 +133,8 @@ import { ogImagePath } from "../lib/og.mjs";
   .rm-meter {
     background: var(--color-bg-elevated);
     padding: 16px 20px;
+    /* Each meter is an #rm-track-* anchor target; clear the fixed transport bar. */
+    scroll-margin-top: 76px;
   }
   .rm-meter-head {
     display: flex;
@@ -285,14 +287,13 @@ import { ogImagePath } from "../lib/og.mjs";
     padding: 0 16px;
     border-right: 1px solid var(--color-border);
   }
-  .rm-lane-head h3 {
+  .rm-lane-head h2 {
     display: flex;
     align-items: center;
     gap: 10px;
     margin: 0;
     font-weight: 500;
     font-size: 14px;
-    scroll-margin-top: 76px;
   }
   .rm-lane-head small {
     font-size: 12px;
@@ -301,8 +302,18 @@ import { ogImagePath } from "../lib/og.mjs";
   }
   .rm-clips {
     position: relative;
+    list-style: none;
+    margin: 0;
+    padding: 0;
     background-image: linear-gradient(90deg, var(--color-border) 1px, transparent 1px);
     background-size: calc(100% / var(--div)) 100%;
+  }
+  /* The <li> is a plain zero-height box in the flow (not display:contents, which
+     drops list semantics in Safari); the .rm-clip inside it is what gets
+     positioned, against .rm-clips as containing block. */
+  .rm-clip-item {
+    margin: 0;
+    height: 0;
   }
   /* Base clip = the "done" treatment (spec §6; mockup .b-clip). */
   .rm-clip {
@@ -361,7 +372,8 @@ import { ogImagePath } from "../lib/og.mjs";
   }
   .rm-playhead span {
     position: absolute;
-    top: 7px;
+    /* Below the ruler line: at top:7px the chip sat on top of a quarter label. */
+    top: calc(var(--ruler-h) + 7px);
     right: 6px;
     padding: 1px 5px;
     border-radius: 2px;
@@ -411,6 +423,16 @@ import { ogImagePath } from "../lib/og.mjs";
 
   /* ---- mobile graph (below 900px): the same clips, date-ordered ---- */
   .rm-graph { display: none; }
+
+  /* The "free" marker on a book panel title (rehoused from the retired BookCard). */
+  .rm-badge {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--color-text-muted);
+    border: 1px solid var(--color-border);
+    border-radius: 3px;
+    padding: 1px 6px;
+  }
 
   /* ---- inspector panels (spec §6): shown by :target with no JavaScript ---- */
   .rm-inspector { margin-top: 4px; }

@@ -2,12 +2,17 @@
 // Three progress meters + the owner's edit controls (spec §6). Numbers render
 // zeroed; src/scripts/roadmap.ts fills them by the ids below. Those ids are a
 // contract with that script — do not rename them.
+//
+// Each meter also carries its track's #rm-track-* anchor, which the home page's
+// Learning lane links to. The meters are the only per-track element on the page
+// visible at every width (the arrangement is hidden below 900px), so the anchor
+// belongs here rather than on an arrangement lane head.
 import { deriveStats } from "../../data/roadmap";
 const s = deriveStats([]); // zeroed; the script overwrites on load
 ---
 
 <div class="rm-meters">
-  <div class="rm-meter" style="--c: var(--track-build)">
+  <div class="rm-meter" id="rm-track-build" style="--c: var(--track-build)">
     <div class="rm-meter-head">
       <b><i class="rm-mdot"></i>Build</b>
       <small><span id="rm-build-stages">0</span>/{s.build.stagesTotal} stages ·
@@ -17,7 +22,7 @@ const s = deriveStats([]); // zeroed; the script overwrites on load
     <div class="rm-bar"><i id="rm-build-bar"></i></div>
   </div>
 
-  <div class="rm-meter" style="--c: var(--track-reading)">
+  <div class="rm-meter" id="rm-track-reading" style="--c: var(--track-reading)">
     <div class="rm-meter-head">
       <b><i class="rm-mdot"></i>Reading</b>
       <small><span id="rm-read-ch">0</span>/{s.reading.chaptersTotal} chapters ·
@@ -26,7 +31,7 @@ const s = deriveStats([]); // zeroed; the script overwrites on load
     <div class="rm-bar"><i id="rm-read-bar"></i></div>
   </div>
 
-  <div class="rm-meter" style="--c: var(--track-foundations)">
+  <div class="rm-meter" id="rm-track-foundations" style="--c: var(--track-foundations)">
     <div class="rm-meter-head">
       <b><i class="rm-mdot"></i>Foundations</b>
       <small><span id="rm-fnd-done">0</span>/{s.foundations.itemsTotal} items</small>

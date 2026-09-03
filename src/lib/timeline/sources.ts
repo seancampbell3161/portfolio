@@ -1,5 +1,8 @@
 // Adapters from each content source to TimelineItem (spec §6). Pure: they take
 // plain arrays so Vitest can test them; src/lib/timeline/astro.ts feeds them.
+// fromRoadmap is the exception: it takes no array, deriving its Learning-lane
+// spans straight from the roadmap module (covered by
+// src/lib/roadmap/__tests__/arrange.test.ts).
 import type { CommunityEntry, ProjectFrontmatter, TimelineItem } from "./types.js";
 import { assertUniqueIds, deriveKind } from "./types.js";
 import { threadSpans } from "../roadmap/arrange.js";

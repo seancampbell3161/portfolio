@@ -10,7 +10,6 @@ const ZOOM_KEY = "roadmap-zoom";
 const arr = document.querySelector<HTMLElement>(".rm-arr");
 const dataEl = document.getElementById("rm-clip-data");
 if (arr && dataEl) {
-  document.documentElement.classList.add("js");
   const now = new Date();
   const raw = JSON.parse(dataEl.textContent || "[]") as Array<{
     id: string; track: RoadmapClip["track"]; title: string; sublabel?: string;

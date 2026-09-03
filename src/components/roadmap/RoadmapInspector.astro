@@ -8,10 +8,8 @@
 import { build, reading, foundations } from "../../data/roadmap";
 import CheckItem from "./CheckItem.astro";
 import DecisionLog from "./DecisionLog.astro";
-import { longDate } from "../../lib/dates";
+import { longDate, isoDay } from "../../lib/dates";
 import { roadmapClips, type ClipStatus } from "../../lib/roadmap/arrange";
-
-const range = (start: Date, end: Date) => `${longDate(start)} – ${longDate(end)}`;
 
 // Spec §7: the kicker reads "{Track}, {status}". Status comes from the same
 // source the arrangement clips use, so a clip and its panel never disagree.
@@ -33,7 +31,7 @@ const statusOf = (id: string) => STATUS_WORDS[statusById.get(id) ?? "planned"];
       <h2 class="rm-insp-title">{m.course}</h2>
       <p class="rm-insp-goal">{m.goal}</p>
       <p class="rm-insp-facts">
-        {range(m.start, m.end)} · <span data-milestone-pct={m.id}>0%</span>
+        <time datetime={isoDay(m.start)}>{longDate(m.start)}</time> – <time datetime={isoDay(m.end)}>{longDate(m.end)}</time> · <span data-milestone-pct={m.id}>0%</span>
       </p>
       <div class="rm-insp-checks">
         {m.groups.map((g) => (
@@ -49,10 +47,13 @@ const statusOf = (id: string) => STATUS_WORDS[statusById.get(id) ?? "planned"];
   {reading.map((b) => (
     <section class="rm-insp" id={`clip-${b.id}`} style="--c: var(--track-reading)" data-clip>
       <p class="rm-insp-k"><i></i>Reading, {statusOf(b.id)}</p>
-      <h2 class="rm-insp-title">{b.title}</h2>
+      <h2 class="rm-insp-title">
+        {b.url ? <a href={b.url} rel="noopener">{b.title}</a> : b.title}
+        {b.free && <span class="rm-badge">free</span>}
+      </h2>
       <p class="rm-insp-goal">{b.author}{b.scopeNote ? ` — ${b.scopeNote}` : ""}</p>
       <p class="rm-insp-facts">
-        {range(b.start, b.end)} · <span data-book-pct={b.id}>0/0</span>
+        <time datetime={isoDay(b.start)}>{longDate(b.start)}</time> – <time datetime={isoDay(b.end)}>{longDate(b.end)}</time> · <span data-book-pct={b.id}>0/{b.chapters.length}</span>
       </p>
       <div class="rm-insp-checks">
         {b.chapters.map((c) => <CheckItem id={c.id} label={`${c.no}. ${c.title}`} />)}
@@ -66,7 +67,9 @@ const statusOf = (id: string) => STATUS_WORDS[statusById.get(id) ?? "planned"];
     <section class="rm-insp" id={`clip-${g.id}`} style="--c: var(--track-foundations)" data-clip>
       <p class="rm-insp-k"><i></i>Foundations, {statusOf(g.id)}</p>
       <h2 class="rm-insp-title">{g.label}</h2>
-      <p class="rm-insp-facts">{range(g.start, g.end)}</p>
+      <p class="rm-insp-facts">
+        <time datetime={isoDay(g.start)}>{longDate(g.start)}</time> – <time datetime={isoDay(g.end)}>{longDate(g.end)}</time>
+      </p>
       <div class="rm-insp-checks">
         {g.items.map((it) => (
           <CheckItem id={it.id} label={it.label} meta={it.total ? `${it.total}${it.kind === "pattern" ? " problems" : " lessons"}` : undefined} hint={it.pairsWith} />

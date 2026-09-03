@@ -73,23 +73,33 @@ const clipData = clips.map((c) => ({
     {lanes.map((lane) => (
       <div class="rm-lane" style={`--c: var(--track-${lane.key})`}>
         <div class="rm-lane-head">
-          <h3 id={`rm-track-${lane.key}`}><i class="rm-mdot"></i>{lane.label}</h3>
+          {/* The #rm-track-* anchors live on the meters (RoadmapMeters.astro),
+              which are visible at every width; this arrangement is hidden below
+              900px, so an id here would strand /roadmap#rm-track-* on phones. */}
+          <h2><i class="rm-mdot"></i>{lane.label}</h2>
           <small>{lane.note}</small>
         </div>
-        <div class="rm-clips" data-track={lane.key}>
+        {/* A list, as the home Timeline's .tl-items is: the clips are a set of
+            peers, and a screen reader should hear how many. The <li> stays a
+            zero-height static box and the <a class="rm-clip"> keeps the absolute
+            positioning, so src/scripts/roadmap-arrangement.ts still writes
+            --x/--w/--y to .rm-clip[data-clip-id]. */}
+        <ol class="rm-clips" data-track={lane.key} role="list">
           {lane.rows.map((p) => (
-            <a
-              class:list={["rm-clip", `is-${p.item.status}`]}
-              href={p.item.href}
-              data-clip-id={p.item.id}
-              style={`--x:${p.x * 100}%; --w:${p.w * 100}%; --y:${p.row}`}
-            >
-              <span class="rm-clip-title">{p.item.title}</span>
-              {p.item.sublabel && <small class="rm-clip-sub">{p.item.sublabel}</small>}
-              <span class="sr-only">, {STATUS_WORDS[p.item.status]}</span>
-            </a>
+            <li class="rm-clip-item">
+              <a
+                class:list={["rm-clip", `is-${p.item.status}`]}
+                href={p.item.href}
+                data-clip-id={p.item.id}
+                style={`--x:${p.x * 100}%; --w:${p.w * 100}%; --y:${p.row}`}
+              >
+                <span class="rm-clip-title">{p.item.title}</span>
+                {p.item.sublabel && <small class="rm-clip-sub">{p.item.sublabel}</small>}
+                <span class="sr-only">, {STATUS_WORDS[p.item.status]}</span>
+              </a>
+            </li>
           ))}
-        </div>
+        </ol>
       </div>
     ))}
 
@@ -98,10 +108,10 @@ const clipData = clips.map((c) => ({
 </div>
 
 {/* Mobile graph: the same clips, date-ordered, shown below 900px (spec §6). */}
-<ol class="rm-graph" aria-label="Roadmap, by date">
+<ol class="rm-graph" role="list" aria-label="Roadmap, by date">
   {graphEntries.map((e) =>
     e.kind === "now" ? (
-      <li class="rm-graph-now" aria-label="now"><span>now · {monthDayYear(now)}</span></li>
+      <li class="rm-graph-now"><span>now · {monthDayYear(now)}</span></li>
     ) : (
       <li class:list={["rm-graph-row", `t-${e.clip.track}`, `is-${e.clip.status}`]}>
         <a href={e.clip.href}>
@@ -114,7 +124,7 @@ const clipData = clips.map((c) => ({
   )}
 </ol>
 
-<script type="application/json" id="rm-clip-data" set:html={JSON.stringify(clipData)}></script>
+<script type="application/json" id="rm-clip-data" set:html={JSON.stringify(clipData).replace(/</g, "\\u003c")}></script>
 
 <div class="rm-legend" aria-hidden="true">
   <span><i class="l-done"></i>done</span>

@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { clipStatus, roadmapClips, threadSpans, roadmapWindow, quarterTicks } from "../arrange.js";
+import { clipStatus, roadmapClips, threadSpans, roadmapWindow, quarterTicks, type RoadmapClip } from "../arrange.js";
 
 const now = new Date("2026-09-02T00:00:00Z");
 
@@ -39,6 +39,14 @@ describe("roadmapClips", () => {
     const redis = roadmapClips(done, now).find((c) => c.id === "redis")!;
     expect(redis.status).toBe("done");
   });
+  it("pluralizes the sublabel count word", () => {
+    const sqlite = clips.find((c) => c.id === "sqlite")!;
+    expect(sqlite.sublabel).toBe("0 of 1 checkpoint");
+    const redis = clips.find((c) => c.id === "redis")!;
+    expect(redis.sublabel).toBe("0 of 4 checkpoints");
+    const ddia = clips.find((c) => c.id === "ddia")!;
+    expect(ddia.sublabel).toBe("0 of 12 chapters");
+  });
   it("links each clip to its inspector anchor and is a span", () => {
     const redis = clips.find((c) => c.id === "redis")!;
     expect(redis.href).toBe("#clip-redis");
@@ -72,6 +80,18 @@ describe("roadmapWindow", () => {
     expect(w.from).toEqual(new Date("2026-01-01T00:00:00Z"));
     expect(w.to).toEqual(new Date("2027-12-31T23:59:59.999Z"));
   });
+  it("all zoom expands past the fixed calendar in both directions", () => {
+    const clip = (id: string, start: string, end: string): RoadmapClip => ({
+      id, track: "build", title: id, start: new Date(start), end: new Date(end),
+      kind: "span", status: "planned", href: `#clip-${id}`,
+    });
+    const w = roadmapWindow("all", now, [
+      clip("early", "2025-03-01T00:00:00Z", "2025-09-01T00:00:00Z"),
+      clip("late", "2027-01-01T00:00:00Z", "2028-06-30T00:00:00Z"),
+    ]);
+    expect(w.from).toEqual(new Date("2025-03-01T00:00:00Z"));
+    expect(w.to).toEqual(new Date("2028-06-30T00:00:00Z"));
+  });
   it("all zoom runs from the earliest clip start to the later of latest end and end of 2027", () => {
     const clips = roadmapClips(new Set<string>(), now);
     const w = roadmapWindow("all", now, clips);
@@ -87,5 +107,14 @@ describe("quarterTicks", () => {
     expect(ticks[0]).toMatchObject({ label: "2026", x: 0 });
     expect(ticks[1].label).toBe("Q2");
     expect(ticks[4].label).toBe("2027");
+  });
+  it("drops the tick that falls before a window starting mid-quarter", () => {
+    const ticks = quarterTicks({
+      from: new Date("2026-02-15T00:00:00Z"),
+      to: new Date("2027-12-31T23:59:59.999Z"),
+    });
+    expect(ticks.every((t) => t.x >= 0)).toBe(true);
+    expect(ticks[0].label).toBe("Q2");
+    expect(ticks[0].x).toBeGreaterThan(0);
   });
 });
