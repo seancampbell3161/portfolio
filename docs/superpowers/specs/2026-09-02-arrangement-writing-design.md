@@ -70,7 +70,7 @@ Body typography. A new token `--color-text-reading: #DDDBD4` is added to `src/st
 
 ## 6. The track
 
-`src/components/Track.astro` renders an ordered list from an array of rows. It is the one component for the index and the sidebar segment. Its props are `{ rows: TrackRow[]; density: "index" | "segment" }`: the rows say what to print, the density says which grid to print it in. (Brainstorming suggested inferring density from the rows; an index with no essays would then flip to the segment grid, so the prop is explicit.)
+`src/components/Track.astro` renders an ordered list from an array of rows. It is the one component for the index and the sidebar segment. Its props are `{ rows: TrackRow[]; density: "index" | "segment"; label?: string }`: the rows say what to print, the density says which grid to print it in, and the label becomes the list's `aria-label` ("Essays" on the index, "Nearby essays" in the sidebar). (Brainstorming suggested inferring density from the rows; an index with no essays would then flip to the segment grid, so the prop is explicit.)
 
 The row builders take essays in this shape, which both the blog collection and the writing lane of the timeline can supply:
 
