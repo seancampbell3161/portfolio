@@ -9,15 +9,27 @@ import { build, reading, foundations } from "../../data/roadmap";
 import CheckItem from "./CheckItem.astro";
 import DecisionLog from "./DecisionLog.astro";
 import { longDate } from "../../lib/dates";
+import { roadmapClips, type ClipStatus } from "../../lib/roadmap/arrange";
 
 const range = (start: Date, end: Date) => `${longDate(start)} – ${longDate(end)}`;
+
+// Spec §7: the kicker reads "{Track}, {status}". Status comes from the same
+// source the arrangement clips use, so a clip and its panel never disagree.
+const now = new Date();
+const statusById = new Map(roadmapClips(new Set<string>(), now).map((c) => [c.id, c.status]));
+const STATUS_WORDS: Record<ClipStatus, string> = {
+  done: "done",
+  "in-progress": "in progress",
+  planned: "planned",
+};
+const statusOf = (id: string) => STATUS_WORDS[statusById.get(id) ?? "planned"];
 ---
 
 <div class="rm-inspector">
   {/* Build */}
   {build.map((m) => (
     <section class="rm-insp" id={`clip-${m.id}`} style="--c: var(--track-build)" data-clip>
-      <p class="rm-insp-k"><i></i>Build · {m.no}</p>
+      <p class="rm-insp-k"><i></i>Build, {statusOf(m.id)} · {m.no}</p>
       <h2 class="rm-insp-title">{m.course}</h2>
       <p class="rm-insp-goal">{m.goal}</p>
       <p class="rm-insp-facts">
@@ -36,7 +48,7 @@ const range = (start: Date, end: Date) => `${longDate(start)} – ${longDate(end
   {/* Reading */}
   {reading.map((b) => (
     <section class="rm-insp" id={`clip-${b.id}`} style="--c: var(--track-reading)" data-clip>
-      <p class="rm-insp-k"><i></i>Reading</p>
+      <p class="rm-insp-k"><i></i>Reading, {statusOf(b.id)}</p>
       <h2 class="rm-insp-title">{b.title}</h2>
       <p class="rm-insp-goal">{b.author}{b.scopeNote ? ` — ${b.scopeNote}` : ""}</p>
       <p class="rm-insp-facts">
@@ -52,7 +64,7 @@ const range = (start: Date, end: Date) => `${longDate(start)} – ${longDate(end
   {/* Foundations */}
   {foundations.map((g) => (
     <section class="rm-insp" id={`clip-${g.id}`} style="--c: var(--track-foundations)" data-clip>
-      <p class="rm-insp-k"><i></i>Foundations</p>
+      <p class="rm-insp-k"><i></i>Foundations, {statusOf(g.id)}</p>
       <h2 class="rm-insp-title">{g.label}</h2>
       <p class="rm-insp-facts">{range(g.start, g.end)}</p>
       <div class="rm-insp-checks">

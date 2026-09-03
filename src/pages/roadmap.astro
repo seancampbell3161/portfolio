@@ -66,6 +66,19 @@ import { ogImagePath } from "../lib/og.mjs";
      (e.g. .rv-ratings, .rv-summary, #rm-message) — otherwise a toggled-off
      element stays visible. The review runner relies on it. */
   .roadmap-page [hidden] { display: none !important; }
+  /* Clip status is otherwise purely visual and the legend is aria-hidden, so
+     each clip link carries a spoken status suffix. */
+  .roadmap-page .sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: -1px;
+    padding: 0;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+    border: 0;
+  }
   .roadmap-page .rm-wrap {
     max-width: 920px;
     margin: 0 auto;
@@ -842,17 +855,59 @@ import { ogImagePath } from "../lib/og.mjs";
     .rm-graph-row.t-build { --c: var(--track-build); }
     .rm-graph-row.t-reading { --c: var(--track-reading); }
     .rm-graph-row.t-foundations { --c: var(--track-foundations); }
+    /* The left edge carries the same three-state vocabulary as the desktop
+       clips, so the shared legend (solid / striped / dashed) describes both. */
     .rm-graph-row::before {
       content: "";
       position: absolute;
       left: 0;
       top: 12px;
       bottom: 12px;
-      width: 3px;
+      width: 4px;
       border-radius: 2px;
       background: var(--c);
     }
-    .rm-graph-row.is-planned::before { background: color-mix(in srgb, var(--c) 55%, transparent); }
+    .rm-graph-row.is-done::before { background: var(--c); }
+    .rm-graph-row.is-in-progress::before {
+      background: repeating-linear-gradient(
+        -45deg,
+        var(--c) 0 3px,
+        color-mix(in srgb, var(--c) 30%, transparent) 3px 6px
+      );
+    }
+    .rm-graph-row.is-planned::before {
+      background: repeating-linear-gradient(
+        to bottom,
+        color-mix(in srgb, var(--c) 60%, transparent) 0 5px,
+        transparent 5px 10px
+      );
+    }
+    /* "now" boundary, as the home graph draws one. */
+    .rm-graph-now {
+      position: relative;
+      padding: 12px 0 12px 16px;
+      border-top: 2px solid var(--color-text-primary);
+    }
+    .rm-graph-now::before {
+      content: "";
+      position: absolute;
+      left: -2px;
+      top: -5px;
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--color-text-primary);
+    }
+    .rm-graph-now span {
+      display: inline-block;
+      font-family: var(--font-mono);
+      font-size: 10.5px;
+      line-height: 1.7;
+      color: var(--color-bg);
+      background: var(--color-text-primary);
+      padding: 0 6px;
+      border-radius: 2px;
+    }
     .rm-graph-row a {
       display: block;
       padding: 12px 0;

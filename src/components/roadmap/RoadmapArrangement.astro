@@ -5,8 +5,17 @@
 // shared timeline math (as the home Timeline.astro does); the arrangement script
 // (src/scripts/roadmap-arrangement.ts) re-lays them for the "All" zoom in the
 // browser, reading the clip list embedded as JSON in #rm-clip-data.
-import { roadmapClips, roadmapWindow, quarterTicks, type Track } from "../../lib/roadmap/arrange";
+import { roadmapClips, roadmapWindow, quarterTicks, type ClipStatus, type RoadmapClip, type Track } from "../../lib/roadmap/arrange";
 import { positionIn, packRows, estimateLabelWidth, fraction } from "../../lib/timeline/layout";
+import { monthDayYear } from "../../lib/dates";
+
+// Spoken status, for the visually-hidden suffix on every clip link: the legend
+// is aria-hidden and clip status is otherwise purely visual (spec §7).
+const STATUS_WORDS: Record<ClipStatus, string> = {
+  done: "done",
+  "in-progress": "in progress",
+  planned: "planned",
+};
 
 const now = new Date();
 const clips = roadmapClips(new Set<string>(), now); // zeroed; live progress fills numbers, not positions
@@ -27,6 +36,19 @@ const lanes = TRACKS.map((t) => {
   const placed = clips.filter((c) => c.track === t.key).flatMap((c) => positionIn(c, win, now) ?? []);
   return { ...t, rows: packRows(placed, estimate) };
 });
+
+// Mobile graph rows: every clip in start-date order, with a "now" boundary
+// inserted before the first clip that starts after now (as the home graph draws
+// its now line). A trailing `now` lands last when every clip has already begun.
+type GraphEntry = { kind: "now" } | { kind: "clip"; clip: RoadmapClip };
+const byStart = [...clips].sort((a, b) => a.start.getTime() - b.start.getTime());
+const firstFuture = byStart.findIndex((c) => c.start.getTime() > now.getTime());
+const nowAt = firstFuture === -1 ? byStart.length : firstFuture;
+const graphEntries: GraphEntry[] = [
+  ...byStart.slice(0, nowAt).map((clip) => ({ kind: "clip" as const, clip })),
+  { kind: "now" as const },
+  ...byStart.slice(nowAt).map((clip) => ({ kind: "clip" as const, clip })),
+];
 
 // Serialize for the client script so it can re-lay for the "All" zoom.
 const clipData = clips.map((c) => ({
@@ -64,6 +86,7 @@ const clipData = clips.map((c) => ({
             >
               <span class="rm-clip-title">{p.item.title}</span>
               {p.item.sublabel && <small class="rm-clip-sub">{p.item.sublabel}</small>}
+              <span class="sr-only">, {STATUS_WORDS[p.item.status]}</span>
             </a>
           ))}
         </div>
@@ -76,11 +99,19 @@ const clipData = clips.map((c) => ({
 
 {/* Mobile graph: the same clips, date-ordered, shown below 900px (spec §6). */}
 <ol class="rm-graph" aria-label="Roadmap, by date">
-  {[...clips].sort((a, b) => a.start.getTime() - b.start.getTime()).map((c) => (
-    <li class:list={["rm-graph-row", `t-${c.track}`, `is-${c.status}`]}>
-      <a href={c.href}><b>{c.title}</b><small>{c.sublabel}</small></a>
-    </li>
-  ))}
+  {graphEntries.map((e) =>
+    e.kind === "now" ? (
+      <li class="rm-graph-now" aria-label="now"><span>now · {monthDayYear(now)}</span></li>
+    ) : (
+      <li class:list={["rm-graph-row", `t-${e.clip.track}`, `is-${e.clip.status}`]}>
+        <a href={e.clip.href}>
+          <b>{e.clip.title}</b>
+          <small>{e.clip.sublabel}</small>
+          <span class="sr-only">, {STATUS_WORDS[e.clip.status]}</span>
+        </a>
+      </li>
+    ),
+  )}
 </ol>
 
 <script type="application/json" id="rm-clip-data" set:html={JSON.stringify(clipData)}></script>
