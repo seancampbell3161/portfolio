@@ -38,10 +38,27 @@ describe("reading track", () => {
 });
 
 describe("foundations track", () => {
-  it("has 22 items (4 courses + 18 patterns)", () => {
-    expect(foundations).toHaveLength(22);
-    expect(foundations.filter((i) => i.kind === "course")).toHaveLength(4);
-    expect(foundations.filter((i) => i.kind === "pattern")).toHaveLength(18);
+  it("foundations is two groups whose items keep their ids", () => {
+    expect(foundations.map((g) => g.id)).toEqual(["fd.courses", "fd.neetcode"]);
+    const items = foundations.flatMap((g) => g.items);
+    expect(items).toHaveLength(22);
+    expect(items.filter((i) => i.kind === "course")).toHaveLength(4);
+    expect(items.filter((i) => i.kind === "pattern")).toHaveLength(18);
+    // the leaf ids are unchanged, so stored progress is not orphaned
+    expect(items.map((i) => i.id)).toContain("fd.nc.arrays");
+  });
+
+  it("every milestone and book carries a start and end", () => {
+    for (const m of build) {
+      expect(m.start instanceof Date).toBe(true);
+      expect(m.end.getTime()).toBeGreaterThanOrEqual(m.start.getTime());
+    }
+    for (const b of reading) {
+      expect(b.end.getTime()).toBeGreaterThanOrEqual(b.start.getTime());
+    }
+    for (const g of foundations) {
+      expect(g.end.getTime()).toBeGreaterThanOrEqual(g.start.getTime());
+    }
   });
 });
 
@@ -54,6 +71,9 @@ describe("allIds", () => {
     expect(allIds.has("redis.log.resp")).toBe(true);
     expect(allIds.has("ddia.ch1")).toBe(true);
     expect(allIds.has("fd.nc.arrays")).toBe(true);
+  });
+  it("allIds still holds every leaf id (82)", () => {
+    expect(allIds.size).toBe(82);
   });
 });
 
@@ -98,5 +118,9 @@ describe("deriveStats", () => {
     const s = deriveStats(["fd.nc.arrays", "redis.log.resp", "nope.unknown"]);
     expect(s.foundations.itemsDone).toBe(1);
     expect(s.logsDone).toBe(1);
+  });
+  it("deriveStats foundations still counts items, not groups", () => {
+    expect(deriveStats([]).foundations.itemsTotal).toBe(22);
+    expect(deriveStats(["fd.pyci", "fd.nc.arrays"]).foundations.itemsDone).toBe(2);
   });
 });

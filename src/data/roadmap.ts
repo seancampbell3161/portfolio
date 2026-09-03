@@ -30,6 +30,8 @@ export interface BuildMilestone {
   no: string;
   course: string;
   goal: string;
+  start: Date;
+  end: Date;
   groups: BuildGroup[];
   logs?: DecisionLog[];
 }
@@ -47,6 +49,8 @@ export interface Book {
   url?: string;
   free?: boolean;
   scopeNote?: string;
+  start: Date;
+  end: Date;
   chapters: Chapter[];
 }
 
@@ -59,12 +63,24 @@ export interface FoundationItem {
   pairsWith?: string; // build-thread hint
 }
 
+// A foundations clip: a small number of these, each holding existing items.
+// Dates are placeholders (mockup-derived) until Sean supplies real months.
+export interface FoundationGroup {
+  id: string;      // new; clip + inspector anchor only, never stored as progress
+  label: string;
+  start: Date;
+  end: Date;
+  items: FoundationItem[];
+}
+
 export const build: BuildMilestone[] = [
   {
     id: "redis",
     no: "M1",
     course: "Redis",
     goal: "Build a Redis server from raw sockets to replication — defend choosing an in-memory store over disk, and name exactly when that choice breaks.",
+    start: new Date("2026-06-01"), // placeholder dates (mockup); Sean to confirm
+    end: new Date("2026-09-30"), // placeholder dates (mockup); Sean to confirm
     groups: [
       { id: "redis.core", label: "Core server — TCP sockets, RESP, PING/ECHO, SET/GET, expiry", stages: 7, hours: 11 },
       { id: "redis.rdb", label: "RDB persistence — read the snapshot file", stages: 6, hours: 9 },
@@ -82,6 +98,8 @@ export const build: BuildMilestone[] = [
     no: "M2",
     course: "SQLite",
     goal: "Read a real SQLite database by hand — page headers, the B-tree, an indexed query — and predict which storage engine wins a query pattern before benchmarking.",
+    start: new Date("2026-10-01"), // placeholder dates (mockup); Sean to confirm
+    end: new Date("2026-12-15"), // placeholder dates (mockup); Sean to confirm
     groups: [
       { id: "sqlite.base", label: "Read the file format, walk the B-tree, run an indexed query", stages: 9, hours: 14 },
     ],
@@ -94,6 +112,8 @@ export const build: BuildMilestone[] = [
     no: "M3",
     course: "HTTP server",
     goal: "Build an HTTP/1.1 server — requests, responses, headers, compression, keep-alive — and reason about encoding and evolution on the wire.",
+    start: new Date("2027-01-01"), // placeholder dates (mockup); Sean to confirm
+    end: new Date("2027-02-28"), // placeholder dates (mockup); Sean to confirm
     groups: [
       { id: "http.base", label: "Base server — bind, parse requests, respond, headers, body", stages: 8, hours: 12 },
       { id: "http.compression", label: "HTTP compression — gzip, multiple schemes", stages: 3, hours: 5 },
@@ -108,6 +128,8 @@ export const build: BuildMilestone[] = [
     no: "M4",
     course: "DNS server",
     goal: "Build a DNS server — construct and parse the binary packet format, handle name compression, forward queries — and appreciate compact wire encoding.",
+    start: new Date("2027-03-01"), // placeholder dates (mockup); Sean to confirm
+    end: new Date("2027-04-15"), // placeholder dates (mockup); Sean to confirm
     groups: [
       { id: "dns.base", label: "UDP server — write/parse header, question, answer; name compression; forwarding", stages: 8, hours: 12 },
     ],
@@ -120,6 +142,8 @@ export const build: BuildMilestone[] = [
     no: "M5",
     course: "Kafka",
     goal: "Build a Kafka broker — the partitioned log, offsets, fetch and produce — and name the consistency model a system needs versus the one it secretly relies on.",
+    start: new Date("2027-05-01"), // placeholder dates (mockup); Sean to confirm
+    end: new Date("2027-08-31"), // placeholder dates (mockup); Sean to confirm
     groups: [
       { id: "kafka.base", label: "Base — bind, correlation IDs, API versions", stages: 5, hours: 8 },
       { id: "kafka.concurrent", label: "Concurrent clients", stages: 2, hours: 3 },
@@ -140,6 +164,8 @@ export const reading: Book[] = [
     title: "Designing Data-Intensive Applications",
     author: "Martin Kleppmann",
     url: "https://dataintensive.net",
+    start: new Date("2026-01-01"), // placeholder dates (mockup); Sean to confirm
+    end: new Date("2026-11-30"), // placeholder dates (mockup); Sean to confirm
     chapters: [
       { id: "ddia.ch1", no: "1", title: "Reliable, Scalable, Maintainable Applications" },
       { id: "ddia.ch2", no: "2", title: "Data Models and Query Languages" },
@@ -159,6 +185,8 @@ export const reading: Book[] = [
     id: "dbint",
     title: "Database Internals",
     author: "Alex Petrov",
+    start: new Date("2026-11-01"), // placeholder dates (mockup); Sean to confirm
+    end: new Date("2027-04-30"), // placeholder dates (mockup); Sean to confirm
     chapters: [
       { id: "dbint.ch1", no: "1", title: "Introduction and Overview" },
       { id: "dbint.ch2", no: "2", title: "B-Tree Basics" },
@@ -183,6 +211,8 @@ export const reading: Book[] = [
     url: "https://pages.cs.wisc.edu/~remzi/OSTEP/",
     free: true,
     scopeNote: "Concurrency + Persistence parts only",
+    start: new Date("2027-05-01"), // placeholder dates (mockup); Sean to confirm
+    end: new Date("2027-10-31"), // placeholder dates (mockup); Sean to confirm
     chapters: [
       { id: "ostep.c1", no: "C1", title: "Concurrency — threads & locks" },
       { id: "ostep.c2", no: "C2", title: "Concurrency — condition variables & semaphores" },
@@ -197,6 +227,8 @@ export const reading: Book[] = [
     id: "aposd",
     title: "A Philosophy of Software Design",
     author: "John Ousterhout",
+    start: new Date("2026-02-01"), // placeholder dates (mockup); Sean to confirm
+    end: new Date("2026-05-31"), // placeholder dates (mockup); Sean to confirm
     chapters: [
       { id: "aposd.s1", no: "1–3", title: "Complexity & its symptoms" },
       { id: "aposd.s2", no: "4–6", title: "Modules should be deep" },
@@ -209,35 +241,51 @@ export const reading: Book[] = [
 
 // NeetCode-150 pattern problem counts are display hints (standard breakdown,
 // ~150 total); they may drift from the live site. Course lesson counts likewise.
-export const foundations: FoundationItem[] = [
-  { id: "fd.pyci", label: "Python for Coding Interviews", kind: "course", total: 40 },
-  { id: "fd.dsab", label: "Algorithms & Data Structures for Beginners", kind: "course", total: 35 },
-  { id: "fd.coreskills", label: "Core Skills — implement the data structures", kind: "course", total: 20 },
-  { id: "fd.advanced", label: "Advanced Algorithms (optional, later)", kind: "course", total: 35 },
-  { id: "fd.nc.arrays", label: "Arrays & Hashing", kind: "pattern", total: 9, pairsWith: "Redis hash store" },
-  { id: "fd.nc.twopointers", label: "Two Pointers", kind: "pattern", total: 5 },
-  { id: "fd.nc.sliding", label: "Sliding Window", kind: "pattern", total: 6 },
-  { id: "fd.nc.stack", label: "Stack", kind: "pattern", total: 7 },
-  { id: "fd.nc.binsearch", label: "Binary Search", kind: "pattern", total: 7, pairsWith: "SQLite B-tree" },
-  { id: "fd.nc.linkedlist", label: "Linked List", kind: "pattern", total: 11 },
-  { id: "fd.nc.trees", label: "Trees", kind: "pattern", total: 15, pairsWith: "SQLite B-tree" },
-  { id: "fd.nc.heap", label: "Heap / Priority Queue", kind: "pattern", total: 7 },
-  { id: "fd.nc.backtracking", label: "Backtracking", kind: "pattern", total: 9 },
-  { id: "fd.nc.tries", label: "Tries", kind: "pattern", total: 3 },
-  { id: "fd.nc.graphs", label: "Graphs", kind: "pattern", total: 13, pairsWith: "replication & partitioning" },
-  { id: "fd.nc.advgraphs", label: "Advanced Graphs", kind: "pattern", total: 6 },
-  { id: "fd.nc.dp1", label: "1-D Dynamic Programming", kind: "pattern", total: 12 },
-  { id: "fd.nc.dp2", label: "2-D Dynamic Programming", kind: "pattern", total: 11 },
-  { id: "fd.nc.greedy", label: "Greedy", kind: "pattern", total: 8 },
-  { id: "fd.nc.intervals", label: "Intervals", kind: "pattern", total: 6 },
-  { id: "fd.nc.mathgeo", label: "Math & Geometry", kind: "pattern", total: 8 },
-  { id: "fd.nc.bits", label: "Bit Manipulation", kind: "pattern", total: 7 },
+export const foundations: FoundationGroup[] = [
+  {
+    id: "fd.courses",
+    label: "Courses",
+    start: new Date("2026-01-01"), // placeholder dates (mockup); Sean to confirm
+    end: new Date("2026-04-30"), // placeholder dates (mockup); Sean to confirm
+    items: [
+      { id: "fd.pyci", label: "Python for Coding Interviews", kind: "course", total: 40 },
+      { id: "fd.dsab", label: "Algorithms & Data Structures for Beginners", kind: "course", total: 35 },
+      { id: "fd.coreskills", label: "Core Skills — implement the data structures", kind: "course", total: 20 },
+      { id: "fd.advanced", label: "Advanced Algorithms (optional, later)", kind: "course", total: 35 },
+    ],
+  },
+  {
+    id: "fd.neetcode",
+    label: "NeetCode 150, pattern by pattern",
+    start: new Date("2026-04-01"), // placeholder dates (mockup); Sean to confirm
+    end: new Date("2027-06-30"), // placeholder dates (mockup); Sean to confirm
+    items: [
+      { id: "fd.nc.arrays", label: "Arrays & Hashing", kind: "pattern", total: 9, pairsWith: "Redis hash store" },
+      { id: "fd.nc.twopointers", label: "Two Pointers", kind: "pattern", total: 5 },
+      { id: "fd.nc.sliding", label: "Sliding Window", kind: "pattern", total: 6 },
+      { id: "fd.nc.stack", label: "Stack", kind: "pattern", total: 7 },
+      { id: "fd.nc.binsearch", label: "Binary Search", kind: "pattern", total: 7, pairsWith: "SQLite B-tree" },
+      { id: "fd.nc.linkedlist", label: "Linked List", kind: "pattern", total: 11 },
+      { id: "fd.nc.trees", label: "Trees", kind: "pattern", total: 15, pairsWith: "SQLite B-tree" },
+      { id: "fd.nc.heap", label: "Heap / Priority Queue", kind: "pattern", total: 7 },
+      { id: "fd.nc.backtracking", label: "Backtracking", kind: "pattern", total: 9 },
+      { id: "fd.nc.tries", label: "Tries", kind: "pattern", total: 3 },
+      { id: "fd.nc.graphs", label: "Graphs", kind: "pattern", total: 13, pairsWith: "replication & partitioning" },
+      { id: "fd.nc.advgraphs", label: "Advanced Graphs", kind: "pattern", total: 6 },
+      { id: "fd.nc.dp1", label: "1-D Dynamic Programming", kind: "pattern", total: 12 },
+      { id: "fd.nc.dp2", label: "2-D Dynamic Programming", kind: "pattern", total: 11 },
+      { id: "fd.nc.greedy", label: "Greedy", kind: "pattern", total: 8 },
+      { id: "fd.nc.intervals", label: "Intervals", kind: "pattern", total: 6 },
+      { id: "fd.nc.mathgeo", label: "Math & Geometry", kind: "pattern", total: 8 },
+      { id: "fd.nc.bits", label: "Bit Manipulation", kind: "pattern", total: 7 },
+    ],
+  },
 ];
 
 export const allIds: Set<string> = new Set([
   ...build.flatMap((m) => [...m.groups.map((g) => g.id), ...(m.logs ?? []).map((l) => l.id)]),
   ...reading.flatMap((b) => b.chapters.map((c) => c.id)),
-  ...foundations.map((i) => i.id),
+  ...foundations.flatMap((g) => g.items.map((i) => i.id)),
 ]);
 
 export const logIds = build.flatMap((m) => (m.logs ?? []).map((l) => l.id));
@@ -297,8 +345,9 @@ export function deriveStats(completed: string[]): RoadmapStats {
     if (total > 0 && d === total) booksDone++;
   }
 
-  const itemsTotal = foundations.length;
-  const itemsDone = foundations.filter((i) => done.has(i.id)).length;
+  const fItems = foundations.flatMap((g) => g.items);
+  const itemsTotal = fItems.length;
+  const itemsDone = fItems.filter((i) => done.has(i.id)).length;
 
   return {
     build: {
