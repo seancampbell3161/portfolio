@@ -1,0 +1,320 @@
+---
+// src/components/Track.astro
+// The Writing lane as a vertical track (writing spec §6): one <ol>, a gutter
+// drawn in pseudo-elements, one <li> per row. `index` density has a mono
+// column for the day and reading time; `segment` density is the sidebar's
+// short excerpt. There is exactly one link per essay row, stretched over the
+// whole row with a pseudo-element.
+import type { TrackRow } from "../lib/timeline/track";
+import { isoDay, shortDate, shortDay } from "../lib/dates";
+
+interface Props {
+  rows: TrackRow[];
+  density: "index" | "segment";
+}
+
+const { rows, density } = Astro.props;
+const index = density === "index";
+---
+
+<ol class:list={["track", `track-${density}`]}>
+  {
+    rows.map((row) => {
+      if (row.kind === "now") {
+        return (
+          <li class="tr tr-now">
+            {index ? (
+              <>
+                <span class="tr-meta">now</span>
+                <span class="tr-body">{row.label}</span>
+              </>
+            ) : (
+              <span class="tr-body">now, {row.label}</span>
+            )}
+          </li>
+        );
+      }
+      if (row.kind === "year") {
+        return (
+          <li class="tr tr-year">
+            <span class="tr-meta">{row.label}</span>
+          </li>
+        );
+      }
+      if (row.kind === "more") {
+        return (
+          <li class="tr tr-more">
+            <span class="tr-body">
+              <a href={row.href}>{row.label}</a>
+            </span>
+          </li>
+        );
+      }
+      return (
+        <li class:list={["tr", "tr-essay", { "is-current": row.current }]}>
+          {index && (
+            <span class="tr-meta">
+              <time datetime={isoDay(row.date)}>{shortDay(row.date)}</time>
+              {row.minutes !== undefined && <small>{row.minutes} min</small>}
+            </span>
+          )}
+          <span class="tr-body">
+            {index ? (
+              <h2 class="tr-title">
+                <a href={row.href} aria-current={row.current ? "page" : undefined}>{row.title}</a>
+              </h2>
+            ) : (
+              <span class="tr-title">
+                <a href={row.href} aria-current={row.current ? "page" : undefined}>{row.title}</a>
+              </span>
+            )}
+            {!index && <time class="tr-date" datetime={isoDay(row.date)}>{shortDate(row.date)}</time>}
+            {row.description && <p class="tr-desc">{row.description}</p>}
+            {row.tags && row.tags.length > 0 && <small class="tr-tags">{row.tags.join(", ")}</small>}
+          </span>
+        </li>
+      );
+    })
+  }
+</ol>
+
+<style>
+  .track {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+
+  .tr {
+    position: relative;
+    display: grid;
+    --node-y: 4px;
+  }
+  .track-index .tr {
+    grid-template-columns: 48px 120px 1fr;
+  }
+  /* The gutter's node and line live in ::before/::after, which are
+     position: absolute and so never occupy a grid track. Without an
+     explicit column, auto-placement would pack tr-meta and tr-body into
+     the first two tracks (48px, 120px) instead of leaving column 1 for
+     the gutter, so they're pinned explicitly, matching the mobile
+     media query below. */
+  .track-index .tr-meta {
+    grid-column: 2;
+  }
+  .track-index .tr-body {
+    grid-column: 3;
+  }
+  .track-segment .tr {
+    grid-template-columns: 28px 1fr;
+    padding-bottom: 18px;
+  }
+  .track-segment .tr:last-child {
+    padding-bottom: 0;
+  }
+
+  /* Gutter (spec §6, §13): decorative, so it lives in pseudo-elements. The
+     line runs the full height of every row except the first (starts at its
+     node) and the last (ends at its node). */
+  .tr::before {
+    content: "";
+    position: absolute;
+    left: 11px;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background: color-mix(in srgb, var(--lane-writing) 55%, var(--color-bg));
+  }
+  .tr:first-child::before {
+    top: var(--node-y);
+  }
+  .tr:last-child::before {
+    bottom: auto;
+    height: var(--node-y);
+  }
+  .tr::after {
+    content: "";
+    position: absolute;
+    left: 6px;
+    top: var(--node-y);
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: var(--lane-writing);
+    border: 2px solid var(--color-bg);
+  }
+  .tr-now::after {
+    background: var(--color-text-primary);
+  }
+  .tr-more::after {
+    background: transparent;
+    border-color: color-mix(in srgb, var(--lane-writing) 55%, var(--color-bg));
+  }
+  .tr-year::after {
+    content: none;
+  }
+  .is-current::after {
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--lane-writing) 35%, transparent);
+  }
+
+  /* Index density */
+  .track-index .tr-now {
+    --node-y: 8px;
+    padding: 6px 0 10px;
+  }
+  .track-index .tr-now .tr-meta,
+  .track-index .tr-now .tr-body {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    line-height: 1.8;
+    color: var(--color-text-muted);
+  }
+  .track-index .tr-year {
+    padding-top: 22px;
+  }
+  .track-index .tr-year .tr-meta {
+    font-size: 12px;
+    line-height: 1.5;
+  }
+  .track-index .tr-essay {
+    --node-y: 30px;
+  }
+  .track-index .tr-essay > * {
+    border-bottom: 1px solid var(--color-border);
+  }
+  .track-index .tr-essay:last-child > * {
+    border-bottom: 0;
+  }
+  .track-index .tr-essay .tr-meta {
+    padding-top: 28px;
+  }
+  .track-index .tr-essay .tr-body {
+    padding: 22px 0 24px;
+  }
+  .tr-meta {
+    font-family: var(--font-mono);
+    font-size: 13px;
+    line-height: 1.8;
+    color: var(--color-text-muted);
+  }
+  .tr-meta small {
+    display: block;
+    font-size: 11px;
+    color: var(--color-text-faint);
+  }
+
+  /* Titles and text */
+  .tr-title {
+    margin: 0;
+  }
+  .track-index .tr-title {
+    font-family: var(--font-display);
+    font-size: 26px;
+    font-weight: 600;
+    line-height: 1.1;
+    letter-spacing: -0.015em;
+    max-width: 26ch;
+    margin-bottom: 8px;
+  }
+  .track-segment .tr-title {
+    display: block;
+    font-size: 14px;
+    font-weight: 500;
+    line-height: 1.4;
+  }
+  .tr-title a {
+    color: var(--color-text-primary);
+  }
+  .tr-title a::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+  }
+  .tr-essay:hover .tr-title a,
+  .is-current .tr-title a {
+    color: var(--lane-writing);
+  }
+  .tr-title a:focus-visible,
+  .tr-more a:focus-visible {
+    outline: 2px solid var(--lane-writing);
+    outline-offset: 2px;
+  }
+  .tr-desc {
+    margin: 0 0 10px;
+    font-size: 16px;
+    line-height: 1.5;
+    color: var(--color-text-secondary);
+    max-width: 60ch;
+  }
+  .tr-tags {
+    font-size: 13px;
+    color: var(--color-text-muted);
+  }
+  .tr-date {
+    display: block;
+    margin-top: 2px;
+    font-family: var(--font-mono);
+    font-size: 12px;
+    color: var(--color-text-muted);
+  }
+
+  /* Segment density */
+  .track-segment .tr-now .tr-body {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    line-height: 1.6;
+    color: var(--color-text-muted);
+  }
+  .track-segment .tr-more .tr-body {
+    font-size: 13px;
+    line-height: 1.6;
+  }
+  .tr-more a {
+    color: var(--lane-writing);
+    border-bottom: 1px solid color-mix(in srgb, var(--lane-writing) 40%, transparent);
+  }
+
+  @media (max-width: 899.98px) {
+    .track-index .tr {
+      grid-template-columns: 28px 1fr;
+    }
+    .track-index .tr-now {
+      grid-template-columns: 28px auto 1fr;
+    }
+    .track-index .tr-now .tr-meta {
+      grid-column: 2;
+      padding-right: 8px;
+    }
+    .track-index .tr-now .tr-body {
+      grid-column: 3;
+    }
+    .track-index .tr-year .tr-meta,
+    .track-index .tr-essay .tr-meta,
+    .track-index .tr-essay .tr-body {
+      grid-column: 2;
+    }
+    .track-index .tr-essay {
+      --node-y: 22px;
+    }
+    .track-index .tr-essay .tr-meta {
+      display: flex;
+      padding-top: 18px;
+      line-height: 1.5;
+      border-bottom: 0;
+    }
+    .track-index .tr-essay .tr-meta small {
+      display: inline;
+      font-size: 13px;
+      color: var(--color-text-muted);
+    }
+    .track-index .tr-essay .tr-meta small::before {
+      content: ", ";
+    }
+    .track-index .tr-essay .tr-body {
+      padding-top: 6px;
+    }
+    .track-index .tr-title {
+      font-size: 22px;
+    }
+  }
+</style>
