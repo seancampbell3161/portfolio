@@ -6,6 +6,7 @@
     "dev": "astro dev",
     "start": "astro dev",
     "build": "astro build",
+    "check": "astro build && vitest run",
     "preview": "astro preview",
     "astro": "astro",
     "og": "node scripts/og-screenshots.mjs",
