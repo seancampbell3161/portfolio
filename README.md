@@ -5,8 +5,10 @@ community entry carries a lane and a date range, and the site draws them on one
 time axis. Cross-references fall out of that — an essay knows what was being
 built when it was written, a project knows what else was going on across its life.
 
-Static [Astro](https://astro.build) 5. Everything renders at build time; the only
-client-side JavaScript is progressive enhancement over markup that already works.
+Static [Astro](https://astro.build) 5. Everything renders at build time, with no
+client-side framework or client-side rendering. Most of the JavaScript is progressive
+enhancement over markup that already works without it; the mobile navigation menu and
+the newsletter form are the two exceptions that require it.
 
 ## Commands
 
