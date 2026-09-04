@@ -7,8 +7,9 @@ built when it was written, a project knows what else was going on across its lif
 
 Static [Astro](https://astro.build) 5. Everything renders at build time, with no
 client-side framework or client-side rendering. Most of the JavaScript is progressive
-enhancement over markup that already works without it; the mobile navigation menu and
-the newsletter form are the two exceptions that require it.
+enhancement over markup that already works without it, but not all of it is — without
+scripting, the mobile navigation menu and the newsletter form stop working outright,
+while pages that show live numbers, like the roadmap, stay usable but render at zero.
 
 ## Commands
 

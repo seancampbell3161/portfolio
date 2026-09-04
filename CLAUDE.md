@@ -13,7 +13,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Architecture
 
-This is a static portfolio site built with **Astro 5**. Everything renders at build time and ships no framework or client-side rendering. Most of the JavaScript is progressive enhancement layered over markup that already works without it; the mobile navigation menu (`src/components/TransportBar.astro`) and the newsletter form (`src/components/Newsletter.astro`) are the two exceptions that require it.
+This is a static portfolio site built with **Astro 5**. Everything renders at build time and ships no framework or client-side rendering. Most of the JavaScript is progressive enhancement layered over markup that already works without it, but not all of it is — without scripting, the mobile navigation menu (`src/components/TransportBar.astro`) and the newsletter form (`src/components/Newsletter.astro`) stop working outright, while the roadmap's live numbers (`src/components/roadmap/RoadmapMeters.astro`, `RoadmapInspector.astro`, `RetentionSection.astro`) stay usable but render at zero.
 
 **Key integrations:** MDX (blog posts), Sitemap, RSS
 
