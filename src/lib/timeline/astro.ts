@@ -1,6 +1,6 @@
 // src/lib/timeline/astro.ts
 // The only timeline module that imports from Astro. Everything it calls is pure.
-import { getCollection, type CollectionEntry } from "astro:content";
+import { getCollection } from "astro:content";
 import community from "../../data/community";
 import { fromBlog, fromCommunity, fromProjects, fromRoadmap, mergeTimeline } from "./sources";
 import type { TimelineItem } from "./types";
@@ -9,7 +9,6 @@ export interface TimelineData {
   items: TimelineItem[];
   /** Build time. The client script nudges the playhead to the real date. */
   now: Date;
-  projects: CollectionEntry<"projects">[];
 }
 
 export async function getTimeline(): Promise<TimelineData> {
@@ -23,5 +22,5 @@ export async function getTimeline(): Promise<TimelineData> {
     fromCommunity(community),
     fromRoadmap(now),
   );
-  return { items, now, projects };
+  return { items, now };
 }

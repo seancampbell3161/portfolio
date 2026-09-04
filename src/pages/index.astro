@@ -7,7 +7,7 @@ import ContactBlock from "../components/ContactBlock.astro";
 import Footer from "../components/Footer.astro";
 import { getTimeline } from "../lib/timeline/astro";
 
-const { items, now, projects } = await getTimeline();
+const { items, now } = await getTimeline();
 ---
 
 <Layout title="Sean Campbell | Software Engineer">
@@ -20,7 +20,7 @@ const { items, now, projects } = await getTimeline();
     </section>
 
     <Timeline items={items} now={now} />
-    <Inspector items={items} projects={projects} />
+    <Inspector items={items} />
     <ContactBlock />
   </main>
 

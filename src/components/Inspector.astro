@@ -1,46 +1,21 @@
 ---
-import type { CollectionEntry } from "astro:content";
 import type { Lane, TimelineItem } from "../lib/timeline/types";
+import { rangeText, whenText } from "../lib/timeline/track";
+import { longDate, monthYearLong } from "../lib/dates";
 
 interface Props {
   items: TimelineItem[];
-  projects: CollectionEntry<"projects">[];
 }
 
-const { items, projects } = Astro.props;
-
-// Case-study bodies, rendered once, keyed by slug (which is the item id).
-const caseStudies = new Map<string, any>();
-for (const p of projects) {
-  const { Content } = await p.render();
-  caseStudies.set(p.slug, Content);
-}
+const { items } = Astro.props;
 
 const laneName = (lane: Lane) => lane[0].toUpperCase() + lane.slice(1);
-const monthYear = (d: Date) => d.toLocaleDateString("en-US", { month: "long", year: "numeric", timeZone: "UTC" });
-const longDate = (d: Date) =>
-  d.toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric", timeZone: "UTC" });
-
-function statusText(item: TimelineItem): string {
-  switch (item.status) {
-    case "in-progress":
-      return `in progress since ${monthYear(item.start)}`;
-    case "live":
-      return "live";
-    case "planned":
-      return "planned";
-    default:
-      return item.end ? `${monthYear(item.start)} to ${monthYear(item.end)}` : longDate(item.start);
-  }
-}
-
 const capitalized = (s: string) => (s === "in-progress" ? "In progress" : s[0].toUpperCase() + s.slice(1));
 ---
 
 <div class="inspector">
   {items.map((item) => {
     const b = item.body;
-    const CaseStudy = item.lane === "building" ? caseStudies.get(item.id) : undefined;
     return (
       <section
         class="insp"
@@ -51,22 +26,12 @@ const capitalized = (s: string) => (s === "in-progress" ? "In progress" : s[0].t
         style={`--c:var(--lane-${item.lane})`}
       >
         <div class="insp-main">
-          <p class="insp-k"><i aria-hidden="true"></i>{laneName(item.lane)}, {statusText(item)}</p>
+          <p class="insp-k"><i aria-hidden="true"></i>{laneName(item.lane)}, {whenText(item)}</p>
           <h2 id={`item-${item.id}-title`}>{item.title}</h2>
           {b && <p class="insp-desc">{b.description}</p>}
-          {b?.lane === "learning" && b.testimonial && (
-            <figure class="insp-quote">
-              <blockquote>{b.testimonial.quote}</blockquote>
-              <figcaption>{b.testimonial.author}, {b.testimonial.role}</figcaption>
-            </figure>
-          )}
-          {CaseStudy && (
-            <div class="insp-body">
-              <CaseStudy />
-            </div>
-          )}
           <div class="insp-links">
             {b?.lane === "writing" && <a href={b.href}>Read the essay</a>}
+            {b?.lane === "building" && <a href={item.href}>Read the case study</a>}
             {b?.lane === "building" && b.url && (
               <a href={b.url} target="_blank" rel="noopener noreferrer">Visit the site</a>
             )}
@@ -75,7 +40,7 @@ const capitalized = (s: string) => (s === "in-progress" ? "In progress" : s[0].t
             )}
             {b?.lane === "learning" && <a href={b.roadmapHref}>See it on the roadmap</a>}
             {b?.lane === "community" && b.url && (
-              <a href={b.url} target="_blank" rel="noopener noreferrer">Details</a>
+              <a href={b.url} target="_blank" rel="noopener noreferrer">{b.linkLabel ?? "Details"}</a>
             )}
             <a href="#" class="insp-close" data-inspector-close>Close</a>
           </div>
@@ -84,7 +49,7 @@ const capitalized = (s: string) => (s === "in-progress" ? "In progress" : s[0].t
           {b?.lane === "building" && (
             <dl class="insp-facts">
               <dt>Stack</dt><dd>{b.stack.join(", ")}</dd>
-              <dt>Started</dt><dd>{monthYear(b.started)}</dd>
+              <dt>Started</dt><dd>{monthYearLong(b.started)}</dd>
               <dt>Status</dt><dd>{capitalized(b.status)}</dd>
             </dl>
           )}
@@ -100,8 +65,7 @@ const capitalized = (s: string) => (s === "in-progress" ? "In progress" : s[0].t
           )}
           {b?.lane === "learning" && (
             <dl class="insp-facts">
-              <dt>When</dt>
-              <dd>{item.end ? `${monthYear(item.start)} to ${monthYear(item.end)}` : `since ${monthYear(item.start)}`}</dd>
+              <dt>When</dt><dd>{rangeText(item.start, item.end)}</dd>
             </dl>
           )}
         </aside>
@@ -167,41 +131,6 @@ const capitalized = (s: string) => (s === "in-progress" ? "In progress" : s[0].t
     font-size: 15.5px;
     line-height: 1.55;
     color: var(--color-text-secondary);
-  }
-  .insp-quote {
-    margin: 18px 0 0;
-    padding: 2px 0 2px 18px;
-    border-left: 3px solid var(--c);
-  }
-  .insp-quote blockquote {
-    margin: 0;
-    font-size: 15.5px;
-    line-height: 1.55;
-    font-style: italic;
-    color: var(--color-text-primary);
-  }
-  .insp-quote figcaption {
-    margin-top: 8px;
-    font-size: 13px;
-    color: var(--color-text-muted);
-  }
-  .insp-body {
-    margin-top: 18px;
-    max-width: 62ch;
-    font-size: 15px;
-    line-height: 1.6;
-    color: var(--color-text-secondary);
-  }
-  .insp-body :global(h2) {
-    margin: 18px 0 6px;
-    font-family: var(--font-sans);
-    font-size: 16px;
-    font-weight: 600;
-    letter-spacing: 0;
-    color: var(--color-text-primary);
-  }
-  .insp-body :global(p) {
-    margin: 0 0 10px;
   }
   .insp-links {
     display: flex;
