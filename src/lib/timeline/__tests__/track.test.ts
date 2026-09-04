@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import {
-  readingMinutes, sortEntries, indexRows, segmentRows, writtenWhile, rangeText, whenText,
+  readingMinutes, sortEntries, indexRows, segmentRows, writtenWhile, during, rangeText, whenText,
 } from "../track.js";
 import type { TrackEntry, TrackRow, TrackIndex } from "../track.js";
 import type { TimelineItem } from "../types.js";
@@ -272,5 +272,70 @@ describe("rangeText and whenText (spec §5.1)", () => {
     expect(whenText({ status: "in-progress", start: d("2026-06-01"), end: d("2026-12-01") })).toBe(
       "in progress since June 2026",
     );
+  });
+});
+
+describe("during (spec §5.1)", () => {
+  const now = d("2026-09-02");
+
+  const item = (o: Partial<TimelineItem> & Pick<TimelineItem, "id" | "lane" | "start" | "kind">): TimelineItem => ({
+    title: o.id,
+    status: "done",
+    href: `/#item-${o.id}`,
+    ...o,
+  });
+
+  // The project under the page: Sep 2024 to Apr 2025.
+  const project = { start: d("2024-09-01"), end: d("2025-04-01") };
+
+  const inside = item({ id: "essay-inside", lane: "writing", start: d("2024-12-01"), kind: "moment" });
+  const onStart = item({ id: "essay-on-start", lane: "writing", start: d("2024-09-01"), kind: "moment" });
+  const onEnd = item({ id: "essay-on-end", lane: "writing", start: d("2025-04-01"), kind: "moment" });
+  const before = item({ id: "essay-before", lane: "writing", start: d("2024-08-31"), kind: "moment" });
+  const after = item({ id: "essay-after", lane: "writing", start: d("2025-04-02"), kind: "moment" });
+  const overlapping = item({ id: "thread", lane: "learning", start: d("2024-01-01"), end: d("2026-01-01"), kind: "span" });
+  const ongoing = item({ id: "ongoing", lane: "learning", start: d("2024-10-01"), kind: "span", status: "in-progress" });
+  const disjoint = item({ id: "disjoint", lane: "learning", start: d("2025-05-01"), end: d("2025-06-01"), kind: "span" });
+  const sibling = item({ id: "other-project", lane: "building", start: d("2024-10-01"), end: d("2024-11-01"), kind: "span" });
+  const talk = item({ id: "talk", lane: "community", start: d("2025-01-15"), kind: "moment" });
+
+  const all = [inside, onStart, onEnd, before, after, overlapping, ongoing, disjoint, sibling, talk];
+
+  it("includes moments inside the span, inclusive of both ends", () => {
+    const ids = during(all, project, now, "building").map((i) => i.id);
+    expect(ids).toContain("essay-inside");
+    expect(ids).toContain("essay-on-start");
+    expect(ids).toContain("essay-on-end");
+  });
+  it("excludes moments outside the span", () => {
+    const ids = during(all, project, now, "building").map((i) => i.id);
+    expect(ids).not.toContain("essay-before");
+    expect(ids).not.toContain("essay-after");
+  });
+  it("includes spans that intersect and excludes those that do not", () => {
+    const ids = during(all, project, now, "building").map((i) => i.id);
+    expect(ids).toContain("thread");
+    expect(ids).toContain("ongoing");
+    expect(ids).not.toContain("disjoint");
+  });
+  it("excludes the lane it is asked to exclude", () => {
+    expect(during(all, project, now, "building").map((i) => i.id)).not.toContain("other-project");
+    expect(during(all, project, now, "writing").map((i) => i.id)).toContain("other-project");
+  });
+  it("runs an open-ended span to now", () => {
+    const openProject = { start: d("2026-06-01") };
+    const recent = item({ id: "recent", lane: "writing", start: d("2026-08-01"), kind: "moment" });
+    const future = item({ id: "future", lane: "writing", start: d("2026-10-01"), kind: "moment" });
+    const ids = during([recent, future], openProject, now, "building").map((i) => i.id);
+    expect(ids).toEqual(["recent"]);
+  });
+  it("orders by lane in timeline order with the excluded lane dropped, then start, then id", () => {
+    const ids = during(all, project, now, "building").map((i) => i.id);
+    expect(ids).toEqual([
+      "essay-on-start", "essay-inside", "essay-on-end", "thread", "ongoing", "talk",
+    ]);
+  });
+  it("returns an empty list when nothing overlaps", () => {
+    expect(during(all, { start: d("2019-01-01"), end: d("2019-02-01") }, now, "building")).toEqual([]);
   });
 });

@@ -1,9 +1,11 @@
 // src/lib/timeline/track.ts
-// The Writing lane as a vertical track (writing spec §6 to §8, §10): the rows
-// the index and the essay sidebar render, plus reading time. Pure: no Astro,
-// no DOM, so Vitest loads it and the pages call it at build time.
+// Lane-agnostic routines for drawing timeline items as vertical tracks on
+// multiple pages: the writing and building indexes, both sidebars, and the
+// inspector's wording helpers. Pure: no Astro, no DOM, so Vitest loads it
+// and the pages call it at build time.
 import { longDate, monthDayYear, monthYearLong } from "../dates.js";
 import type { Lane, Status, TimelineItem } from "./types.js";
+import { LANES } from "./types.js";
 import { effectiveEnd } from "./layout.js";
 
 /**
@@ -143,6 +145,17 @@ const WHILE_LANES: readonly Lane[] = ["building", "learning", "community"];
 export const MOMENT_WINDOW_DAYS = 14;
 const DAY_MS = 86_400_000;
 
+export interface DateSpan {
+  start: Date;
+  /** Absent means open-ended: the range runs to now. */
+  end?: Date;
+}
+
+/** Whether a span item's own range touches [from, to]. Inclusive at both ends. */
+function spanTouches(item: TimelineItem, from: number, to: number, now: Date): boolean {
+  return item.start.getTime() <= to && effectiveEnd(item, now).getTime() >= from;
+}
+
 /**
  * Spec §8: items from the other lanes that overlap the publish date. A span
  * counts when it starts on or before the date and its effective end (its end,
@@ -154,9 +167,7 @@ export function writtenWhile(items: readonly TimelineItem[], published: Date, no
   const p = published.getTime();
   const overlaps = (item: TimelineItem): boolean => {
     if (!WHILE_LANES.includes(item.lane)) return false;
-    if (item.kind === "span") {
-      return item.start.getTime() <= p && effectiveEnd(item, now).getTime() >= p;
-    }
+    if (item.kind === "span") return spanTouches(item, p, p, now);
     return Math.abs(item.start.getTime() - p) <= MOMENT_WINDOW_DAYS * DAY_MS;
   };
   return items
@@ -164,6 +175,37 @@ export function writtenWhile(items: readonly TimelineItem[], published: Date, no
     .sort(
       (a, b) =>
         WHILE_LANES.indexOf(a.lane) - WHILE_LANES.indexOf(b.lane) ||
+        a.start.getTime() - b.start.getTime() ||
+        a.id.localeCompare(b.id),
+    );
+}
+
+/**
+ * Spec §5.1: what else was happening across a span. Spans count when they
+ * intersect it; moments count when they fall inside it, inclusive. An
+ * open-ended span (an in-progress project) runs to now. Lanes keep timeline
+ * order with `exclude` dropped, then start, then id.
+ */
+export function during(
+  items: readonly TimelineItem[],
+  span: DateSpan,
+  now: Date,
+  exclude: Lane,
+): TimelineItem[] {
+  const from = span.start.getTime();
+  const to = (span.end ?? now).getTime();
+  const lanes = LANES.filter((l) => l !== exclude);
+  const overlaps = (item: TimelineItem): boolean => {
+    if (!lanes.includes(item.lane)) return false;
+    if (item.kind === "span") return spanTouches(item, from, to, now);
+    const t = item.start.getTime();
+    return t >= from && t <= to;
+  };
+  return items
+    .filter(overlaps)
+    .sort(
+      (a, b) =>
+        lanes.indexOf(a.lane) - lanes.indexOf(b.lane) ||
         a.start.getTime() - b.start.getTime() ||
         a.id.localeCompare(b.id),
     );
