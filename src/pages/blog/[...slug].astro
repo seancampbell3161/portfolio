@@ -6,7 +6,7 @@ import { type CollectionEntry, getCollection } from "astro:content";
 import BlogPost from "../../layouts/BlogPost.astro";
 import { getTimeline } from "../../lib/timeline/astro";
 import { readingMinutes, segmentRows, writtenWhile } from "../../lib/timeline/track";
-import type { Essay } from "../../lib/timeline/track";
+import type { TrackEntry } from "../../lib/timeline/track";
 
 export async function getStaticPaths() {
   const posts = await getCollection("blog", ({ data }) => {
@@ -26,11 +26,11 @@ const { entry } = Astro.props;
 const { Content } = await entry.render();
 
 const { items, now } = await getTimeline();
-const essays: Essay[] = items
+const essays: TrackEntry[] = items
   .filter((item) => item.lane === "writing")
-  .map((item) => ({ id: item.id, href: item.href, title: item.title, date: item.start }));
+  .map((item) => ({ id: item.id, href: item.href, title: item.title, start: item.start, status: item.status }));
 
-const segment = segmentRows(essays, `essay-${entry.slug}`, now);
+const segment = segmentRows(essays, `essay-${entry.slug}`, now, { href: "/blog", noun: "essays" });
 const around = writtenWhile(items, entry.data.pubDate, now);
 const minutes = readingMinutes(entry.body);
 ---

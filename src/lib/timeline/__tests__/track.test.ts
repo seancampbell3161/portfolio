@@ -1,24 +1,28 @@
 import { describe, it, expect } from "vitest";
-import { readingMinutes, sortEssays, indexRows, segmentRows, writtenWhile, rangeText, whenText } from "../track.js";
-import type { Essay, TrackRow } from "../track.js";
+import {
+  readingMinutes, sortEntries, indexRows, segmentRows, writtenWhile, rangeText, whenText,
+} from "../track.js";
+import type { TrackEntry, TrackRow, TrackIndex } from "../track.js";
 import type { TimelineItem } from "../types.js";
 
 const d = (s: string) => new Date(s);
 const words = (n: number) => Array.from({ length: n }, (_, i) => `w${i}`).join(" ");
 
-/** Short form of a row list for assertions: essay ids (starred when current), more labels, other kinds. */
+/** Short form of a row list for assertions: entry ids (starred when current), labels for other kinds. */
 const shape = (rows: TrackRow[]) =>
   rows.map((r) => {
-    if (r.kind === "essay") return `${r.id}${r.current ? "*" : ""}`;
+    if (r.kind === "entry") return `${r.id}${r.current ? "*" : ""}`;
     if (r.kind === "more") return r.label;
     if (r.kind === "year") return r.label;
     return r.kind;
   });
 
-const essays: Essay[] = [
-  { id: "essay-b", href: "/blog/b", title: "B", date: d("2026-07-22"), description: "About B", tags: ["Redis"], minutes: 3 },
-  { id: "essay-c", href: "/blog/c", title: "C", date: d("2026-09-01"), minutes: 5 },
-  { id: "essay-a", href: "/blog/a", title: "A", date: d("2025-12-30"), minutes: 7 },
+const ESSAYS: TrackIndex = { href: "/blog", noun: "essays" };
+
+const essays: TrackEntry[] = [
+  { id: "essay-b", href: "/blog/b", title: "B", start: d("2026-07-22"), status: "done", description: "About B", tags: ["Redis"], minutes: 3 },
+  { id: "essay-c", href: "/blog/c", title: "C", start: d("2026-09-01"), status: "done", minutes: 5 },
+  { id: "essay-a", href: "/blog/a", title: "A", start: d("2025-12-30"), status: "done", minutes: 7 },
 ];
 
 describe("readingMinutes (spec §10)", () => {
@@ -36,18 +40,18 @@ describe("readingMinutes (spec §10)", () => {
   });
 });
 
-describe("sortEssays", () => {
+describe("sortEntries", () => {
   it("sorts newest first and breaks ties by id", () => {
-    const tie: Essay[] = [
-      { id: "essay-z", href: "/blog/z", title: "Z", date: d("2026-01-01") },
-      { id: "essay-y", href: "/blog/y", title: "Y", date: d("2026-01-01") },
-      { id: "essay-x", href: "/blog/x", title: "X", date: d("2026-02-01") },
+    const tie: TrackEntry[] = [
+      { id: "essay-z", href: "/blog/z", title: "Z", start: d("2026-01-01"), status: "done" },
+      { id: "essay-y", href: "/blog/y", title: "Y", start: d("2026-01-01"), status: "done" },
+      { id: "essay-x", href: "/blog/x", title: "X", start: d("2026-02-01"), status: "done" },
     ];
-    expect(sortEssays(tie).map((e) => e.id)).toEqual(["essay-x", "essay-y", "essay-z"]);
+    expect(sortEntries(tie).map((e) => e.id)).toEqual(["essay-x", "essay-y", "essay-z"]);
   });
   it("does not mutate its input", () => {
     const copy = [...essays];
-    sortEssays(essays);
+    sortEntries(essays);
     expect(essays).toEqual(copy);
   });
 });
@@ -58,16 +62,17 @@ describe("indexRows (spec §6)", () => {
   it("starts with a now row carrying the build date", () => {
     expect(rows[0]).toEqual({ kind: "now", label: "Sep 2, 2026" });
   });
-  it("orders essays newest first with a year row before the first essay of each year", () => {
+  it("orders entries newest first with a year row before the first entry of each year", () => {
     expect(shape(rows)).toEqual(["now", "2026", "essay-c", "essay-b", "2025", "essay-a"]);
   });
-  it("carries the index fields on essay rows", () => {
+  it("carries the index fields on entry rows", () => {
     expect(rows[3]).toEqual({
-      kind: "essay",
+      kind: "entry",
       id: "essay-b",
       href: "/blog/b",
       title: "B",
-      date: d("2026-07-22"),
+      start: d("2026-07-22"),
+      status: "done",
       minutes: 3,
       description: "About B",
       tags: ["Redis"],
@@ -75,57 +80,92 @@ describe("indexRows (spec §6)", () => {
   });
   it("uses the UTC year for year rows", () => {
     // 2025-12-31T23:30Z is still 2025 in UTC even though it is 2026 east of UTC+0:30.
-    const late: Essay[] = [{ id: "essay-l", href: "/blog/l", title: "L", date: d("2025-12-31T23:30:00Z") }];
+    const late: TrackEntry[] = [{ id: "essay-l", href: "/blog/l", title: "L", start: d("2025-12-31T23:30:00Z"), status: "done" }];
     expect(shape(indexRows(late, d("2026-09-02")))).toEqual(["now", "2025", "essay-l"]);
   });
-  it("yields only the now row when there are no essays", () => {
+  it("yields only the now row when there are no entries", () => {
     expect(indexRows([], d("2026-09-02"))).toEqual([{ kind: "now", label: "Sep 2, 2026" }]);
   });
 });
 
 describe("segmentRows (spec §7)", () => {
   const now = d("2026-09-02");
-  const five: Essay[] = [
-    { id: "essay-a", href: "/blog/a", title: "A", date: d("2025-12-21") },
-    { id: "essay-b", href: "/blog/b", title: "B", date: d("2025-12-30") },
-    { id: "essay-c", href: "/blog/c", title: "C", date: d("2026-05-16") },
-    { id: "essay-d", href: "/blog/d", title: "D", date: d("2026-07-22") },
-    { id: "essay-e", href: "/blog/e", title: "E", date: d("2026-09-01") },
+  const five: TrackEntry[] = [
+    { id: "essay-a", href: "/blog/a", title: "A", start: d("2025-12-21"), status: "done" },
+    { id: "essay-b", href: "/blog/b", title: "B", start: d("2025-12-30"), status: "done" },
+    { id: "essay-c", href: "/blog/c", title: "C", start: d("2026-05-16"), status: "done" },
+    { id: "essay-d", href: "/blog/d", title: "D", start: d("2026-07-22"), status: "done" },
+    { id: "essay-e", href: "/blog/e", title: "E", start: d("2026-09-01"), status: "done" },
   ];
 
-  it("newest essay: now head, itself, the older neighbour, an older tail", () => {
-    expect(shape(segmentRows(five, "essay-e", now))).toEqual(["now", "essay-e*", "essay-d", "3 older, all essays"]);
-    expect(segmentRows(five, "essay-e", now)[0]).toEqual({ kind: "now", label: "Sep 2, 2026" });
+  it("newest entry: now head, itself, the older neighbour, an older tail", () => {
+    expect(shape(segmentRows(five, "essay-e", now, ESSAYS))).toEqual(["now", "essay-e*", "essay-d", "3 older, all essays"]);
+    expect(segmentRows(five, "essay-e", now, ESSAYS)[0]).toEqual({ kind: "now", label: "Sep 2, 2026" });
   });
-  it("second essay: singular newer head", () => {
-    expect(shape(segmentRows(five, "essay-d", now))).toEqual([
+  it("second entry: singular newer head", () => {
+    expect(shape(segmentRows(five, "essay-d", now, ESSAYS))).toEqual([
       "1 newer, all essays", "essay-e", "essay-d*", "essay-c", "2 older, all essays",
     ]);
   });
-  it("middle essay: both neighbours and both counts", () => {
-    expect(shape(segmentRows(five, "essay-c", now))).toEqual([
+  it("middle entry: both neighbours and both counts", () => {
+    expect(shape(segmentRows(five, "essay-c", now, ESSAYS))).toEqual([
       "2 newer, all essays", "essay-d", "essay-c*", "essay-b", "1 older, all essays",
     ]);
   });
-  it("oldest essay: newer head, the newer neighbour, itself, no tail", () => {
-    expect(shape(segmentRows(five, "essay-a", now))).toEqual(["4 newer, all essays", "essay-b", "essay-a*"]);
+  it("oldest entry: newer head, the newer neighbour, itself, no tail", () => {
+    expect(shape(segmentRows(five, "essay-a", now, ESSAYS))).toEqual(["4 newer, all essays", "essay-b", "essay-a*"]);
   });
-  it("a single essay: now and itself", () => {
-    expect(shape(segmentRows([five[0]], "essay-a", now))).toEqual(["now", "essay-a*"]);
+  it("a single entry: now and itself", () => {
+    expect(shape(segmentRows([five[0]], "essay-a", now, ESSAYS))).toEqual(["now", "essay-a*"]);
   });
   it("more rows link to the index", () => {
-    const rows = segmentRows(five, "essay-c", now);
+    const rows = segmentRows(five, "essay-c", now, ESSAYS);
     expect(rows[0]).toEqual({ kind: "more", label: "2 newer, all essays", href: "/blog" });
     expect(rows[4]).toEqual({ kind: "more", label: "1 older, all essays", href: "/blog" });
   });
-  it("segment essay rows carry id, href, title, date only", () => {
-    const rich: Essay[] = [{ ...five[4], description: "x", tags: ["t"], minutes: 9 }];
-    expect(segmentRows(rich, "essay-e", now)[1]).toEqual({
-      kind: "essay", id: "essay-e", href: "/blog/e", title: "E", date: d("2026-09-01"), current: true,
+  it("segment entry rows carry id, href, title, start, status only", () => {
+    const rich: TrackEntry[] = [{ ...five[4], description: "x", tags: ["t"], minutes: 9 }];
+    expect(segmentRows(rich, "essay-e", now, ESSAYS)[1]).toEqual({
+      kind: "entry", id: "essay-e", href: "/blog/e", title: "E", start: d("2026-09-01"),
+      status: "done", current: true,
     });
   });
   it("throws for an unknown id", () => {
-    expect(() => segmentRows(five, "essay-zzz", now)).toThrow("Unknown essay: essay-zzz");
+    expect(() => segmentRows(five, "essay-zzz", now, ESSAYS)).toThrow("Unknown track entry: essay-zzz");
+  });
+});
+
+describe("segmentRows with another index (spec §5.1)", () => {
+  const now = d("2026-09-02");
+  const PROJECTS: TrackIndex = { href: "/building", noun: "projects" };
+  const three: TrackEntry[] = [
+    { id: "songle", href: "/building/songle", title: "Songle", start: d("2023-06-01"), end: d("2024-02-01"), status: "live" },
+    { id: "rswebtwain", href: "/building/rswebtwain", title: "RSWebTWAIN", start: d("2024-09-01"), end: d("2025-04-01"), status: "done" },
+    { id: "daw-engine", href: "/building/daw-engine", title: "Browser DAW engine", start: d("2026-06-01"), status: "in-progress" },
+  ];
+  it("names the index in the more rows and links to it", () => {
+    const rows = segmentRows(three, "songle", now, PROJECTS);
+    expect(shape(rows)).toEqual(["2 newer, all projects", "rswebtwain", "songle*"]);
+    expect(rows[0]).toEqual({ kind: "more", label: "2 newer, all projects", href: "/building" });
+  });
+  it("carries end and status onto segment rows so the component can draw a bar", () => {
+    const rows = segmentRows(three, "daw-engine", now, PROJECTS);
+    expect(rows[1]).toMatchObject({ kind: "entry", id: "daw-engine", status: "in-progress", current: true });
+    expect(rows[2]).toMatchObject({ id: "rswebtwain", end: d("2025-04-01"), status: "done" });
+  });
+});
+
+describe("indexRows over spans", () => {
+  const now = d("2026-09-02");
+  const two: TrackEntry[] = [
+    { id: "songle", href: "/building/songle", title: "Songle", start: d("2023-06-01"), end: d("2024-02-01"), status: "live" },
+    { id: "daw-engine", href: "/building/daw-engine", title: "Browser DAW engine", start: d("2026-06-01"), status: "in-progress" },
+  ];
+  it("groups by start year, newest first, and keeps end and status", () => {
+    const rows = indexRows(two, now);
+    expect(shape(rows)).toEqual(["now", "2026", "daw-engine", "2023", "songle"]);
+    expect(rows[2]).toMatchObject({ kind: "entry", status: "in-progress", end: undefined });
+    expect(rows[4]).toMatchObject({ kind: "entry", status: "live", end: d("2024-02-01") });
   });
 });
 

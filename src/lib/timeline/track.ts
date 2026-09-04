@@ -34,37 +34,37 @@ export function whenText(o: { status: Status; start: Date; end?: Date }): string
   }
 }
 
-/** An essay as both the blog collection and the timeline's writing lane can supply it. */
-export interface Essay {
-  /** `essay-<slug>`, the id fromBlog produces. */
+/** An entry on any lane's vertical track: an essay, a project, anything dated. */
+export interface TrackEntry {
+  /** The timeline id, e.g. `essay-<slug>` or a project slug. */
   id: string;
-  /** `/blog/<slug>` */
   href: string;
   title: string;
-  /** pubDate */
-  date: Date;
+  start: Date;
+  /** Set for a finished span; absent for a moment or an open-ended span. */
+  end?: Date;
+  status: Status;
   description?: string;
+  /** Essay tags, or a project's stack. */
   tags?: string[];
+  /** Essays only. */
   minutes?: number;
 }
 
-export type EssayRow = {
-  kind: "essay";
-  id: string;
-  href: string;
-  title: string;
-  date: Date;
-  current?: boolean;
-  minutes?: number;
-  description?: string;
-  tags?: string[];
-};
+export type EntryRow = TrackEntry & { kind: "entry"; current?: boolean };
 
 export type TrackRow =
   | { kind: "now"; label: string }
   | { kind: "year"; label: string }
   | { kind: "more"; label: string; href: string }
-  | EssayRow;
+  | EntryRow;
+
+/** The index a segment's "more" rows point back at. */
+export interface TrackIndex {
+  href: string;
+  /** Plural, lowercase: "essays", "projects". */
+  noun: string;
+}
 
 export const WORDS_PER_MINUTE = 220;
 
@@ -75,26 +75,28 @@ export function readingMinutes(body: string): number {
 }
 
 /** Newest first, ties by id, so every builder sees one order. Returns a copy. */
-export function sortEssays(essays: readonly Essay[]): Essay[] {
-  return [...essays].sort((a, b) => b.date.getTime() - a.date.getTime() || a.id.localeCompare(b.id));
+export function sortEntries(entries: readonly TrackEntry[]): TrackEntry[] {
+  return [...entries].sort((a, b) => b.start.getTime() - a.start.getTime() || a.id.localeCompare(b.id));
 }
 
-/** Spec §6: a now row, then a year row before the first essay of each year, then the essays. */
-export function indexRows(essays: readonly Essay[], now: Date): TrackRow[] {
+/** Spec §6: a now row, then a year row before the first entry of each start year, then the entries. */
+export function indexRows(entries: readonly TrackEntry[], now: Date): TrackRow[] {
   const rows: TrackRow[] = [{ kind: "now", label: monthDayYear(now) }];
   let year: number | undefined;
-  for (const e of sortEssays(essays)) {
-    const y = e.date.getUTCFullYear();
+  for (const e of sortEntries(entries)) {
+    const y = e.start.getUTCFullYear();
     if (y !== year) {
       rows.push({ kind: "year", label: String(y) });
       year = y;
     }
     rows.push({
-      kind: "essay",
+      kind: "entry",
       id: e.id,
       href: e.href,
       title: e.title,
-      date: e.date,
+      start: e.start,
+      end: e.end,
+      status: e.status,
       minutes: e.minutes,
       description: e.description,
       tags: e.tags,
@@ -103,31 +105,36 @@ export function indexRows(essays: readonly Essay[], now: Date): TrackRow[] {
   return rows;
 }
 
-const INDEX_HREF = "/blog";
-
-const briefRow = (e: Essay): EssayRow => ({ kind: "essay", id: e.id, href: e.href, title: e.title, date: e.date });
+const briefRow = (e: TrackEntry): EntryRow => ({
+  kind: "entry", id: e.id, href: e.href, title: e.title, start: e.start, end: e.end, status: e.status,
+});
 
 /**
- * Spec §7: the current essay ringed between its neighbours. The head is now
- * for the newest essay, otherwise "{n} newer"; the tail is "{n} older" when
- * any remain. It doubles as previous and next.
+ * Spec §7: the current entry ringed between its neighbours. The head is now for
+ * the newest entry, otherwise "{n} newer"; the tail is "{n} older" when any
+ * remain. It doubles as previous and next. `index` names the page they link to.
  */
-export function segmentRows(essays: readonly Essay[], currentId: string, now: Date): TrackRow[] {
-  const sorted = sortEssays(essays);
+export function segmentRows(
+  entries: readonly TrackEntry[],
+  currentId: string,
+  now: Date,
+  index: TrackIndex,
+): TrackRow[] {
+  const sorted = sortEntries(entries);
   const i = sorted.findIndex((e) => e.id === currentId);
-  if (i < 0) throw new Error(`Unknown essay: ${currentId}`);
+  if (i < 0) throw new Error(`Unknown track entry: ${currentId}`);
   const n = sorted.length;
   const rows: TrackRow[] = [];
 
   if (i === 0) rows.push({ kind: "now", label: monthDayYear(now) });
-  else rows.push({ kind: "more", label: `${i} newer, all essays`, href: INDEX_HREF });
+  else rows.push({ kind: "more", label: `${i} newer, all ${index.noun}`, href: index.href });
 
   if (i > 0) rows.push(briefRow(sorted[i - 1]));
   rows.push({ ...briefRow(sorted[i]), current: true });
   if (i < n - 1) rows.push(briefRow(sorted[i + 1]));
 
   const older = n - i - 2;
-  if (older > 0) rows.push({ kind: "more", label: `${older} older, all essays`, href: INDEX_HREF });
+  if (older > 0) rows.push({ kind: "more", label: `${older} older, all ${index.noun}`, href: index.href });
 
   return rows;
 }

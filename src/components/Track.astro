@@ -52,10 +52,10 @@ const index = density === "index";
         );
       }
       return (
-        <li class:list={["tr", "tr-essay", { "is-current": row.current }]}>
+        <li class:list={["tr", "tr-entry", { "is-current": row.current }]}>
           {index && (
             <span class="tr-meta">
-              <time datetime={isoDay(row.date)}>{shortDay(row.date)}</time>
+              <time datetime={isoDay(row.start)}>{shortDay(row.start)}</time>
               {row.minutes !== undefined && <small>{row.minutes} min</small>}
             </span>
           )}
@@ -69,7 +69,7 @@ const index = density === "index";
                 <a href={row.href} aria-current={row.current ? "page" : undefined}>{row.title}</a>
               </span>
             )}
-            {!index && <time class="tr-date" datetime={isoDay(row.date)}>{shortDate(row.date)}</time>}
+            {!index && <time class="tr-date" datetime={isoDay(row.start)}>{shortDate(row.start)}</time>}
             {row.description && <p class="tr-desc">{row.description}</p>}
             {row.tags && row.tags.length > 0 && <small class="tr-tags">{row.tags.join(", ")}</small>}
           </span>
@@ -185,19 +185,19 @@ const index = density === "index";
     font-size: 12px;
     line-height: 1.5;
   }
-  .track-index .tr-essay {
+  .track-index .tr-entry {
     --node-y: 30px;
   }
-  .track-index .tr-essay > * {
+  .track-index .tr-entry > * {
     border-bottom: 1px solid var(--color-border);
   }
-  .track-index .tr-essay:last-child > * {
+  .track-index .tr-entry:last-child > * {
     border-bottom: 0;
   }
-  .track-index .tr-essay .tr-meta {
+  .track-index .tr-entry .tr-meta {
     padding-top: 28px;
   }
-  .track-index .tr-essay .tr-body {
+  .track-index .tr-entry .tr-body {
     padding: 22px 0 24px;
   }
   .tr-meta {
@@ -239,7 +239,7 @@ const index = density === "index";
     position: absolute;
     inset: 0;
   }
-  .tr-essay:hover .tr-title a,
+  .tr-entry:hover .tr-title a,
   .is-current .tr-title a {
     color: var(--lane-writing);
   }
@@ -298,28 +298,28 @@ const index = density === "index";
       grid-column: 3;
     }
     .track-index .tr-year .tr-meta,
-    .track-index .tr-essay .tr-meta,
-    .track-index .tr-essay .tr-body {
+    .track-index .tr-entry .tr-meta,
+    .track-index .tr-entry .tr-body {
       grid-column: 2;
     }
-    .track-index .tr-essay {
+    .track-index .tr-entry {
       --node-y: 22px;
     }
-    .track-index .tr-essay .tr-meta {
+    .track-index .tr-entry .tr-meta {
       display: flex;
       padding-top: 18px;
       line-height: 1.5;
       border-bottom: 0;
     }
-    .track-index .tr-essay .tr-meta small {
+    .track-index .tr-entry .tr-meta small {
       display: inline;
       font-size: 13px;
       color: var(--color-text-muted);
     }
-    .track-index .tr-essay .tr-meta small::before {
+    .track-index .tr-entry .tr-meta small::before {
       content: ", ";
     }
-    .track-index .tr-essay .tr-body {
+    .track-index .tr-entry .tr-body {
       padding-top: 6px;
     }
     .track-index .tr-title {

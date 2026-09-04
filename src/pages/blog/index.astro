@@ -9,18 +9,19 @@ import Newsletter from "../../components/Newsletter.astro";
 import Footer from "../../components/Footer.astro";
 import { getCollection } from "astro:content";
 import { ogImagePath } from "../../lib/og.mjs";
-import { indexRows, readingMinutes, sortEssays } from "../../lib/timeline/track";
-import type { Essay } from "../../lib/timeline/track";
+import { indexRows, readingMinutes, sortEntries } from "../../lib/timeline/track";
+import type { TrackEntry } from "../../lib/timeline/track";
 import { monthYear } from "../../lib/dates";
 
 const includeDrafts = !import.meta.env.PROD;
 const posts = await getCollection("blog", ({ data }) => includeDrafts || !data.draft);
 
-const essays: Essay[] = posts.map((p) => ({
+const essays: TrackEntry[] = posts.map((p) => ({
   id: `essay-${p.slug}`,
   href: `/blog/${p.slug}`,
   title: p.data.title,
-  date: p.data.pubDate,
+  start: p.data.pubDate,
+  status: "done",
   description: p.data.description,
   tags: p.data.tags,
   minutes: readingMinutes(p.body),
@@ -29,12 +30,12 @@ const essays: Essay[] = posts.map((p) => ({
 const now = new Date();
 const rows = indexRows(essays, now);
 
-const sorted = sortEssays(essays);
+const sorted = sortEntries(essays);
 const count = `${sorted.length} ${sorted.length === 1 ? "essay" : "essays"}`;
 let range = "";
 if (sorted.length > 0) {
-  const from = monthYear(sorted[sorted.length - 1].date);
-  const to = monthYear(sorted[0].date);
+  const from = monthYear(sorted[sorted.length - 1].start);
+  const to = monthYear(sorted[0].start);
   range = from === to ? from : `${from} to ${to}`;
 }
 ---
