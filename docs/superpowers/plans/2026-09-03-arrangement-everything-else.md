@@ -777,7 +777,7 @@ Replace the final `return (...)` inside the `rows.map` (the entry row) with:
 
 - [ ] **Step 3: Move the stylesheet onto `--c` and add the bar**
 
-In the `<style>` block of the same file, replace every `var(--lane-writing)` with `var(--c)`. There are ten of them: the gutter line, the node, the `.tr-more` node border, the current ring, the title hover and current color, the two focus outlines, and the `.tr-more a` color and border. Leave every other token alone.
+In the `<style>` block of the same file, replace every `var(--lane-writing)` with `var(--c)`. There are eight of them: the gutter line, the node, the `.tr-more` node border, the current ring, the title hover and current color, the two focus outlines, and the `.tr-more a` color and border. Leave every other token alone.
 
 Then add the bar node, immediately after the `.is-current::after` rule:
 
