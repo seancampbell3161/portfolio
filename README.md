@@ -1,268 +1,116 @@
-# Sean Campbell Portfolio
+# seanthedeveloper.com
 
-A modern, fast, and content-driven portfolio site built with [Astro](https://astro.build).
+A portfolio built as an arrangement: every essay, project, roadmap milestone and
+community entry carries a lane and a date range, and the site draws them on one
+time axis. Cross-references fall out of that — an essay knows what was being
+built when it was written, a project knows what else was going on across its life.
 
-## Features
+Static [Astro](https://astro.build) 5. Everything renders at build time; the only
+client-side JavaScript is progressive enhancement over markup that already works.
 
-- ⚡ **Lightning fast** - Ships zero JS by default
-- 📝 **Blog ready** - MDX support with content collections  
-- 🎨 **Sleek design** - Dark theme with subtle animations
-- 📱 **Fully responsive** - Mobile-first approach
-- 🔍 **SEO optimized** - Meta tags, sitemap, and semantic HTML
-- 🚀 **Deploy anywhere** - Configured for Netlify
-- 🎯 **Lucide icons** - Clean, consistent iconography (zero dependencies)
+## Commands
 
-## Quick Start
+| Command | What it does |
+|---|---|
+| `npm run dev` | Astro dev server with hot reload |
+| `npm run build` | Production build into `dist/` |
+| `npm run preview` | Serve the production build locally |
+| `npm test` | Vitest unit suite |
+| `npm run check` | Build, then the full suite (includes the roadmap contract test) |
+| `npm run shots` | Review screenshots of the main pages at two widths, into `screenshots/` (needs `npm run preview` running) |
+| `npm run og` | Regenerate the Open Graph share images against the live site |
 
-```bash
-# Install dependencies
-npm install
+Node 20.
 
-# Start dev server
-npm run dev
+## Pages
 
-# Build for production
-npm run build
+| Path | What it is |
+|---|---|
+| `/` | The arrangement: four lanes on one time axis, with an inspector panel per clip |
+| `/blog` | The Writing lane played vertically; `/blog/<slug>` for each essay |
+| `/building` | The Building lane played vertically; `/building/<slug>` for each case study |
+| `/roadmap` | The learning roadmap as an arrangement, with live progress and a review deck |
 
-# Preview production build
-npm run preview
-```
+## Adding content
 
-## Project Structure
+**An essay.** Create `src/content/blog/<slug>.mdx`:
 
-```
-/
-├── public/
-│   ├── favicon.svg
-│   └── images/
-│       ├── profile.jpg          # Your profile photo
-│       ├── README.md            # Image requirements guide
-│       └── beyond/
-│           ├── speaking.jpg     # Conference/meetup photo
-│           ├── mentoring.jpg    # Teaching/collaboration photo
-│           └── opensource.jpg   # Open source contribution image
-├── src/
-│   ├── components/
-│   │   ├── Beyond.astro         # Community involvement (with images)
-│   │   ├── Contact.astro        # Contact CTA
-│   │   ├── Currently.astro      # What I'm building (with icons)
-│   │   ├── Footer.astro         # Footer with social icons
-│   │   ├── Hero.astro           # Hero with profile photo
-│   │   ├── Icon.astro           # Lucide icon component
-│   │   ├── Nav.astro            # Navigation with social icons
-│   │   ├── Projects.astro       # Case study cards (with icons)
-│   │   └── Testimonial.astro
-│   ├── content/
-│   │   └── blog/                # Blog posts (MDX)
-│   ├── layouts/
-│   │   ├── BlogPost.astro
-│   │   └── Layout.astro
-│   ├── pages/
-│   │   ├── blog/
-│   │   │   ├── index.astro
-│   │   │   └── [...slug].astro
-│   │   ├── 404.astro
-│   │   └── index.astro
-│   └── styles/
-│       └── global.css
-├── astro.config.mjs
-├── netlify.toml
-├── package.json
-└── tsconfig.json
-```
-
-## Adding Your Images
-
-Before deploying, add your images to the `/public/images/` folder:
-
-### Required Images
-
-| Image | Location | Size | Description |
-|-------|----------|------|-------------|
-| Profile | `/public/images/profile.jpg` | 640x760px | Your headshot/photo |
-| Speaking | `/public/images/beyond/speaking.jpg` | 800x500px | Conference/meetup photo |
-| Mentoring | `/public/images/beyond/mentoring.jpg` | 800x500px | Teaching/collaboration |
-| Open Source | `/public/images/beyond/opensource.jpg` | 800x500px | Contributions visual |
-
-See `/public/images/README.md` for detailed guidance on image selection.
-
-## Customization
-
-### Personal Information
-
-Edit the component files in `src/components/` to update:
-
-- **Hero.astro** - Name, title, tagline, tech stack, stats, profile image
-- **Beyond.astro** - Speaking, teaching, open source (with images)
-- **Projects.astro** - Case studies with problem/solution/tradeoffs/impact
-- **Testimonial.astro** - Quote, author name, title
-- **Currently.astro** - What you're learning/building
-- **Contact.astro** - Email address, headline
-- **Nav.astro** - Social links (GitHub, LinkedIn, Twitter)
-- **Footer.astro** - Social links
-
-### Site Config
-
-Update `astro.config.mjs`:
-
-```javascript
-export default defineConfig({
-  site: 'https://yourdomain.com', // Your domain
-  // ...
-});
-```
-
-### Social Links
-
-Update social links in both `Nav.astro` and `Footer.astro`:
-
-```javascript
-const socialLinks = [
-  { href: 'https://github.com/yourusername', icon: 'github', label: 'GitHub' },
-  { href: 'https://linkedin.com/in/yourusername', icon: 'linkedin', label: 'LinkedIn' },
-  { href: 'https://twitter.com/yourusername', icon: 'twitter', label: 'Twitter' },
-];
-```
-
-### Colors & Typography
-
-Edit CSS variables in `src/styles/global.css`:
-
-```css
-:root {
-  --color-accent: #60a5fa;           /* Primary accent (blue) */
-  --color-accent-secondary: #a78bfa;  /* Secondary accent (purple) */
-  /* ... */
-}
-```
-
-### Adding Icons
-
-The `Icon.astro` component includes common Lucide icons. To add more:
-
-1. Find the icon on [lucide.dev](https://lucide.dev)
-2. Copy the SVG path data
-3. Add to the `icons` object in `src/components/Icon.astro`
-
-## Adding Blog Posts
-
-Create new `.mdx` files in `src/content/blog/`:
-
-```mdx
+```yaml
 ---
-title: "Your Post Title"
-description: "A brief description"
-pubDate: 2024-12-15
-tags: ["Tag1", "Tag2"]
-heroImage: "/images/blog/post-hero.jpg"  # Optional
-draft: false  # Set to true to hide
+title: "Post title"
+description: "One sentence; it becomes the standfirst and the meta description."
+pubDate: 2026-09-03
+tags: ["Rust", "WASM"]   # optional
+heroImage: "/images/blog/<slug>/hero.png"   # optional
+updatedDate: 2026-10-01   # optional
+draft: false   # true hides it from production
 ---
-
-Your content here with full MDX support.
 ```
 
-## Deployment to Netlify
+It appears on the writing index, on the home timeline, and in the RSS feed. Reading
+time is computed from the body.
 
-### Option 1: Git Integration (Recommended)
+**A project.** Create `src/content/projects/<slug>.mdx`. The slug is the URL and the
+timeline id, so do not rename it after launch:
 
-1. Push your code to GitHub/GitLab/Bitbucket
-2. Log in to [Netlify](https://app.netlify.com)
-3. Click "New site from Git"
-4. Select your repository
-5. Build settings are auto-detected from `netlify.toml`
-6. Click "Deploy site"
-
-### Option 2: Netlify CLI
-
-```bash
-# Install Netlify CLI
-npm install -g netlify-cli
-
-# Login to Netlify
-netlify login
-
-# Deploy (creates new site)
-netlify deploy --prod
-```
-
-### Option 3: Drag & Drop
-
-```bash
-npm run build
-```
-
-Then drag the `dist/` folder to [Netlify Drop](https://app.netlify.com/drop).
-
-## Custom Domain
-
-1. In Netlify dashboard, go to Site settings → Domain management
-2. Click "Add custom domain"
-3. Follow the DNS configuration instructions
-
-## Performance Tips
-
-- **Images**: Use `.webp` format and specify dimensions
-- **Optimization**: Run images through [squoosh.app](https://squoosh.app) before adding
-- **Fonts**: Already using `display=swap` for Google Fonts
-- Blog post images should go in `public/images/blog/`
-
-## Adding More Pages
-
-Create new `.astro` files in `src/pages/`:
-
-```astro
+```yaml
 ---
-// src/pages/uses.astro
-import Layout from '../layouts/Layout.astro';
-import Nav from '../components/Nav.astro';
-import Footer from '../components/Footer.astro';
+title: "Project name"
+description: "One sentence."
+start: 2024-09-01
+end: 2025-04-01        # required for done and live; omit while in progress
+status: done            # done | live | in-progress
+stack: ["Rust", "Tauri v2"]
+url: "https://example.com"              # optional
+source: "https://github.com/..."        # optional
 ---
-
-<Layout title="Uses | Sean Campbell">
-  <Nav />
-  <main class="container" style="padding-top: 120px;">
-    <!-- Your content -->
-  </main>
-  <Footer />
-</Layout>
 ```
 
-## Roadmap page (`/roadmap`)
+The body is free-form MDX. The convention is `## Problem`, `## Solution`,
+`## Tradeoffs`, `## Impact`.
 
-A public learning roadmap with a shared, persisted progress state.
+**A community entry.** Add an object to `src/data/community.ts` with `id` (a
+kebab-case slug), `title`, `org`, `description`, `start`, and `status` (`done` |
+`live` | `in-progress` | `planned`); optionally `subtitle`, `end` (required when
+`status` is `planned`), `url`, and `linkLabel` (what the inspector's link says;
+requires `url`). It is validated at build time and a bad entry fails the build
+with its id in the message.
 
-- **Content** lives in `src/data/roadmap.ts` (single source of truth).
-- **Progress** is stored in Netlify Blobs (store `roadmap`, key `progress`) via the
-  `netlify/functions/progress.ts` function. `GET /api/progress` is public; `POST` is
-  gated by a bearer token.
-- **Edit mode**: on `/roadmap`, click **Edit** and enter `ROADMAP_ADMIN_TOKEN`. The token
-  is kept in `sessionStorage` and sent only to the API — it never ships in the client bundle.
+**A roadmap milestone, book or foundation group.** Edit `src/data/roadmap.ts`.
+**Leaf ids are load-bearing**: progress is stored by id in Netlify Blobs, so renaming
+one loses its saved state. Adding and reordering are safe. `npm run check` asserts the
+built page still carries every id the client scripts look for.
 
-### Environment
+## Roadmap operations
 
-Set `ROADMAP_ADMIN_TOKEN` (a long random secret) in:
+`/roadmap` has a shared, persisted progress state and a spaced-repetition review deck.
 
-- the Netlify site environment variables (Site settings → Environment variables), and
-- a local `.env` file for development (see `.env.example`).
+- **Content** lives in `src/data/roadmap.ts`.
+- **Progress** is stored in Netlify Blobs (store `roadmap`, key `progress`) through
+  `netlify/functions/progress.ts`. `GET /api/progress` is public; `POST` needs a bearer token.
+- **Edit mode**: click **Edit** on the page and enter `ROADMAP_ADMIN_TOKEN`. The token is
+  kept in `sessionStorage` and sent only to the API; it never ships in the client bundle.
 
-### Local development
+Set `ROADMAP_ADMIN_TOKEN` (a long random secret) in the Netlify site environment
+variables and in a local `.env` (see `.env.example`).
 
-Blobs require the Netlify environment, so run the dev server through the Netlify CLI:
+Blobs need the Netlify environment, so develop that page through the Netlify CLI:
 
 ```bash
 netlify dev
 ```
 
-`npm run dev` (plain Astro) serves the page but the `/api/progress` calls will fail because
-Blobs are not configured outside `netlify dev`.
+Plain `npm run dev` serves the page, but `/api/progress` calls fail.
 
-## Tech Stack
+## Images
 
-- [Astro](https://astro.build) - Static site generator
-- [MDX](https://mdxjs.com) - Markdown with components
-- [Lucide Icons](https://lucide.dev) - Icon library (inlined SVGs)
-- CSS - Custom properties, no frameworks
-- [Netlify](https://netlify.com) - Hosting & deployment
+The profile photo at `public/images/profile.jpg` is 640x852 and appears in the contact
+block. Essay images live under `public/images/blog/<slug>/`. Share images in `public/og/`
+are generated by `npm run og` and committed.
+
+## Deployment
+
+Netlify, configured in `netlify.toml`. Pushing to `main` deploys.
 
 ## License
 
