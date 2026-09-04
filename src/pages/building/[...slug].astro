@@ -1,0 +1,45 @@
+---
+// src/pages/building/[...slug].astro
+// One page per project. The sidebar's segment and "While building" list come
+// from the same timeline the home page renders (everything-else spec §4.3).
+import { type CollectionEntry, getCollection } from "astro:content";
+import ProjectPage from "../../layouts/ProjectPage.astro";
+import { getTimeline } from "../../lib/timeline/astro";
+import { during, segmentRows } from "../../lib/timeline/track";
+import type { TrackEntry } from "../../lib/timeline/track";
+
+export async function getStaticPaths() {
+  const projects = await getCollection("projects");
+  return projects.map((project) => ({
+    params: { slug: project.slug },
+    props: { entry: project },
+  }));
+}
+
+interface Props {
+  entry: CollectionEntry<"projects">;
+}
+
+const { entry } = Astro.props;
+const { Content } = await entry.render();
+
+const { items, now } = await getTimeline();
+const projects: TrackEntry[] = items
+  .filter((item) => item.lane === "building")
+  .map((item) => ({
+    id: item.id,
+    href: item.href,
+    title: item.title,
+    start: item.start,
+    end: item.end,
+    status: item.status,
+  }));
+
+// The project id is its slug (src/lib/timeline/sources.ts).
+const segment = segmentRows(projects, entry.slug, now, { href: "/building", noun: "projects" });
+const alongside = during(items, { start: entry.data.start, end: entry.data.end }, now, "building");
+---
+
+<ProjectPage entry={entry} segment={segment} alongside={alongside}>
+  <Content />
+</ProjectPage>

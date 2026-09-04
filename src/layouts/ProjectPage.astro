@@ -1,0 +1,79 @@
+---
+// src/layouts/ProjectPage.astro
+// A case study (everything-else spec §4.3) in the shared reading frame: the
+// kicker says where it sits in time, the body is the MDX, and the sidebar
+// carries the facts, the neighbouring projects, and what else was happening.
+import type { CollectionEntry } from "astro:content";
+import Reader from "./Reader.astro";
+import Track from "../components/Track.astro";
+import WhileList from "../components/WhileList.astro";
+import { whenText } from "../lib/timeline/track";
+import type { TrackRow } from "../lib/timeline/track";
+import type { TimelineItem } from "../lib/timeline/types";
+import { monthYearLong } from "../lib/dates";
+import { ogImagePath } from "../lib/og.mjs";
+
+interface Props {
+  entry: CollectionEntry<"projects">;
+  segment: TrackRow[];
+  alongside: TimelineItem[];
+}
+
+const { entry, segment, alongside } = Astro.props;
+const { title, description, start, end, status, stack, url, source } = entry.data;
+
+const capitalized = (s: string) => (s === "in-progress" ? "In progress" : s[0].toUpperCase() + s.slice(1));
+// Build-time only: the schema already validated these as absolute URLs.
+const host = (u: string) => new URL(u).host.replace(/^www\./, "");
+---
+
+<Reader
+  title={`${title} | Sean Campbell`}
+  description={description}
+  image={ogImagePath("building")}
+  active="building"
+>
+  <p class="kicker">
+    <i class="sq"></i>
+    <span>Building, {whenText({ status, start, end })}</span>
+  </p>
+  <h1>{title}</h1>
+  <p class="standfirst">{description}</p>
+  <div class="body">
+    <slot />
+  </div>
+
+  <Fragment slot="aside">
+    <p class="kicker">
+      <i class="sq"></i>
+      <span>Building</span>
+    </p>
+    <dl class="facts">
+      <dt>Stack</dt><dd>{stack.join(", ")}</dd>
+      <dt>Started</dt><dd>{monthYearLong(start)}</dd>
+      {end ? (
+        <>
+          <dt>Ended</dt><dd>{monthYearLong(end)}</dd>
+        </>
+      ) : (
+        <>
+          <dt>Status</dt><dd>{capitalized(status)}</dd>
+        </>
+      )}
+      {url && (
+        <>
+          <dt>Site</dt>
+          <dd><a href={url} target="_blank" rel="noopener noreferrer">{host(url)}</a></dd>
+        </>
+      )}
+      {source && (
+        <>
+          <dt>Source</dt>
+          <dd><a href={source} target="_blank" rel="noopener noreferrer">GitHub</a></dd>
+        </>
+      )}
+    </dl>
+    <Track rows={segment} density="segment" label="Nearby projects" lane="building" />
+    <WhileList label="While building" items={alongside} />
+  </Fragment>
+</Reader>
