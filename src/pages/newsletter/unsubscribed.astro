@@ -1,48 +1,17 @@
 ---
 import Layout from "../../layouts/Layout.astro";
 import TransportBar from "../../components/TransportBar.astro";
+import ResultPanel from "../../components/ResultPanel.astro";
 import Footer from "../../components/Footer.astro";
 ---
 
-<Layout
-  title="Unsubscribed | Sean Campbell"
-  description="You've been unsubscribed."
->
-  <TransportBar />
-  <main class="newsletter-result">
-    <h1>You're unsubscribed.</h1>
+<Layout title="Unsubscribed | Sean Campbell" description="You've been unsubscribed.">
+  <TransportBar active="writing" />
+  <ResultPanel title="You're unsubscribed." link={{ href: "/blog", label: "Back to the essays" }}>
     <p>
-      No more newsletter emails will be sent to you. If this was a mistake,
-      you can resubscribe from the blog page anytime.
+      No more newsletter emails will be sent to you. If this was a mistake, you can resubscribe from
+      the blog page anytime.
     </p>
-    <a href="/blog" class="back-link">← Back to the blog</a>
-  </main>
+  </ResultPanel>
   <Footer />
 </Layout>
-
-<style>
-  .newsletter-result {
-    max-width: 560px;
-    margin: 0 auto;
-    padding: 160px var(--space-xl) var(--space-4xl);
-    text-align: center;
-    position: relative;
-    z-index: 1;
-  }
-  .newsletter-result h1 {
-    margin-bottom: var(--space-lg);
-  }
-  .newsletter-result p {
-    font-size: 18px;
-    color: var(--color-text-secondary);
-    line-height: 1.7;
-    margin-bottom: var(--space-2xl);
-  }
-  .back-link {
-    color: var(--color-accent);
-    font-weight: 600;
-  }
-  .back-link:hover {
-    text-decoration: underline;
-  }
-</style>
