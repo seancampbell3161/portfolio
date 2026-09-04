@@ -2,9 +2,37 @@
 // The Writing lane as a vertical track (writing spec §6 to §8, §10): the rows
 // the index and the essay sidebar render, plus reading time. Pure: no Astro,
 // no DOM, so Vitest loads it and the pages call it at build time.
-import { monthDayYear } from "../dates.js";
-import type { Lane, TimelineItem } from "./types.js";
+import { longDate, monthDayYear, monthYearLong } from "../dates.js";
+import type { Lane, Status, TimelineItem } from "./types.js";
 import { effectiveEnd } from "./layout.js";
+
+/**
+ * Spec §5.1: how a date range is spoken everywhere on the site. A start and end
+ * inside one month collapse to that month; no end reads as open-ended.
+ */
+export function rangeText(start: Date, end?: Date): string {
+  if (!end) return `since ${monthYearLong(start)}`;
+  const from = monthYearLong(start);
+  const to = monthYearLong(end);
+  return from === to ? from : `${from} to ${to}`;
+}
+
+/**
+ * Spec §5.1: the kicker and inspector wording, one rule for every page. A moment
+ * (done, no end) is spoken as its day; everything else is a range.
+ */
+export function whenText(o: { status: Status; start: Date; end?: Date }): string {
+  switch (o.status) {
+    case "in-progress":
+      return `in progress since ${monthYearLong(o.start)}`;
+    case "planned":
+      return `planned, ${rangeText(o.start, o.end)}`;
+    case "live":
+      return `${rangeText(o.start, o.end)}, live`;
+    default:
+      return o.end ? rangeText(o.start, o.end) : longDate(o.start);
+  }
+}
 
 /** An essay as both the blog collection and the timeline's writing lane can supply it. */
 export interface Essay {

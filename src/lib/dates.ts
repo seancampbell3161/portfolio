@@ -31,6 +31,11 @@ export function monthYear(d: Date): string {
   return `${MONTHS_SHORT[d.getUTCMonth()]} ${d.getUTCFullYear()}`;
 }
 
+/** "June 2026" */
+export function monthYearLong(d: Date): string {
+  return `${MONTHS_LONG[d.getUTCMonth()]} ${d.getUTCFullYear()}`;
+}
+
 /** "Sep 2, 2026" */
 export function monthDayYear(d: Date): string {
   return `${MONTHS_SHORT[d.getUTCMonth()]} ${d.getUTCDate()}, ${d.getUTCFullYear()}`;

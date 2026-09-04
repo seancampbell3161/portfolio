@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { readingMinutes, sortEssays, indexRows, segmentRows, writtenWhile } from "../track.js";
+import { readingMinutes, sortEssays, indexRows, segmentRows, writtenWhile, rangeText, whenText } from "../track.js";
 import type { Essay, TrackRow } from "../track.js";
 import type { TimelineItem } from "../types.js";
 
@@ -194,5 +194,43 @@ describe("writtenWhile (spec §8)", () => {
     const b = item({ id: "talk-b", lane: "community", start: d("2026-09-01"), kind: "moment" });
     const a = item({ id: "talk-a", lane: "community", start: d("2026-09-01"), kind: "moment" });
     expect(writtenWhile([b, a], published, now).map((i) => i.id)).toEqual(["talk-a", "talk-b"]);
+  });
+});
+
+describe("rangeText and whenText (spec §5.1)", () => {
+  it("rangeText spans two months", () => {
+    expect(rangeText(d("2024-03-01"), d("2024-09-01"))).toBe("March 2024 to September 2024");
+  });
+  it("rangeText collapses a start and end in the same month", () => {
+    expect(rangeText(d("2024-03-01"), d("2024-03-28"))).toBe("March 2024");
+  });
+  it("rangeText without an end reads as open", () => {
+    expect(rangeText(d("2024-03-01"))).toBe("since March 2024");
+  });
+  it("whenText: in progress", () => {
+    expect(whenText({ status: "in-progress", start: d("2026-06-01") })).toBe("in progress since June 2026");
+  });
+  it("whenText: planned", () => {
+    expect(whenText({ status: "planned", start: d("2026-06-01"), end: d("2026-09-30") })).toBe(
+      "planned, June 2026 to September 2026",
+    );
+  });
+  it("whenText: live", () => {
+    expect(whenText({ status: "live", start: d("2024-03-01"), end: d("2024-09-01") })).toBe(
+      "March 2024 to September 2024, live",
+    );
+  });
+  it("whenText: done with an end is the bare range", () => {
+    expect(whenText({ status: "done", start: d("2024-09-01"), end: d("2025-04-01") })).toBe(
+      "September 2024 to April 2025",
+    );
+  });
+  it("whenText: done without an end is the day itself", () => {
+    expect(whenText({ status: "done", start: d("2026-09-01") })).toBe("1 September 2026");
+  });
+  it("whenText: an in-progress item ignores an end it does not have", () => {
+    expect(whenText({ status: "in-progress", start: d("2026-06-01"), end: d("2026-12-01") })).toBe(
+      "in progress since June 2026",
+    );
   });
 });
