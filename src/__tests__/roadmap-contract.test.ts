@@ -41,14 +41,43 @@ describe.skipIf(!built)("roadmap client contract (dist/roadmap/index.html)", () 
     }
   });
 
+  it("keeps the owner's controls outside the arrangement that is hidden below 900px", () => {
+    // .rm-arr is display:none below 900px, but edit mode must still work there
+    // (the owner may check things off on a phone) — that's why #rm-edit and
+    // #rm-message live in the toolbar, before .rm-arr opens, rather than inside
+    // it. A future re-indent that moves the toolbar back inside .rm-arr would
+    // satisfy every other assertion here while silently killing edit mode on
+    // phones, so this checks document order rather than mere presence.
+    const editAt = html.indexOf('id="rm-edit"');
+    const messageAt = html.indexOf('id="rm-message"');
+    const arrAt = html.indexOf('class="rm-arr"');
+    expect(editAt, "rm-edit not found").toBeGreaterThan(-1);
+    expect(messageAt, "rm-message not found").toBeGreaterThan(-1);
+    expect(arrAt, "rm-arr not found").toBeGreaterThan(-1);
+    expect(
+      editAt,
+      "#rm-edit must appear before .rm-arr opens — .rm-arr is hidden below 900px, but edit mode is not, so the owner's controls cannot live inside it",
+    ).toBeLessThan(arrAt);
+    expect(
+      messageAt,
+      "#rm-message must appear before .rm-arr opens — .rm-arr is hidden below 900px, but edit mode is not, so the owner's controls cannot live inside it",
+    ).toBeLessThan(arrAt);
+  });
+
   it("keeps a checkbox for every leaf id, because progress is stored by id", () => {
-    // The frozen script only wires up input[data-id] — if data-id moved onto a
-    // wrapper element, a plain substring check would still pass while saving
-    // broke. This requires the attribute to sit within an <input ...> tag.
+    // The frozen script only wires up input[data-id] and sets its .checked /
+    // .disabled — if data-id moved onto a wrapper element, or the element
+    // weren't a real checkbox, a plain substring check would still pass while
+    // saving broke. Both attributes must sit on the SAME <input> tag; they are
+    // matched with lookaheads so neither attribute's position relative to the
+    // other is assumed (today's built markup happens to write type="checkbox"
+    // before data-id, but nothing pins that order).
     for (const id of allIds) {
       const escaped = id.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-      const re = new RegExp(`<input\\b[^>]*\\bdata-id="${escaped}"`);
-      expect(html, `data-id ${id} is not on an input element`).toMatch(re);
+      const re = new RegExp(
+        `<input\\b(?=[^>]*\\bdata-id="${escaped}")(?=[^>]*\\btype="checkbox")[^>]*>`,
+      );
+      expect(html, `data-id ${id} is not on a checkbox <input>`).toMatch(re);
     }
   });
 
