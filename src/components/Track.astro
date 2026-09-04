@@ -1,24 +1,32 @@
 ---
 // src/components/Track.astro
-// The Writing lane as a vertical track (writing spec §6): one <ol>, a gutter
-// drawn in pseudo-elements, one <li> per row. `index` density has a mono
-// column for the day and reading time; `segment` density is the sidebar's
-// short excerpt. There is exactly one link per essay row, stretched over the
-// whole row with a pseudo-element.
+// A lane played as a vertical track (writing spec §6, everything-else spec §4.2):
+// one <ol>, a gutter drawn in pseudo-elements, one <li> per row. `index` density
+// has a mono column for the date and reading time or the range; `segment` density
+// is the sidebar's short excerpt. There is exactly one link per entry row,
+// stretched over the whole row with a pseudo-element. A span entry (one with an
+// end, or in progress) draws a bar in the gutter instead of a dot and prints a
+// range instead of a day, so the track speaks the arrangement's clip vocabulary.
 import type { TrackRow } from "../lib/timeline/track";
-import { isoDay, shortDate, shortDay } from "../lib/dates";
+import { deriveKind, type Lane } from "../lib/timeline/types";
+import { isoDay, monthYear, shortDate, shortDay } from "../lib/dates";
 
 interface Props {
   rows: TrackRow[];
   density: "index" | "segment";
   label?: string;
+  lane?: Lane;
 }
 
-const { rows, density, label } = Astro.props;
+const { rows, density, label, lane = "writing" } = Astro.props;
 const index = density === "index";
 ---
 
-<ol class:list={["track", `track-${density}`]} aria-label={label}>
+<ol
+  class:list={["track", `track-${density}`]}
+  aria-label={label}
+  style={`--c: var(--lane-${lane})`}
+>
   {
     rows.map((row) => {
       if (row.kind === "now") {
@@ -51,12 +59,34 @@ const index = density === "index";
           </li>
         );
       }
+      const span = deriveKind(row.status, row.end) === "span";
       return (
-        <li class:list={["tr", "tr-entry", { "is-current": row.current }]}>
+        <li
+          class:list={[
+            "tr",
+            "tr-entry",
+            { "is-current": row.current, "is-span": span, "is-progress": row.status === "in-progress" },
+          ]}
+        >
           {index && (
             <span class="tr-meta">
-              <time datetime={isoDay(row.start)}>{shortDay(row.start)}</time>
-              {row.minutes !== undefined && <small>{row.minutes} min</small>}
+              {span ? (
+                <>
+                  <time datetime={isoDay(row.start)}>{monthYear(row.start)}</time>
+                  <small>
+                    {row.end ? (
+                      <>to <time datetime={isoDay(row.end)}>{monthYear(row.end)}</time></>
+                    ) : (
+                      "to now"
+                    )}
+                  </small>
+                </>
+              ) : (
+                <>
+                  <time datetime={isoDay(row.start)}>{shortDay(row.start)}</time>
+                  {row.minutes !== undefined && <small>{row.minutes} min</small>}
+                </>
+              )}
             </span>
           )}
           <span class="tr-body">
@@ -69,7 +99,19 @@ const index = density === "index";
                 <a href={row.href} aria-current={row.current ? "page" : undefined}>{row.title}</a>
               </span>
             )}
-            {!index && <time class="tr-date" datetime={isoDay(row.start)}>{shortDate(row.start)}</time>}
+            {!index && (
+              <span class="tr-date">
+                {span ? (
+                  <>
+                    <time datetime={isoDay(row.start)}>{monthYear(row.start)}</time>
+                    {" to "}
+                    {row.end ? <time datetime={isoDay(row.end)}>{monthYear(row.end)}</time> : "now"}
+                  </>
+                ) : (
+                  <time datetime={isoDay(row.start)}>{shortDate(row.start)}</time>
+                )}
+              </span>
+            )}
             {row.description && <p class="tr-desc">{row.description}</p>}
             {row.tags && row.tags.length > 0 && <small class="tr-tags">{row.tags.join(", ")}</small>}
           </span>
@@ -132,7 +174,7 @@ const index = density === "index";
     top: 0;
     bottom: 0;
     width: 2px;
-    background: color-mix(in srgb, var(--lane-writing) 55%, var(--color-bg));
+    background: color-mix(in srgb, var(--c) 55%, var(--color-bg));
   }
   .tr:first-child::before {
     top: var(--node-y);
@@ -149,7 +191,7 @@ const index = density === "index";
     width: 12px;
     height: 12px;
     border-radius: 50%;
-    background: var(--lane-writing);
+    background: var(--c);
     border: 2px solid var(--color-bg);
   }
   .tr-now::after {
@@ -157,13 +199,30 @@ const index = density === "index";
   }
   .tr-more::after {
     background: transparent;
-    border-color: color-mix(in srgb, var(--lane-writing) 55%, var(--color-bg));
+    border-color: color-mix(in srgb, var(--c) 55%, var(--color-bg));
   }
   .tr-year::after {
     content: none;
   }
   .is-current::after {
-    box-shadow: 0 0 0 3px color-mix(in srgb, var(--lane-writing) 35%, transparent);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--c) 35%, transparent);
+  }
+
+  /* A span entry's node is a bar, not a dot: the clip vocabulary from the
+     arrangement, carried into the vertical track (spec §4.2). In progress is
+     hatched, as an in-progress clip is. */
+  .is-span::after {
+    left: 8px;
+    width: 8px;
+    height: 22px;
+    border-radius: 2px;
+  }
+  .is-span.is-progress::after {
+    background: repeating-linear-gradient(
+      -45deg,
+      color-mix(in srgb, var(--c) 45%, var(--color-bg)) 0 3px,
+      var(--c) 3px 6px
+    );
   }
 
   /* Index density */
@@ -241,11 +300,11 @@ const index = density === "index";
   }
   .tr-entry:hover .tr-title a,
   .is-current .tr-title a {
-    color: var(--lane-writing);
+    color: var(--c);
   }
   .tr-title a:focus-visible,
   .tr-more a:focus-visible {
-    outline: 2px solid var(--lane-writing);
+    outline: 2px solid var(--c);
     outline-offset: 2px;
   }
   .tr-desc {
@@ -279,8 +338,8 @@ const index = density === "index";
     line-height: 1.6;
   }
   .tr-more a {
-    color: var(--lane-writing);
-    border-bottom: 1px solid color-mix(in srgb, var(--lane-writing) 40%, transparent);
+    color: var(--c);
+    border-bottom: 1px solid color-mix(in srgb, var(--c) 40%, transparent);
   }
 
   @media (max-width: 899.98px) {
@@ -316,7 +375,7 @@ const index = density === "index";
       font-size: 13px;
       color: var(--color-text-muted);
     }
-    .track-index .tr-entry .tr-meta small::before {
+    .track-index .tr-entry:not(.is-span) .tr-meta small::before {
       content: ", ";
     }
     .track-index .tr-entry .tr-body {
