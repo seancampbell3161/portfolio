@@ -1,6 +1,9 @@
 // src/data/community.ts
 // Hand-authored Community lane entries (spec §6). Validated at module load so
-// a bad entry fails the build with its id in the message.
+// a bad entry fails the build with its id in the message. `url` plus `linkLabel`
+// give the inspector a labelled link ("Watch the talk"); both are optional, and
+// a label without a url is rejected. Dates marked placeholder are still to be
+// confirmed by the owner (everything-else spec §14).
 import { communityEntrySchema, type CommunityEntry } from "../lib/timeline/types";
 
 const raw = [
@@ -21,6 +24,7 @@ const raw = [
     description: "Backend and frontend architecture patterns, for the Dallas Software Developers meetup.",
     start: "2025-04-01", // placeholder: confirm the talk and its month
     status: "done",
+    linkLabel: undefined,
   },
   {
     id: "dsd-talk-productivity",
@@ -29,6 +33,7 @@ const raw = [
     description: "Developer productivity, for the Dallas Software Developers meetup.",
     start: "2026-03-01", // placeholder: confirm the talk and its month
     status: "done",
+    linkLabel: undefined,
   },
 ];
 

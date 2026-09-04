@@ -9,11 +9,6 @@ export const LANES: readonly Lane[] = ["writing", "building", "learning", "commu
 export type Status = "done" | "live" | "in-progress" | "planned";
 export type Kind = "moment" | "span";
 
-export interface Testimonial {
-  quote: string;
-  author: string;
-  role: string;
-}
 
 export type InspectorBody =
   | { lane: "writing"; description: string; published: Date; href: string }
@@ -26,8 +21,8 @@ export type InspectorBody =
       url?: string;
       source?: string;
     }
-  | { lane: "learning"; description: string; roadmapHref: string; testimonial?: Testimonial }
-  | { lane: "community"; org: string; description: string; url?: string };
+  | { lane: "learning"; description: string; roadmapHref: string }
+  | { lane: "community"; org: string; description: string; url?: string; linkLabel?: string };
 
 export interface TimelineItem {
   id: string;
@@ -114,16 +109,15 @@ export const timelineEntrySchema = z
   .superRefine(entryRules);
 
 export const communityEntrySchema = timelineEntrySchema.innerType()
-  .extend({ org: z.string().min(1) })
-  .superRefine(entryRules);
-export type CommunityEntry = z.infer<typeof communityEntrySchema>;
-
-export const learningEntrySchema = timelineEntrySchema.innerType()
   .extend({
-    roadmapHref: z.string().min(1),
-    testimonial: z
-      .object({ quote: z.string().min(1), author: z.string().min(1), role: z.string().min(1) })
-      .optional(),
+    org: z.string().min(1),
+    /** What the inspector's link says; "Details" when absent. */
+    linkLabel: z.string().min(1).optional(),
   })
-  .superRefine(entryRules);
-export type LearningEntry = z.infer<typeof learningEntrySchema>;
+  .superRefine((v, ctx) => {
+    entryRules(v, ctx);
+    if (v.linkLabel && !v.url) {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, message: "linkLabel requires url", path: ["linkLabel"] });
+    }
+  });
+export type CommunityEntry = z.infer<typeof communityEntrySchema>;

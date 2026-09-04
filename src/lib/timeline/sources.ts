@@ -49,7 +49,7 @@ export function fromProjects(entries: readonly ProjectLike[]): TimelineItem[] {
       start: p.start,
       end: p.end,
       status: p.status,
-      href: `/#item-${e.slug}`,
+      href: `/building/${e.slug}`,
       kind: deriveKind(p.status, p.end),
       body: {
         lane: "building",
@@ -75,7 +75,7 @@ export function fromCommunity(entries: readonly CommunityEntry[]): TimelineItem[
     status: e.status,
     href: `/#item-${e.id}`,
     kind: deriveKind(e.status, e.end),
-    body: { lane: "community", org: e.org, description: e.description, url: e.url },
+    body: { lane: "community", org: e.org, description: e.description, url: e.url, linkLabel: e.linkLabel },
   }));
 }
 

@@ -5,7 +5,6 @@ import {
   projectFrontmatterSchema,
   timelineEntrySchema,
   communityEntrySchema,
-  learningEntrySchema,
 } from "../types.js";
 
 const d = (s: string) => new Date(s);
@@ -97,19 +96,25 @@ describe("timelineEntrySchema", () => {
   });
 });
 
-describe("communityEntrySchema and learningEntrySchema", () => {
-  it("community requires org", () => {
-    const r = communityEntrySchema.safeParse({
-      id: "x", title: "t", description: "d", start: "2026-01-01", status: "done",
-    });
-    expect(r.success).toBe(false);
+describe("communityEntrySchema", () => {
+  const ok = {
+    id: "dsd-talk", title: "Talk", description: "d", org: "Dallas Software Developers",
+    start: "2026-03-01", status: "done",
+  };
+  it("requires org", () => {
+    const { org, ...withoutOrg } = ok;
+    expect(communityEntrySchema.safeParse(withoutOrg).success).toBe(false);
   });
-  it("learning requires roadmapHref and allows a testimonial", () => {
-    const r = learningEntrySchema.safeParse({
-      id: "100devs", title: "100Devs", description: "d", start: "2021-01-15", end: "2022-01-15",
-      status: "done", roadmapHref: "/roadmap",
-      testimonial: { quote: "q", author: "Leon Noel", role: "Managing Director of Engineering, Resilient Coders" },
-    });
+  it("accepts a url with a link label", () => {
+    const r = communityEntrySchema.safeParse({ ...ok, url: "https://example.com/talk", linkLabel: "Watch the talk" });
     expect(r.success).toBe(true);
+  });
+  it("makes the link label optional", () => {
+    expect(communityEntrySchema.safeParse(ok).success).toBe(true);
+  });
+  it("rejects a link label with no url to hang it on", () => {
+    const r = communityEntrySchema.safeParse({ ...ok, linkLabel: "Watch the talk" });
+    expect(r.success).toBe(false);
+    if (!r.success) expect(r.error.issues[0].message).toBe("linkLabel requires url");
   });
 });

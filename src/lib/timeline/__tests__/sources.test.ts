@@ -43,7 +43,7 @@ describe("fromProjects", () => {
     expect(roaming.kind).toBe("span");
     expect(roaming.end).toEqual(d("2026-06-30"));
     expect(roaming.subtitle).toBe("Next.js, Go");
-    expect(roaming.href).toBe("/#item-roaming-camp");
+    expect(roaming.href).toBe("/building/roaming-camp");
     expect(daw.kind).toBe("span");
     expect(daw.end).toBeUndefined();
   });
@@ -65,7 +65,18 @@ describe("fromCommunity", () => {
     expect(talk.subtitle).toBe("Dallas Software Developers");
     expect(talk.kind).toBe("moment");
     expect(talk.href).toBe("/#item-dsd-talk");
-    expect(talk.body).toEqual({ lane: "community", org: "Dallas Software Developers", description: "d", url: undefined });
+    expect(talk.body).toEqual({
+      lane: "community", org: "Dallas Software Developers", description: "d", url: undefined, linkLabel: undefined,
+    });
+  });
+  it("carries a link label into the body", () => {
+    const [talk] = fromCommunity([
+      {
+        id: "dsd-talk", title: "Talk", description: "d", org: "Dallas Software Developers",
+        start: d("2026-03-01"), status: "done", url: "https://example.com/talk", linkLabel: "Watch the talk",
+      },
+    ]);
+    expect(talk.body).toMatchObject({ url: "https://example.com/talk", linkLabel: "Watch the talk" });
   });
 });
 
