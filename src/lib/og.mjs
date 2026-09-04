@@ -10,6 +10,7 @@ export const OG_SHOTS = [
   { route: "/", name: "home" },
   { route: "/roadmap", name: "roadmap" },
   { route: "/blog", name: "blog" },
+  { route: "/building", name: "building" },
 ];
 
 // Public URL used in <meta og:image>; served from public/og/<name>.png.

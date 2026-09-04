@@ -22,6 +22,7 @@ describe("og config", () => {
     }
     const names = OG_SHOTS.map((s) => s.name);
     expect(names).toContain("home");
+    expect(names).toContain("building");
     expect(new Set(names).size).toBe(names.length);
   });
 });

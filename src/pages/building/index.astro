@@ -1,0 +1,142 @@
+---
+// src/pages/building/index.astro
+// The Building lane as a vertical track (everything-else spec §4.2): the head
+// with a count and range, the track, the footer. Mirrors the writing index; no
+// newsletter block, because the projects are not a subscription.
+import Layout from "../../layouts/Layout.astro";
+import TransportBar from "../../components/TransportBar.astro";
+import Track from "../../components/Track.astro";
+import Footer from "../../components/Footer.astro";
+import { getTimeline } from "../../lib/timeline/astro";
+import { ogImagePath } from "../../lib/og.mjs";
+import { indexRows, sortEntries } from "../../lib/timeline/track";
+import type { TrackEntry } from "../../lib/timeline/track";
+import { monthYear } from "../../lib/dates";
+
+const { items, now } = await getTimeline();
+
+const projects: TrackEntry[] = items
+  .filter((item) => item.lane === "building")
+  .map((item) => ({
+    id: item.id,
+    href: item.href,
+    title: item.title,
+    start: item.start,
+    end: item.end,
+    status: item.status,
+    description: item.body?.lane === "building" ? item.body.description : undefined,
+    tags: item.body?.lane === "building" ? item.body.stack : undefined,
+  }));
+
+const rows = indexRows(projects, now);
+
+// "4 projects, Jun 2023 to now" — the earliest start, and now if anything is
+// still open, otherwise the latest end.
+const sorted = sortEntries(projects);
+const count = `${sorted.length} ${sorted.length === 1 ? "project" : "projects"}`;
+let range = "";
+if (sorted.length > 0) {
+  const from = monthYear(sorted[sorted.length - 1].start);
+  const open = sorted.some((p) => !p.end);
+  let latest: Date | undefined;
+  for (const p of sorted) if (p.end && (!latest || p.end.getTime() > latest.getTime())) latest = p.end;
+  const to = open ? "now" : latest ? monthYear(latest) : from;
+  range = from === to ? from : `${from} to ${to}`;
+}
+---
+
+<Layout
+  title="Building | Sean Campbell"
+  description="Case studies: what I built, why, what it cost, and what it changed."
+  image={ogImagePath("building")}
+>
+  <TransportBar active="building" />
+
+  <main class="building">
+    <header class="head">
+      <div>
+        <h1>Building</h1>
+        <p class="lede">What I've built, in the order it happened. Each one has a problem, a solution, and a bill.</p>
+      </div>
+      <p class="count">
+        {count}
+        {range && (
+          <>
+            <br />
+            {range}
+          </>
+        )}
+      </p>
+    </header>
+
+    <div class="column">
+      <Track rows={rows} density="index" label="Projects" lane="building" />
+    </div>
+  </main>
+
+  <Footer />
+</Layout>
+
+<style>
+  .building {
+    padding-top: 110px;
+    padding-bottom: var(--space-4xl);
+  }
+
+  .head {
+    max-width: var(--max-width);
+    margin: 0 auto;
+    padding: 0 40px 28px;
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 40px;
+    align-items: end;
+  }
+  .head h1 {
+    font-size: 56px;
+    line-height: 1;
+    margin: 0 0 14px;
+  }
+  .lede {
+    max-width: 44ch;
+    margin: 0;
+    font-size: 17px;
+    line-height: 1.5;
+    color: var(--color-text-secondary);
+  }
+  .count {
+    margin: 0 0 6px;
+    font-family: var(--font-mono);
+    font-size: 12px;
+    line-height: 1.7;
+    color: var(--color-text-muted);
+    text-align: right;
+  }
+
+  .column {
+    max-width: 960px;
+    margin: 0 auto;
+    padding: 0 40px;
+  }
+
+  @media (max-width: 899.98px) {
+    .building {
+      padding-top: 84px;
+    }
+    .head {
+      display: block;
+      padding: 0 20px 16px;
+    }
+    .head h1 {
+      font-size: 36px;
+      margin-bottom: 10px;
+    }
+    .count {
+      margin-top: 14px;
+      text-align: left;
+    }
+    .column {
+      padding: 0 20px;
+    }
+  }
+</style>
