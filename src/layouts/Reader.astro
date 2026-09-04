@@ -1,0 +1,40 @@
+---
+// src/layouts/Reader.astro
+// The two-column reading frame (everything-else spec §5.2): an article column
+// and a sidebar, on one lane. The essay page and the project page both fill it.
+// Its styles are in src/styles/reader.css, imported globally here for the reason
+// given at the top of that file.
+import Layout from "./Layout.astro";
+import TransportBar from "../components/TransportBar.astro";
+import Footer from "../components/Footer.astro";
+import type { Lane } from "../lib/timeline/types";
+
+interface Props {
+  title: string;
+  description?: string;
+  image?: string;
+  /** Colors the page and underlines its link in the transport bar. */
+  active: Lane;
+}
+
+const { title, description, image, active } = Astro.props;
+---
+
+<Layout title={title} description={description} image={image}>
+  <TransportBar active={active} />
+
+  <main class="reader" style={`--c: var(--lane-${active})`}>
+    <article class="article">
+      <slot />
+    </article>
+    <aside class="aside">
+      <slot name="aside" />
+    </aside>
+  </main>
+
+  <Footer />
+</Layout>
+
+<style is:global>
+  @import "../styles/reader.css";
+</style>

@@ -1,0 +1,41 @@
+---
+// src/components/WhileList.astro
+// "Written while" on an essay, "While building" on a project (spec §4.3, §5.2).
+// Renders nothing when the list is empty. Styling comes from src/styles/reader.css:
+// this component is only ever used inside a Reader sidebar.
+import type { Status, TimelineItem } from "../lib/timeline/types";
+
+interface Props {
+  label: string;
+  items: TimelineItem[];
+}
+
+const { label, items } = Astro.props;
+
+const STATUS_WORD: Record<Status, string> = {
+  done: "done",
+  live: "live",
+  "in-progress": "in progress",
+  planned: "planned",
+};
+---
+
+{items.length > 0 && (
+  <section class="while">
+    <p class="kicker">
+      <i class="sq sq-muted"></i>
+      <span>{label}</span>
+    </p>
+    <ul class="while-list" aria-label={label}>
+      {items.map((item) => (
+        <li style={`--c: var(--lane-${item.lane})`}>
+          <i class="dot"></i>
+          <div>
+            <a href={item.href}>{item.title}</a>
+            <small>{item.lane}, {STATUS_WORD[item.status]}</small>
+          </div>
+        </li>
+      ))}
+    </ul>
+  </section>
+)}
