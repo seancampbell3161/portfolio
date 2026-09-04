@@ -24,6 +24,13 @@ const ticks = quarterTicks(win);
 const estimate = estimateLabelWidth();
 const nowX = fraction(now, win); // 0..1 within the window
 
+// Spec §9: the "All" zoom is only worth showing once a clip falls outside the
+// default window. While they are the same window the control is a no-op, so it
+// is not rendered at all and the script no-ops with it.
+const allWin = roadmapWindow("all", now, clips);
+const showZoom =
+  allWin.from.getTime() !== win.from.getTime() || allWin.to.getTime() !== win.to.getTime();
+
 const TRACKS: { key: Track; label: string; note: string }[] = [
   { key: "build", label: "Build", note: "CodeCrafters, in order" },
   { key: "reading", label: "Reading", note: "anchor + light" },
@@ -34,7 +41,11 @@ const TRACKS: { key: Track; label: string; note: string }[] = [
 // packRows returns RowPlaced<RoadmapClip>[] — each has .item (the clip), .x, .w, .row.
 const lanes = TRACKS.map((t) => {
   const placed = clips.filter((c) => c.track === t.key).flatMap((c) => positionIn(c, win, now) ?? []);
-  return { ...t, rows: packRows(placed, estimate) };
+  const rows = packRows(placed, estimate);
+  // The lane grows with its packed rows rather than sitting at a fixed height,
+  // so a third row is drawn instead of overflowing (spec §9).
+  const rowCount = rows.reduce((max, p) => Math.max(max, p.row + 1), 1);
+  return { ...t, rows, rowCount };
 });
 
 // Mobile graph rows: every clip in start-date order, with a "now" boundary
@@ -57,21 +68,29 @@ const clipData = clips.map((c) => ({
 }));
 ---
 
-<div class="rm-arr" data-window-from={win.from.toISOString()} data-window-to={win.to.toISOString()}>
-  <div class="rm-arr-head">
+{/* Above the arrangement and outside it, because the arrangement is hidden
+    below 900px while edit mode still works on the mobile graph. The ids here
+    are a contract with src/scripts/roadmap.ts — do not rename them. */}
+<div class="rm-toolbar">
+  {showZoom && (
     <div class="rm-zoom" role="group" aria-label="Zoom">
       <button type="button" data-rm-zoom="span" aria-pressed="true">2026–2027</button>
       <button type="button" data-rm-zoom="all" aria-pressed="false">All</button>
     </div>
-  </div>
+  )}
+  <span id="rm-save-state" class="rm-save-state" role="status" aria-live="polite"></span>
+  <button id="rm-edit" type="button" class="rm-edit-btn">Edit</button>
+</div>
+<p id="rm-message" class="rm-message" role="alert" aria-live="assertive" hidden></p>
 
+<div class="rm-arr">
   <div class="rm-arr-body">
     <div class="rm-ruler" aria-hidden="true">
       {ticks.map((t) => <span class="rm-tick" style={`left:${t.x * 100}%`}>{t.label}</span>)}
     </div>
 
     {lanes.map((lane) => (
-      <div class="rm-lane" style={`--c: var(--track-${lane.key})`}>
+      <div class="rm-lane" style={`--c: var(--track-${lane.key}); --rows: ${lane.rowCount}`}>
         <div class="rm-lane-head">
           {/* The #rm-track-* anchors live on the meters (RoadmapMeters.astro),
               which are visible at every width; this arrangement is hidden below

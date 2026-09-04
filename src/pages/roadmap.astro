@@ -179,14 +179,19 @@ import { ogImagePath } from "../lib/og.mjs";
     transition: width var(--transition-slow);
   }
 
-  /* ---- owner controls ---- */
-  .rm-controls {
+  /* ---- toolbar: zoom (desktop) on the left, owner controls on the right ---- */
+  .rm-toolbar {
     display: flex;
     flex-wrap: wrap;
     gap: 12px;
-    justify-content: flex-end;
     align-items: center;
-    margin: 16px 0 0;
+    justify-content: flex-end;
+    margin: 20px 0 0;
+  }
+  .rm-zoom {
+    display: inline-flex;
+    gap: 4px;
+    margin-right: auto;
   }
   .rm-save-state {
     font-family: var(--font-mono);
@@ -214,7 +219,6 @@ import { ogImagePath } from "../lib/og.mjs";
   .rm-arr {
     --head-w: 160px;
     --ruler-h: 32px;
-    --lane-h: 108px;
     --row-pitch: 46px;
     --row-top: 12px;
     --clip-h: 40px;
@@ -226,14 +230,6 @@ import { ogImagePath } from "../lib/og.mjs";
     background: var(--color-bg-elevated);
     overflow: hidden;
   }
-  .rm-arr-head {
-    display: flex;
-    justify-content: flex-end;
-    align-items: center;
-    padding: 10px 14px;
-    border-bottom: 1px solid var(--color-border);
-  }
-  .rm-zoom { display: inline-flex; gap: 4px; }
   .rm-zoom button {
     font-family: var(--font-mono);
     font-size: 11px;
@@ -275,7 +271,7 @@ import { ogImagePath } from "../lib/og.mjs";
   .rm-lane {
     display: grid;
     grid-template-columns: var(--head-w) 1fr;
-    height: var(--lane-h);
+    height: calc(var(--row-top) * 2 + var(--clip-h) + (var(--rows, 1) - 1) * var(--row-pitch));
     border-bottom: 1px solid var(--color-border);
   }
   .rm-lane:last-of-type { border-bottom: 0; }
@@ -378,6 +374,9 @@ import { ogImagePath } from "../lib/og.mjs";
     padding: 1px 5px;
     border-radius: 2px;
     background: var(--color-text-primary);
+    /* The chip sits over the first lane; the halo keeps a clip's hatch from
+       showing through its rounded corners (spec §9). */
+    box-shadow: 0 0 0 3px var(--color-bg-elevated);
     color: var(--color-bg);
     font-family: var(--font-mono);
     font-size: 11px;
@@ -447,10 +446,9 @@ import { ogImagePath } from "../lib/og.mjs";
     scroll-margin-top: 76px;
   }
   /* Native anchor navigation drives this in every mode — the arrangement script
-     does not take over inspector state (unlike the home timeline.ts), so the
-     :target rule is not gated on the js class. */
-  .rm-insp:target,
-  .rm-insp[data-open] { display: block; }
+     does not take over inspector state (unlike the home timeline.ts), so
+     :target is the only rule; no script ever sets data-open on .rm-insp. */
+  .rm-insp:target { display: block; }
   .rm-insp-k {
     display: flex;
     align-items: center;
@@ -862,6 +860,10 @@ import { ogImagePath } from "../lib/og.mjs";
   /* ---- vertical graph (below 900px) ---- */
   @media (max-width: 899.98px) {
     .rm-arr { display: none; }
+    /* The zoom only moves the arrangement, which is hidden here; the Edit
+       button stays, because edit mode works on the graph below. */
+    .rm-zoom { display: none; }
+    .rm-toolbar { justify-content: flex-end; }
     .rm-graph {
       display: block;
       list-style: none;

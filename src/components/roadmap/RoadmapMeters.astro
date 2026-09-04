@@ -1,7 +1,9 @@
 ---
-// Three progress meters + the owner's edit controls (spec §6). Numbers render
-// zeroed; src/scripts/roadmap.ts fills them by the ids below. Those ids are a
-// contract with that script — do not rename them.
+// Three progress meters (spec §6). Numbers render zeroed; src/scripts/roadmap.ts
+// fills them by the ids below. Those ids are a contract with that script — do
+// not rename them. The owner's edit controls (save state, Edit button) and the
+// message line moved to the arrangement's toolbar (RoadmapArrangement.astro),
+// because edit mode works at every width and the arrangement does not.
 //
 // Each meter also carries its track's #rm-track-* anchor, which the home page's
 // Learning lane links to. The meters are the only per-track element on the page
@@ -39,9 +41,3 @@ const s = deriveStats([]); // zeroed; the script overwrites on load
     <div class="rm-bar"><i id="rm-fnd-bar"></i></div>
   </div>
 </div>
-
-<div class="rm-controls">
-  <span id="rm-save-state" class="rm-save-state" role="status" aria-live="polite"></span>
-  <button id="rm-edit" type="button" class="rm-edit-btn">Edit</button>
-</div>
-<p id="rm-message" class="rm-message" role="alert" aria-live="assertive" hidden></p>
