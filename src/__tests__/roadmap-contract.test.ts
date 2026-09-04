@@ -32,7 +32,7 @@ describe.skipIf(!built)("roadmap client contract (dist/roadmap/index.html)", () 
   ];
 
   it("keeps the page root the script hangs edit mode on", () => {
-    expect(html).toContain('class="roadmap-page');
+    expect(html).toMatch(/class="roadmap-page"/);
   });
 
   it("keeps every fixed element id", () => {
@@ -42,8 +42,13 @@ describe.skipIf(!built)("roadmap client contract (dist/roadmap/index.html)", () 
   });
 
   it("keeps a checkbox for every leaf id, because progress is stored by id", () => {
+    // The frozen script only wires up input[data-id] — if data-id moved onto a
+    // wrapper element, a plain substring check would still pass while saving
+    // broke. This requires the attribute to sit within an <input ...> tag.
     for (const id of allIds) {
-      expect(html, `missing data-id ${id}`).toContain(`data-id="${id}"`);
+      const escaped = id.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+      const re = new RegExp(`<input\\b[^>]*\\bdata-id="${escaped}"`);
+      expect(html, `data-id ${id} is not on an input element`).toMatch(re);
     }
   });
 
