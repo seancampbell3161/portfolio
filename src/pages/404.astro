@@ -1,78 +1,194 @@
 ---
-import Layout from '../layouts/Layout.astro';
-import TransportBar from '../components/TransportBar.astro';
-import Footer from '../components/Footer.astro';
+// src/pages/404.astro
+// An empty position on the arrangement (everything-else spec §7): a decorative
+// ruler and four empty lanes, then the heading, the path that was asked for,
+// and a link per section. The path is filled by the inline script below and
+// stays hidden without JavaScript, so the page reads either way.
+import Layout from "../layouts/Layout.astro";
+import TransportBar from "../components/TransportBar.astro";
+import Footer from "../components/Footer.astro";
+import type { Lane } from "../lib/timeline/types";
+
+const lanes: { key: Lane; label: string; href: string }[] = [
+  { key: "writing", label: "Writing", href: "/blog" },
+  { key: "building", label: "Building", href: "/building" },
+  { key: "learning", label: "Learning", href: "/roadmap" },
+  { key: "community", label: "Community", href: "/#lane-community" },
+];
 ---
 
-<Layout title="Page Not Found | Sean Campbell">
+<Layout
+  title="Nothing recorded here | Sean Campbell"
+  description="That page isn't on the timeline."
+>
   <TransportBar />
-  
-  <main class="error-page">
-    <div class="error-content">
-      <span class="error-code">404</span>
-      <h1 class="error-title">Page Not Found</h1>
-      <p class="error-text">
-        Looks like this page got lost in the deployment pipeline.
-      </p>
-      <a href="/" class="error-link">
-        ← Back to Home
-      </a>
-    </div>
+
+  <main class="lost">
+    <figure class="empty" aria-hidden="true">
+      <div class="ruler"><span class="tag">now</span></div>
+      {lanes.map((l) => (
+        <div class="lane" style={`--c: var(--lane-${l.key})`}>
+          <span class="lane-name">{l.label}</span>
+          <span class="lane-track"></span>
+        </div>
+      ))}
+      <span class="playhead"></span>
+    </figure>
+
+    {/* TODO(owner): heading and line in Sean's voice (spec §14). Placeholder below. */}
+    <h1>Nothing recorded here.</h1>
+    <p class="line">This position is empty. The page either moved or never existed.</p>
+
+    <p class="path" hidden data-lost-path><code></code></p>
+
+    <ul class="jump">
+      <li><a class="home" href="/">Home</a></li>
+      {lanes.map((l) => (
+        <li><a href={l.href} style={`--c: var(--lane-${l.key})`}>{l.label}</a></li>
+      ))}
+    </ul>
   </main>
-  
+
   <Footer />
 </Layout>
 
+<script is:inline>
+  const lost = document.querySelector("[data-lost-path]");
+  if (lost) {
+    lost.querySelector("code").textContent = location.pathname;
+    lost.hidden = false;
+  }
+</script>
+
 <style>
-  .error-page {
-    min-height: 100vh;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 120px 40px 80px;
+  .lost {
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 150px 40px var(--space-4xl);
+  }
+
+  /* The empty console fragment. Decorative: aria-hidden, no dates on the ruler,
+     because nothing is recorded at this position. */
+  .empty {
     position: relative;
-    z-index: 1;
-    text-align: center;
-  }
-  
-  .error-content {
-    max-width: 500px;
-  }
-  
-  .error-code {
-    font-size: clamp(80px, 15vw, 150px);
-    font-weight: 700;
-    background: linear-gradient(135deg, var(--color-accent), var(--color-accent-secondary));
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-    line-height: 1;
-    display: block;
-    margin-bottom: var(--space-lg);
-  }
-  
-  .error-title {
-    margin-bottom: var(--space-md);
-  }
-  
-  .error-text {
-    color: var(--color-text-secondary);
-    font-size: 18px;
-    margin-bottom: var(--space-xl);
-  }
-  
-  .error-link {
-    display: inline-block;
-    padding: 12px 24px;
-    background: var(--color-bg-elevated);
+    margin: 0 0 40px;
     border: 1px solid var(--color-border);
     border-radius: var(--radius-md);
-    font-weight: 500;
-    transition: all var(--transition-base);
+    background: var(--color-bg-elevated);
+    overflow: hidden;
   }
-  
-  .error-link:hover {
-    border-color: var(--color-accent);
-    color: var(--color-accent);
+  .ruler {
+    position: relative;
+    height: 30px;
+    margin-left: 96px;
+    border-bottom: 1px solid var(--color-border);
+  }
+  .tag {
+    position: absolute;
+    top: 7px;
+    left: calc(62% - 34px);
+    padding: 1px 5px;
+    border-radius: 2px;
+    background: var(--color-text-primary);
+    color: var(--color-bg);
+    font-family: var(--font-mono);
+    font-size: 11px;
+    line-height: 1.4;
+  }
+  .lane {
+    display: grid;
+    grid-template-columns: 96px 1fr;
+    align-items: center;
+    height: 34px;
+    border-bottom: 1px solid var(--color-border);
+  }
+  .lane:last-of-type {
+    border-bottom: 0;
+  }
+  .lane-name {
+    padding-left: 16px;
+    font-size: 12px;
+    color: var(--color-text-muted);
+    border-right: 1px solid var(--color-border);
+    line-height: 34px;
+  }
+  .lane-track {
+    height: 2px;
+    margin: 0 14px;
+    border-radius: 1px;
+    background: color-mix(in srgb, var(--c) 22%, transparent);
+  }
+  .playhead {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: calc(96px + (100% - 96px) * 0.62);
+    width: 2px;
+    background: var(--color-text-primary);
+  }
+
+  h1 {
+    font-size: clamp(2.2rem, 5vw, 3.2rem);
+    line-height: 1.02;
+    margin: 0 0 14px;
+  }
+  .line {
+    font-size: 18px;
+    line-height: 1.5;
+    color: var(--color-text-secondary);
+    margin: 0;
+    max-width: 46ch;
+  }
+  .path {
+    margin: 18px 0 0;
+    font-family: var(--font-mono);
+    font-size: 13px;
+    color: var(--color-text-muted);
+    overflow-wrap: anywhere;
+  }
+  .path[hidden] {
+    display: none;
+  }
+
+  .jump {
+    list-style: none;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px 24px;
+    margin: 32px 0 0;
+    padding: 0;
+    font-size: 15px;
+  }
+  .jump a {
+    padding-bottom: 2px;
+    color: var(--color-text-primary);
+    border-bottom: 2px solid var(--c, var(--color-border-hover));
+  }
+  .jump a:hover {
+    color: var(--c, var(--color-text-primary));
+  }
+  .jump a:focus-visible {
+    outline: 2px solid var(--c, var(--color-text-primary));
+    outline-offset: 3px;
+  }
+
+  @media (max-width: 899.98px) {
+    .lost {
+      padding: 104px 20px var(--space-3xl);
+    }
+    .ruler,
+    .lane {
+      margin-left: 0;
+      grid-template-columns: 78px 1fr;
+    }
+    .ruler {
+      margin-left: 78px;
+    }
+    .playhead {
+      left: calc(78px + (100% - 78px) * 0.62);
+    }
+    .jump {
+      gap: 10px 18px;
+    }
   }
 </style>
