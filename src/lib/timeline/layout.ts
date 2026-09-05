@@ -1,5 +1,5 @@
 // Pure layout math (spec §7). No DOM: runs at build time in Astro and again in
-// the browser (src/scripts/timeline.ts) for zoom changes.
+// the browser (src/scripts/timeline/) for zoom changes.
 // All calendar math is UTC: content dates parse from YYYY-MM-DD strings, which are UTC midnight.
 import type { Kind, Lane, TimelineItem } from "./types.js";
 

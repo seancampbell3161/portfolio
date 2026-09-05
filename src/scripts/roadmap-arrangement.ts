@@ -2,7 +2,7 @@
 // file the page already works: the server-rendered "span" window stands, clips
 // are anchors, and CSS :target shows the inspector panels. This script adds the
 // "All" zoom, re-laying clips and redrawing the ruler and playhead with the same
-// pure math the page used at build time (mirroring src/scripts/timeline.ts).
+// pure math the page used at build time (mirroring src/scripts/timeline/apply.ts).
 //
 // The zoom buttons live in the toolbar, outside .rm-arr (spec §9: the toolbar
 // holds edit mode, which works at every width, so it cannot live inside the
