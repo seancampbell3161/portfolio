@@ -10,6 +10,8 @@ client-side framework or client-side rendering. Most of the JavaScript is progre
 enhancement over markup that already works without it, but not all of it is — without
 scripting, the mobile navigation menu and the newsletter form stop working outright,
 while pages that show live numbers, like the roadmap, stay usable but render at zero.
+The home timeline's zoom, scrubbing and panning are enhancements too: without
+scripting the page shows the current year and every clip stays a link.
 
 ## Commands
 
