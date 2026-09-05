@@ -35,6 +35,20 @@ const raw = [
     status: "done",
     // url: "https://example.com/talk-recording", linkLabel: "Watch the talk",
   },
+  {
+    id: "commit-your-code-2026",
+    title: "Commit Your Code 2026",
+    org: "Dallas Software Developers",
+    description:
+      "Two days in Plano, learning modern AI concepts from the talks, sharing technical discussions with other engineers who are just as passionate about the work, and showing up for my local developer community.",
+    // A moment, not a span: rangeText collapses a same-month start/end to just
+    // "September 2026", while a moment reads as "03 September 2026". The second
+    // day lives in the description above.
+    start: "2026-09-03",
+    status: "done",
+    url: "https://www.commityourcode.com/",
+    linkLabel: "Conference site",
+  },
 ];
 
 const community: CommunityEntry[] = raw.map((entry) => {
