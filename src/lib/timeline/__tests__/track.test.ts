@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import {
-  readingMinutes, sortEntries, indexRows, segmentRows, writtenWhile, during, rangeText, whenText,
+  readingMinutes, sortEntries, indexRows, segmentRows, writtenWhile, during, onDate, rangeText, whenText,
 } from "../track.js";
 import type { TrackEntry, TrackRow, TrackIndex } from "../track.js";
 import type { TimelineItem } from "../types.js";
@@ -337,5 +337,51 @@ describe("during (spec §5.1)", () => {
   });
   it("returns an empty list when nothing overlaps", () => {
     expect(during(all, { start: d("2019-01-01"), end: d("2019-02-01") }, now, "building")).toEqual([]);
+  });
+});
+
+describe("onDate (interactions 1, §6.2)", () => {
+  const now = d("2026-09-02");
+  const item = (o: Partial<TimelineItem> & Pick<TimelineItem, "id" | "lane" | "start" | "kind">): TimelineItem => ({
+    title: o.id,
+    status: "done",
+    href: `/#item-${o.id}`,
+    ...o,
+  });
+  const day = d("2024-06-15");
+
+  const essay = item({ id: "essay", lane: "writing", start: d("2024-06-15"), kind: "moment" });
+  const essayEdge = item({ id: "essay-edge", lane: "writing", start: d("2024-06-01"), kind: "moment" }); // 14 days before
+  const essayFar = item({ id: "essay-far", lane: "writing", start: d("2024-06-30"), kind: "moment" }); // 15 days after
+  const project = item({ id: "project", lane: "building", start: d("2024-06-15"), end: d("2024-08-01"), kind: "span" });
+  const ended = item({ id: "ended", lane: "building", start: d("2024-01-01"), end: d("2024-06-15"), kind: "span" });
+  const before = item({ id: "before", lane: "building", start: d("2024-01-01"), end: d("2024-06-14"), kind: "span" });
+  const ongoing = item({ id: "ongoing", lane: "learning", start: d("2024-01-01"), kind: "span", status: "in-progress" });
+  const talk = item({ id: "talk", lane: "community", start: d("2024-06-20"), kind: "moment" });
+  const all = [talk, ongoing, before, ended, project, essayEdge, essayFar, essay];
+
+  it("includes a span on its first and on its last day, not the day after it ends", () => {
+    const ids = onDate(all, day, now).map((i) => i.id);
+    expect(ids).toContain("project");
+    expect(ids).toContain("ended");
+    expect(ids).not.toContain("before");
+  });
+  it("runs an ongoing span to now and not before its start", () => {
+    expect(onDate(all, day, now).map((i) => i.id)).toContain("ongoing");
+    expect(onDate(all, d("2026-09-01"), now).map((i) => i.id)).toContain("ongoing");
+    expect(onDate(all, d("2023-12-31"), now).map((i) => i.id)).not.toContain("ongoing");
+  });
+  it("includes a moment 14 days away and excludes one 15 days away", () => {
+    const ids = onDate(all, day, now).map((i) => i.id);
+    expect(ids).toContain("essay-edge");
+    expect(ids).not.toContain("essay-far");
+  });
+  it("orders by lane in timeline order, then start, then id", () => {
+    expect(onDate(all, day, now).map((i) => i.id)).toEqual([
+      "essay-edge", "essay", "ended", "project", "ongoing", "talk",
+    ]);
+  });
+  it("returns an empty list for an empty day", () => {
+    expect(onDate(all, d("2019-01-01"), now)).toEqual([]);
   });
 });

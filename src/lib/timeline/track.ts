@@ -210,3 +210,25 @@ export function during(
         a.id.localeCompare(b.id),
     );
 }
+
+/**
+ * Interactions spec §6.2: what was happening on one day. A span counts when the
+ * day lies between its start and its effective end (its end, or now while in
+ * progress), inclusive. A moment counts within MOMENT_WINDOW_DAYS either side.
+ * Every lane, in timeline order; within a lane by start, then id.
+ */
+export function onDate(items: readonly TimelineItem[], date: Date, now: Date): TimelineItem[] {
+  const t = date.getTime();
+  const overlaps = (item: TimelineItem): boolean =>
+    item.kind === "span"
+      ? spanTouches(item, t, t, now)
+      : Math.abs(item.start.getTime() - t) <= MOMENT_WINDOW_DAYS * DAY_MS;
+  return items
+    .filter(overlaps)
+    .sort(
+      (a, b) =>
+        LANES.indexOf(a.lane) - LANES.indexOf(b.lane) ||
+        a.start.getTime() - b.start.getTime() ||
+        a.id.localeCompare(b.id),
+    );
+}
