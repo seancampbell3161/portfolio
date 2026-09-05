@@ -44,11 +44,14 @@ function syncHash(s: TimelineState, prev: TimelineState): void {
 
 /**
  * #item-<id> on load: widen the zoom (without remembering it) until the item is
- * on screen, then open it without stealing focus.
+ * on screen, then open it without stealing focus. A hash that merely matches the
+ * deep-link pattern always suppresses the draw-in below, even when the item no
+ * longer exists (a stale link) -- matching the original script.
  */
 function openDeepLink(ctx: Ctx): boolean {
   const m = location.hash.match(/^#item-([a-z0-9-]+)$/);
-  if (!m || !document.getElementById(`item-${m[1]}`)) return false;
+  if (!m) return false;
+  if (!document.getElementById(`item-${m[1]}`)) return true;
   const item = ctx.itemById.get(m[1]);
   if (item) {
     const current = ctx.store.get().zoom;
