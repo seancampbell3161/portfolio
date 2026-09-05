@@ -9,7 +9,6 @@ export const LANES: readonly Lane[] = ["writing", "building", "learning", "commu
 export type Status = "done" | "live" | "in-progress" | "planned";
 export type Kind = "moment" | "span";
 
-
 export type InspectorBody =
   | { lane: "writing"; description: string; published: Date; href: string }
   | {

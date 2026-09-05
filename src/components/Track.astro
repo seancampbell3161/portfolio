@@ -378,6 +378,13 @@ const index = density === "index";
     .track-index .tr-entry:not(.is-span) .tr-meta small::before {
       content: ", ";
     }
+    /* A span row's meta holds two flex items (the start <time> and the
+       <small> end/"to now") with no text between them, so a plain space
+       between them collapses. gap is the flex-native way to add that
+       separator without injecting content a screen reader would read. */
+    .track-index .tr-entry.is-span .tr-meta {
+      gap: 4px;
+    }
     .track-index .tr-entry .tr-body {
       padding-top: 6px;
     }

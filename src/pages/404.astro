@@ -42,7 +42,7 @@ const lanes: { key: Lane; label: string; href: string }[] = [
     <p class="path" hidden data-lost-path><code></code></p>
 
     <ul class="jump">
-      <li><a class="home" href="/">Home</a></li>
+      <li><a href="/">Home</a></li>
       {lanes.map((l) => (
         <li><a href={l.href} style={`--c: var(--lane-${l.key})`}>{l.label}</a></li>
       ))}
