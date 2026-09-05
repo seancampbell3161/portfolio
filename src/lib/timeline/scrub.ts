@@ -8,11 +8,16 @@ const DAY_MS = 86_400_000;
 
 const floorToDay = (t: number): number => Math.floor(t / DAY_MS) * DAY_MS;
 
-/** `fraction` of the window, clamped, floored to a UTC day, never before `from`. */
+/**
+ * `fraction` of the window, clamped. Always a UTC midnight: the day the
+ * fraction lands in, never earlier than the window's first whole day (a window
+ * that starts mid-day rounds up), so the date round-trips through `#on-` hashes.
+ */
 export function dateAt(fraction: number, win: Window): Date {
   const f = Math.min(1, Math.max(0, fraction));
   const t = win.from.getTime() + f * (win.to.getTime() - win.from.getTime());
-  return new Date(Math.max(win.from.getTime(), floorToDay(t)));
+  const firstDay = Math.ceil(win.from.getTime() / DAY_MS) * DAY_MS;
+  return new Date(Math.max(firstDay, floorToDay(t)));
 }
 
 function daysIn(year: number, month: number): number {
@@ -21,7 +26,8 @@ function daysIn(year: number, month: number): number {
 
 /**
  * One month or one year in either direction, keeping the day of the month and
- * falling back to the last day of a shorter month; clamped to `bounds`.
+ * falling back to the last day of a shorter month; clamped to the whole days
+ * inside `bounds`. Always a UTC midnight.
  */
 export function stepDate(date: Date, unit: "month" | "year", direction: -1 | 1, bounds: Window): Date {
   const y = date.getUTCFullYear();
@@ -37,7 +43,9 @@ export function stepDate(date: Date, unit: "month" | "year", direction: -1 | 1, 
     nm = ((total % 12) + 12) % 12;
   }
   const target = Date.UTC(ny, nm, Math.min(day, daysIn(ny, nm)));
-  return new Date(Math.min(bounds.to.getTime(), Math.max(bounds.from.getTime(), target)));
+  const lo = Math.ceil(bounds.from.getTime() / DAY_MS) * DAY_MS;
+  const hi = floorToDay(bounds.to.getTime());
+  return new Date(Math.min(hi, Math.max(lo, target)));
 }
 
 /** Whole days from `win.from` to `date`, for aria-valuenow. */

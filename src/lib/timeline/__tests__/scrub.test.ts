@@ -17,9 +17,9 @@ describe("dateAt (interactions 1, §6.3)", () => {
     expect(dateAt(-0.3, YEAR)).toEqual(d("2026-01-01T00:00:00Z"));
     expect(dateAt(1.7, YEAR)).toEqual(d("2026-12-31T00:00:00Z"));
   });
-  it("never lands before a window that starts mid-day", () => {
+  it("starts on the first whole day of a window that begins mid-day", () => {
     const w = { from: d("2023-09-02T12:00:00Z"), to: YEAR.to };
-    expect(dateAt(0, w)).toEqual(w.from);
+    expect(dateAt(0, w)).toEqual(d("2023-09-03T00:00:00Z"));
   });
 });
 
@@ -40,9 +40,13 @@ describe("stepDate", () => {
     expect(stepDate(d("2024-06-15"), "year", -1, ALL)).toEqual(d("2023-06-15"));
   });
   it("clamps to the bounds", () => {
-    expect(stepDate(d("2026-12-15"), "month", 1, ALL)).toEqual(ALL.to);
-    expect(stepDate(d("2021-01-20"), "month", -1, ALL)).toEqual(ALL.from);
+    expect(stepDate(d("2026-12-15"), "month", 1, ALL)).toEqual(d("2026-12-31T00:00:00Z"));
+    expect(stepDate(d("2021-01-20"), "month", -1, ALL)).toEqual(d("2021-01-15T00:00:00Z"));
     expect(stepDate(d("2021-06-01"), "year", -1, ALL)).toEqual(ALL.from);
+  });
+  it("clamps a mid-day lower bound up to the next whole day", () => {
+    const b = { from: d("2023-09-02T12:00:00Z"), to: ALL.to };
+    expect(stepDate(d("2023-09-20"), "month", -1, b)).toEqual(d("2023-09-03T00:00:00Z"));
   });
 });
 
