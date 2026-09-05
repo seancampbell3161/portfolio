@@ -43,9 +43,10 @@ describe.skipIf(!built)("home client contract (dist/index.html)", () => {
     }
   });
 
-  it("keeps every attribute the script rebuilds items and the graph from", () => {
+  it("keeps every attribute, class and id the script rebuilds items and the graph from", () => {
     for (const hook of [
       'class="tl-item"', "data-id=", "data-lane=", "data-kind=", "data-status=", "data-start=",
+      'class="tl-clip"', 'class="tl-title"', 'class="tl-sub"', 'class="tl-when"', 'id="item-',
       "data-item-link=", "data-inspector-close", "data-lane-summary=", "data-gutter", "data-nowline", "data-now-label",
     ]) {
       expect(html, `missing ${hook}`).toContain(hook);
