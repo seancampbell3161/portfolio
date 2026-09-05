@@ -23,6 +23,7 @@ scripting the page shows the current year and every clip stays a link.
 | `npm test` | Vitest unit suite |
 | `npm run check` | Build, then the full suite (includes the roadmap contract test) |
 | `npm run shots` | Review screenshots of the main pages at two widths, into `screenshots/` (needs `npm run preview` running) |
+| `npm run e2e` | Playwright pass over the home timeline's scrub and pan interactions at two widths (needs `npm run preview` running) |
 | `npm run og` | Regenerate the Open Graph share images against the live site |
 
 Node 20.

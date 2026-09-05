@@ -9,6 +9,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - `npm run check` — Production build followed by the full Vitest suite, including the roadmap client-contract test that reads `dist/roadmap/index.html`
 - `npm run preview` — Preview production build locally
 - `npm run shots` — Full-page screenshots of the home page, the writing index, the Building index, the roadmap, two essays (one with code blocks), a project page, the 404 page and a newsletter page, at desktop and phone widths (`screenshots/`, gitignored). Needs `npm run preview` running.
+- `npm run e2e` — Playwright pass over the home timeline's scrub and pan interactions at desktop and phone widths (hover, pin, drag, tap, keys, deep links). Needs `npm run preview` running.
 - `npm test` — Run the Vitest unit suite
 
 ## Architecture
