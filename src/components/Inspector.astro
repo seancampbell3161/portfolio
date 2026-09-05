@@ -72,6 +72,24 @@ const capitalized = (s: string) => (s === "in-progress" ? "In progress" : s[0].t
       </section>
     );
   })}
+  <section
+    class="insp insp-date"
+    id="on-date"
+    tabindex="-1"
+    role="region"
+    aria-labelledby="on-date-title"
+    hidden
+    style="--c: var(--color-text-primary)"
+  >
+    <div class="insp-main">
+      <p class="insp-k"><i aria-hidden="true"></i>On this date</p>
+      <h2 id="on-date-title" data-on-date-title></h2>
+      <ul class="insp-on" data-on-date-list></ul>
+      <div class="insp-links">
+        <a href="#" class="insp-close" data-inspector-close>Close</a>
+      </div>
+    </div>
+  </section>
 </div>
 
 <style>
@@ -161,6 +179,48 @@ const capitalized = (s: string) => (s === "in-progress" ? "In progress" : s[0].t
   }
   .insp-facts dd {
     margin: 0;
+  }
+  /* The "On this date" panel (interactions spec §4.3): one column, filled by the
+     script. Without JavaScript it must never show, even when targeted. */
+  .insp-date {
+    grid-template-columns: 1fr;
+  }
+  html:not(.js) .insp-date:target {
+    display: none;
+  }
+  .insp-on {
+    display: grid;
+    gap: 10px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    font-size: 15px;
+  }
+  .insp-on li {
+    display: flex;
+    align-items: baseline;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+  .insp-on li i {
+    flex: none;
+    align-self: center;
+    width: 8px;
+    height: 8px;
+    border-radius: 2px;
+    background: var(--c);
+  }
+  .insp-on a {
+    color: var(--color-text-primary);
+    padding-bottom: 1px;
+    border-bottom: 1px solid color-mix(in srgb, var(--c) 40%, transparent);
+  }
+  .insp-on small {
+    font-size: 13px;
+    color: var(--color-text-muted);
+  }
+  .insp-on .insp-empty {
+    color: var(--color-text-secondary);
   }
 
   @media (max-width: 899.98px) {

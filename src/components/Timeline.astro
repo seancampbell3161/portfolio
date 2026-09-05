@@ -67,6 +67,7 @@ const iso = (d: Date) => d.toISOString().slice(0, 10);
       </div>
     ))}
     <div class="tl-ov-win" data-ov-window style={`--x:${ovX};--w:${ovW}`}></div>
+    <i class="tl-ov-pin" data-ov-pin hidden></i>
   </div>
 
   <div class="tl-stage">
@@ -130,6 +131,7 @@ const iso = (d: Date) => d.toISOString().slice(0, 10);
     </div>
 
     <div class="tl-playhead" aria-hidden="true" data-playhead style={`--x:${nowX}`}><span>now</span></div>
+    <div class="tl-cursor" aria-hidden="true" data-cursor hidden><span data-cursor-label></span></div>
   </div>
 </section>
 
@@ -205,6 +207,15 @@ const iso = (d: Date) => d.toISOString().slice(0, 10);
     width: calc(var(--w) * 100%);
     border: 1px solid var(--color-text-primary);
     background: rgba(236, 234, 228, 0.07);
+  }
+  .tl-ov-pin {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: calc(var(--x) * 100%);
+    width: 1px;
+    background: var(--color-text-primary);
+    pointer-events: none;
   }
 
   /* ---------- arrangement (900px and up) ---------- */
@@ -458,6 +469,46 @@ const iso = (d: Date) => d.toISOString().slice(0, 10);
     font-size: 11px;
     line-height: 1.4;
   }
+  /* ---------- scrub cursor (interactions spec §4.1, §7.5) ---------- */
+  .tl-cursor {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: calc(var(--head-w) + (100% - var(--head-w)) * var(--x));
+    width: 1px;
+    background: var(--color-text-secondary);
+    pointer-events: none;
+    z-index: 1;
+  }
+  .tl-cursor span {
+    position: absolute;
+    top: 7px;
+    left: 6px;
+    padding: 1px 5px;
+    border-radius: 2px;
+    background: var(--color-text-secondary);
+    color: var(--color-bg);
+    font-family: var(--font-mono);
+    font-size: 11px;
+    line-height: 1.4;
+    white-space: nowrap;
+  }
+  /* Near the right edge the chip would be clipped by the stage; the script flips it. */
+  .tl-cursor[data-flip] span {
+    left: auto;
+    right: 6px;
+  }
+  .tl-ticks {
+    cursor: crosshair;
+  }
+  .tl-ticks:focus-visible {
+    outline: 2px solid var(--lane-learning);
+    outline-offset: -2px;
+  }
+  /* While a cursor shows, clips that do not touch its date step back. No transition. */
+  .tl[data-scrubbing] .tl-item:not([data-touch]) {
+    opacity: 0.35;
+  }
   .tl-gutter,
   .tl-nowline {
     display: none;
@@ -488,7 +539,8 @@ const iso = (d: Date) => d.toISOString().slice(0, 10);
       overflow: visible;
     }
     .tl-ruler,
-    .tl-playhead {
+    .tl-playhead,
+    .tl-cursor {
       display: none;
     }
     .tl-heads {
