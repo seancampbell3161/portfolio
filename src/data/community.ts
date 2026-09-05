@@ -24,7 +24,7 @@ const raw = [
     description: "Backend and frontend architecture patterns, for the Dallas Software Developers meetup.",
     start: "2025-04-01", // placeholder: confirm the talk and its month
     status: "done",
-    linkLabel: undefined,
+    // url: "https://example.com/talk-recording", linkLabel: "Watch the talk",
   },
   {
     id: "dsd-talk-productivity",
@@ -33,7 +33,7 @@ const raw = [
     description: "Developer productivity, for the Dallas Software Developers meetup.",
     start: "2026-03-01", // placeholder: confirm the talk and its month
     status: "done",
-    linkLabel: undefined,
+    // url: "https://example.com/talk-recording", linkLabel: "Watch the talk",
   },
 ];
 
