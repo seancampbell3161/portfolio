@@ -43,7 +43,11 @@ export function initScrub(ctx: Ctx): void {
   ticks.setAttribute("aria-valuemax", String(dayIndex(allWin.to, allWin)));
   function updateAria(): void {
     const value = store.get().pinned ?? now;
-    ticks!.setAttribute("aria-valuenow", String(dayIndex(value, allWin)));
+    // A pin can sit outside the all-time window (spec §8.4), and aria-valuenow
+    // has to stay between valuemin and valuemax whatever the pin does.
+    const max = dayIndex(allWin.to, allWin);
+    const valueNow = Math.min(max, Math.max(0, dayIndex(value, allWin)));
+    ticks!.setAttribute("aria-valuenow", String(valueNow));
     ticks!.setAttribute("aria-valuetext", longDate(value));
   }
   updateAria();
@@ -130,11 +134,15 @@ export function initScrub(ctx: Ctx): void {
   // ---- pointer on the ticks area (spec §4.2) ----
   let pointerId: number | null = null;
   ticks.addEventListener("pointermove", (e) => {
-    if (pointerId !== null) {
-      pin(ctx, dateFromPointer(e));
+    const date = dateFromPointer(e);
+    if (e.pointerId === pointerId) {
+      // The hover follows the pin, so an unpin leaves the cursor under the
+      // pointer rather than back where the press started.
+      hover = date;
+      pin(ctx, date);
       return;
     }
-    hover = dateFromPointer(e);
+    hover = date;
     render();
   });
   ticks.addEventListener("pointerleave", () => {
@@ -148,14 +156,16 @@ export function initScrub(ctx: Ctx): void {
     pin(ctx, dateFromPointer(e));
     e.preventDefault();
   });
-  function release(e: PointerEvent): void {
+  function release(e: PointerEvent, cancelled: boolean): void {
     if (e.pointerId !== pointerId) return;
     pointerId = null;
     ticks!.releasePointerCapture(e.pointerId);
-    panel!.scrollIntoView({ block: "nearest" });
+    // A cancelled press (the browser took the gesture over) is not a choice to
+    // read the panel, so it does not scroll.
+    if (!cancelled) panel!.scrollIntoView({ block: "nearest" });
   }
-  ticks.addEventListener("pointerup", release);
-  ticks.addEventListener("pointercancel", release);
+  ticks.addEventListener("pointerup", (e) => release(e, false));
+  ticks.addEventListener("pointercancel", (e) => release(e, true));
 
   // ---- close: the panel's Close link, and Escape while pinned ----
   document.addEventListener("click", (e) => {
@@ -182,6 +192,7 @@ export function initScrub(ctx: Ctx): void {
     pin(ctx, date);
   }
   ticks.addEventListener("keydown", (e) => {
+    if (e.altKey || e.ctrlKey || e.metaKey) return;
     const s = store.get();
     const base = s.pinned ?? now;
     const unit = e.shiftKey ? "year" : "month";

@@ -35,6 +35,7 @@ export function initPan(ctx: Ctx): void {
   // Slider convention: left and down lower the value (an earlier year, a higher
   // offset); Home is the earliest year, End the current one.
   strip.addEventListener("keydown", (e) => {
+    if (e.altKey || e.ctrlKey || e.metaKey) return;
     const s = store.get();
     const max = maxOffset(s.zoom, now, items);
     if (max === 0) return;
@@ -72,6 +73,9 @@ export function initPan(ctx: Ctx): void {
   let boxW = 0;
   let dragging = false;
 
+  // Mirrors the box positioning in apply.ts's applyLayout; kept here because the
+  // drag overrides --x on every move, so the layout listener alone cannot
+  // restore the snapped position on release.
   /** Put the box exactly where the current offset's window sits. */
   function settleBox(): void {
     if (!box) return;
