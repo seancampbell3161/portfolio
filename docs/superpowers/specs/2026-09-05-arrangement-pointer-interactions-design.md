@@ -73,7 +73,7 @@ Following an entry link opens that item's panel through the existing inspector c
 
 ### 4.4 The hash
 
-Pinning sets the hash to `#on-YYYY-MM-DD` via `history.replaceState`, so a date is shareable. Unpinning clears it. On load a matching hash pans the window to the smallest offset that shows the date (`offsetToShow`), pins it, fills the panel and scrolls it near, with no focus move and no playhead draw-in, mirroring the item deep link. Without JavaScript the hash matches nothing and the page is unchanged.
+Pinning sets the hash to `#on-YYYY-MM-DD` via `history.replaceState`, so a date is shareable. Unpinning clears it. On load a matching hash pans the window to the smallest offset that shows the date (`offsetToShow`), pins it, fills the panel and scrolls it near, with no focus move and no playhead draw-in, mirroring the item deep link. Without JavaScript the hash matches nothing and the page is unchanged. Pin changes are coalesced before they reach the URL (a drag or a held key writes at most a few times a second); the first pin, an unpin and an item change write at once; a failed write never blocks rendering.
 
 ### 4.5 Keyboard
 
@@ -260,7 +260,7 @@ Removed:
 - The date panel is a labelled region like the item panels. Its entries are real links, so a screen-reader user reaches each item through it.
 - The cursor line, chip and pin tick are `aria-hidden`; the slider's value text carries the date.
 - No motion is added. Dimming has no transition. `prefers-reduced-motion` keeps suppressing the playhead draw-in.
-- Dimmed clips stay focusable and readable at a third opacity; the focus ring is not dimmed because it is drawn on the clip's own outline in full lane color.
+- Dimmed clips stay focusable and readable at a third opacity; the focus ring dims with the clip, since opacity is on the item; a focused clip that does not touch the date is a correct signal.
 
 ## 11. Testing
 
