@@ -47,17 +47,17 @@ Out of scope:
 
 ### 4.1 The cursor
 
-The ruler (`.tl-ruler`, 900px and up) is the scrub bar. Hovering it shows the cursor: a 1px vertical line in the secondary text color running from the ruler down through the lanes, thinner and dimmer than the playhead, with a date chip on the ruler at the cursor's x. The chip uses the mono font and matches the playhead's "now" chip in size and shape. The date has day precision and is formatted by `longDate` from `src/lib/dates.ts` (UTC).
+The ruler (`.tl-ruler`, 900px and up) is the scrub bar. Hovering it shows the cursor: a 1px vertical line in the secondary text color running from the ruler down through the lanes, thinner and dimmer than the playhead, with a date chip on the ruler at the cursor's x. The chip uses the mono font and matches the playhead's "now" chip in size and shape. The date has day precision. The chip prints it as `monthDayYear` ("Sep 14, 2024", the transport bar's format) so it does not cover the month ticks; the panel heading and the slider's value text print it as `longDate` ("14 September 2024"). Both come from `src/lib/dates.ts` (UTC).
 
 The cursor's date is `dateAt(fraction, win)`: the pointer's x as a fraction of the ticks area (`[data-ticks]`, the ruler minus the corner label, which is the same width as the clip area), mapped into the current window and floored to a UTC day. The ruler's corner label is not part of the scrub bar. Scrubbing covers the whole window, including months of the current year still ahead of now; planned learning clips then show with their planned wording.
 
-While a cursor is showing (hovering or pinned), every clip that does not touch the cursor's date dims to about a third opacity with no transition. A span touches the date when the date lies between its start and its effective end (its end, or now when ongoing). A moment touches when it lands within 14 days of the date, the same `MOMENT_WINDOW_DAYS` window "Written while" uses.
+While a cursor is drawn (hovering, or pinned inside the window), every clip that does not touch the cursor's date dims to about a third opacity with no transition. A span touches the date when the date lies between its start and its effective end (its end, or now when ongoing). A moment touches when it lands within 14 days of the date, the same `MOMENT_WINDOW_DAYS` window "Written while" uses.
 
 The cursor is positioned by the same `--x` custom property the playhead uses and is never animated.
 
 ### 4.2 Pinning
 
-Pointer down on the ruler pins the cursor at that date; moving while held drags it; release leaves it pinned. A pinned cursor stays when the pointer leaves the ruler and stays through zoom and pan. It is drawn only while its date is inside the current window; when the date is outside, the line and chip hide but the pin, the panel and the hash remain. Pinning does not move keyboard focus. Pointer up after a pin scrolls the panel into view with `block: "nearest"`, mirroring an item click.
+Pointer down on the ruler pins the cursor at that date; moving while held drags it; release leaves it pinned. A pinned cursor stays when the pointer leaves the ruler and stays through zoom and pan. It is drawn only while its date is inside the current window; when the date is outside, the line and chip hide and nothing is dimmed, but the pin, the panel and the hash remain. Pinning does not move keyboard focus. Pointer up after a pin scrolls the panel into view with `block: "nearest"`, mirroring an item click.
 
 Pointer down while already pinned moves the pin. Escape unpins.
 
@@ -77,7 +77,7 @@ Pinning sets the hash to `#on-YYYY-MM-DD` via `history.replaceState`, so a date 
 
 ### 4.5 Keyboard
 
-The script upgrades the ruler into a focusable slider: `tabindex="0"`, `role="slider"`, `aria-label="Scrub the timeline"`, `aria-valuemin="0"`, `aria-valuemax` the number of days in the all-time window, `aria-valuenow` the pinned date's day index in that window (`dayIndex`), `aria-valuetext` the long date. Before any pin the value is now.
+The script upgrades the ruler's ticks area (`[data-ticks]`) into a focusable slider and removes `aria-hidden` from the ruler around it: `tabindex="0"`, `role="slider"`, `aria-label="Scrub the timeline"`, `aria-valuemin="0"`, `aria-valuemax` the number of days in the all-time window, `aria-valuenow` the pinned date's day index in that window (`dayIndex`), `aria-valuetext` the long date. Before any pin the value is now.
 
 - Left and right step one month; Shift plus left or right steps one year (`stepDate`), clamped to the all-time window.
 - Home and End go to the current window's from and to.
@@ -123,8 +123,10 @@ All in `src/lib/timeline/`, no DOM, covered by Vitest.
 ```ts
 export function windowFor(zoom: Zoom, now: Date, items: readonly TimelineItem[], offset = 0): Window;
 export function maxOffset(zoom: Zoom, now: Date, items: readonly TimelineItem[]): number;
-/** Smallest clamped offset whose window contains `date`. */
-export function offsetToShow(date: Date, zoom: Zoom, now: Date, items: readonly TimelineItem[]): number;
+/** The offset whose window contains `date`, nearest `current` when several do (a tap keeps the smallest move; a deep link passes 0). */
+export function offsetToShow(date: Date, zoom: Zoom, now: Date, items: readonly TimelineItem[], current = 0): number;
+/** "2024", or "2022 to 2025": the corner label and the strip's value text. */
+export function windowLabel(zoom: Zoom, w: Window): string;
 /** Drag delta as a fraction of the all-time window -> years -> rounded and clamped. Dragging right (later) lowers the offset. */
 export function offsetForDrag(startOffset: number, deltaFraction: number, zoom: Zoom, now: Date, items: readonly TimelineItem[]): number;
 ```
