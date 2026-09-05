@@ -13,6 +13,7 @@ import {
   ticksFor,
   whenLabel,
   windowFor,
+  windowLabel,
   type Zoom,
 } from "../../lib/timeline/layout";
 import { saveZoom, type Ctx, type TimelineState } from "./state";
@@ -47,13 +48,10 @@ export function applyLayout(ctx: Ctx, s: TimelineState): void {
     }
   }
 
-  const windowLabel = root.querySelector("[data-window-label]");
-  if (windowLabel) {
-    const label =
-      zoom === "year"
-        ? String(win.from.getUTCFullYear())
-        : `${win.from.getUTCFullYear()} to ${win.to.getUTCFullYear()}`;
-    windowLabel.textContent = label;
+  const labelEl = root.querySelector("[data-window-label]");
+  if (labelEl) {
+    const label = windowLabel(zoom, win);
+    labelEl.textContent = label;
     root.setAttribute("aria-label", `Timeline, ${label}`);
   }
   const ticksEl = root.querySelector<HTMLElement>("[data-ticks]");

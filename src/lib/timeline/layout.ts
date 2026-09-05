@@ -19,20 +19,89 @@ export function endOfYear(d: Date): Date {
   return new Date(Date.UTC(d.getUTCFullYear(), 11, 31, 23, 59, 59, 999));
 }
 
-/** Spec §5 zoom windows. */
-export function windowFor(zoom: Zoom, now: Date, items: readonly TimelineItem[]): Window {
-  const to = endOfYear(now);
-  if (zoom === "year") return { from: startOfYear(now), to };
-  if (zoom === "three-years") {
-    const from = new Date(now.getTime());
-    from.setUTCFullYear(now.getUTCFullYear() - 3);
-    return { from, to };
-  }
+function earliestStart(items: readonly TimelineItem[]): Date | null {
   let earliest: Date | null = null;
   for (const item of items) {
     if (!earliest || item.start.getTime() < earliest.getTime()) earliest = item.start;
   }
-  return { from: earliest ?? startOfYear(now), to };
+  return earliest;
+}
+
+function shiftYears(d: Date, years: number): Date {
+  const c = new Date(d.getTime());
+  c.setUTCFullYear(c.getUTCFullYear() + years);
+  return c;
+}
+
+/** Spec §5 zoom windows, shifted back `offset` whole years (interactions spec §5.1). "all" ignores the offset. */
+export function windowFor(zoom: Zoom, now: Date, items: readonly TimelineItem[], offset = 0): Window {
+  const to = endOfYear(now);
+  let base: Window;
+  if (zoom === "year") base = { from: startOfYear(now), to };
+  else if (zoom === "three-years") base = { from: shiftYears(now, -3), to };
+  else return { from: earliestStart(items) ?? startOfYear(now), to };
+  if (offset === 0) return base;
+  return { from: shiftYears(base.from, -offset), to: shiftYears(base.to, -offset) };
+}
+
+/** How far back the window may pan: the current year minus the earliest item's year. Zero for "all". */
+export function maxOffset(zoom: Zoom, now: Date, items: readonly TimelineItem[]): number {
+  if (zoom === "all") return 0;
+  const earliest = earliestStart(items);
+  if (!earliest) return 0;
+  return Math.max(0, now.getUTCFullYear() - earliest.getUTCFullYear());
+}
+
+function contains(w: Window, t: number): boolean {
+  return t >= w.from.getTime() && t <= w.to.getTime();
+}
+
+/**
+ * The offset whose window contains `date`, choosing the one nearest `current`
+ * when several do (ties go to the smaller). Before every window: the max.
+ * After every window: zero.
+ */
+export function offsetToShow(
+  date: Date,
+  zoom: Zoom,
+  now: Date,
+  items: readonly TimelineItem[],
+  current = 0,
+): number {
+  const max = maxOffset(zoom, now, items);
+  const t = date.getTime();
+  let best: number | null = null;
+  for (let o = 0; o <= max; o++) {
+    if (!contains(windowFor(zoom, now, items, o), t)) continue;
+    if (best === null || Math.abs(o - current) < Math.abs(best - current)) best = o;
+  }
+  if (best !== null) return best;
+  return t < windowFor(zoom, now, items, max).from.getTime() ? max : 0;
+}
+
+const YEAR_MS = 365.25 * 86_400_000;
+
+/**
+ * Where a drag lands: the pointer's travel as a fraction of the all-time strip,
+ * in years, rounded to a whole offset and clamped. Dragging right moves the
+ * window later, so it lowers the offset.
+ */
+export function offsetForDrag(
+  startOffset: number,
+  deltaFraction: number,
+  zoom: Zoom,
+  now: Date,
+  items: readonly TimelineItem[],
+): number {
+  const all = windowFor("all", now, items);
+  const years = (all.to.getTime() - all.from.getTime()) / YEAR_MS;
+  const raw = Math.round(startOffset - deltaFraction * years);
+  return Math.min(maxOffset(zoom, now, items), Math.max(0, raw));
+}
+
+/** The corner label and the strip's value text: "2024", or "2022 to 2025". */
+export function windowLabel(zoom: Zoom, w: Window): string {
+  return zoom === "year" ? String(w.from.getUTCFullYear()) : `${w.from.getUTCFullYear()} to ${w.to.getUTCFullYear()}`;
 }
 
 /** Position of a date inside a window as a fraction of its width. Not clamped. */

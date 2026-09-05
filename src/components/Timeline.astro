@@ -11,6 +11,7 @@ import {
   ticksFor,
   whenLabel,
   windowFor,
+  windowLabel,
   type Zoom,
 } from "../lib/timeline/layout";
 
@@ -47,8 +48,7 @@ const laneIndex = (lane: string) => LANES.indexOf(lane as (typeof LANES)[number]
 const ticks = ticksFor(zoom, win);
 const allTicks = ticksFor("all", allWin);
 const summaries = LANES.map((lane) => laneSummary(lane, items, win, now));
-const windowLabel =
-  zoom === "year" ? String(win.from.getUTCFullYear()) : `${win.from.getUTCFullYear()} to ${win.to.getUTCFullYear()}`;
+const label = windowLabel(zoom, win);
 const nowX = fraction(now, win);
 const ovX = fraction(win.from, allWin);
 const ovW = fraction(win.to, allWin) - ovX;
@@ -58,7 +58,7 @@ const overview = LANES.map((lane) =>
 const iso = (d: Date) => d.toISOString().slice(0, 10);
 ---
 
-<section class="tl" data-timeline data-now={now.toISOString()} data-zoom={zoom} aria-label={`Timeline, ${windowLabel}`}>
+<section class="tl" data-timeline data-now={now.toISOString()} data-zoom={zoom} aria-label={`Timeline, ${label}`}>
   <div class="tl-ov" aria-hidden="true">
     {allTicks.map((t) => <span class="tl-ov-yr" style={`--x:${t.x}`}>{t.label}</span>)}
     {LANES.map((lane, li) => (
@@ -71,7 +71,7 @@ const iso = (d: Date) => d.toISOString().slice(0, 10);
 
   <div class="tl-stage">
     <div class="tl-ruler" aria-hidden="true">
-      <span class="tl-corner" data-window-label>{windowLabel}</span>
+      <span class="tl-corner" data-window-label>{label}</span>
       <div class="tl-ticks" data-ticks>
         {ticks.map((t) => <span style={`--x:${t.x}`}>{t.label}</span>)}
       </div>

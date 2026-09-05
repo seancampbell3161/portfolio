@@ -3,6 +3,10 @@ import type { TimelineItem, Lane, Status } from "../types.js";
 import { deriveKind } from "../types.js";
 import {
   windowFor,
+  maxOffset,
+  offsetToShow,
+  offsetForDrag,
+  windowLabel,
   fraction,
   positionIn,
   packRows,
@@ -275,5 +279,91 @@ describe("whenLabel", () => {
     expect(whenLabel(d("2026-03-05"), "year")).toBe("Mar");
     expect(whenLabel(d("2026-03-05"), "three-years")).toBe("Mar 2026");
     expect(whenLabel(d("2026-03-05"), "all")).toBe("Mar 2026");
+  });
+});
+
+describe("windowFor with a year offset (interactions 1, §5.1)", () => {
+  const items = [mk("a", "learning", "2021-01-15"), mk("b", "writing", "2025-12-21")];
+  it("offset zero is the preset", () => {
+    expect(windowFor("year", NOW, items, 0)).toEqual(windowFor("year", NOW, items));
+  });
+  it("shifts both ends of the year window back by whole years", () => {
+    const w = windowFor("year", NOW, items, 2);
+    expect(w.from).toEqual(new Date(Date.UTC(2024, 0, 1)));
+    expect(w.to.getUTCFullYear()).toBe(2024);
+    expect(w.to.getUTCMonth()).toBe(11);
+    expect(w.to.getUTCDate()).toBe(31);
+  });
+  it("shifts the three-year window the same way", () => {
+    const w = windowFor("three-years", NOW, items, 1);
+    expect(w.from.getUTCFullYear()).toBe(2022);
+    expect(w.from.getUTCMonth()).toBe(8);
+    expect(w.to.getUTCFullYear()).toBe(2025);
+  });
+  it("ignores the offset at the all zoom", () => {
+    expect(windowFor("all", NOW, items, 3)).toEqual(windowFor("all", NOW, items));
+  });
+});
+
+describe("maxOffset", () => {
+  const items = [mk("a", "learning", "2021-01-15"), mk("b", "writing", "2025-12-21")];
+  it("is the current year minus the earliest item's year, for year and three-years alike", () => {
+    expect(maxOffset("year", NOW, items)).toBe(5);
+    expect(maxOffset("three-years", NOW, items)).toBe(5);
+  });
+  it("is zero for all, and zero with no items", () => {
+    expect(maxOffset("all", NOW, items)).toBe(0);
+    expect(maxOffset("year", NOW, [])).toBe(0);
+  });
+});
+
+describe("offsetToShow", () => {
+  const items = [mk("a", "learning", "2021-01-15"), mk("b", "writing", "2025-12-21")];
+  it("is zero for a date already in the preset window", () => {
+    expect(offsetToShow(d("2026-03-01"), "year", NOW, items)).toBe(0);
+  });
+  it("is the year distance at the year zoom", () => {
+    expect(offsetToShow(d("2024-06-15"), "year", NOW, items)).toBe(2);
+  });
+  it("prefers the containing window nearest the current offset", () => {
+    // June 2025 lies in the offset-0 (Sep 2023 to Dec 2026) and offset-1 (Sep 2022 to Dec 2025) three-year windows.
+    expect(offsetToShow(d("2025-06-01"), "three-years", NOW, items)).toBe(0);
+    expect(offsetToShow(d("2025-06-01"), "three-years", NOW, items, 3)).toBe(1);
+  });
+  it("clamps: before the earliest window gives the max, after the newest gives zero", () => {
+    expect(offsetToShow(d("2015-01-01"), "year", NOW, items)).toBe(5);
+    expect(offsetToShow(d("2030-01-01"), "year", NOW, items)).toBe(0);
+  });
+  it("is zero at the all zoom", () => {
+    expect(offsetToShow(d("2024-06-15"), "all", NOW, items)).toBe(0);
+  });
+});
+
+describe("offsetForDrag", () => {
+  // The all-time window runs 2021-01-15 to 2026-12-31, about 5.96 years.
+  const items = [mk("a", "learning", "2021-01-15"), mk("b", "writing", "2025-12-21")];
+  it("rounds a drag shorter than half a year away", () => {
+    expect(offsetForDrag(0, -0.05, "year", NOW, items)).toBe(0);
+  });
+  it("dragging left (earlier) raises the offset once past half a year", () => {
+    expect(offsetForDrag(0, -0.1, "year", NOW, items)).toBe(1);
+  });
+  it("dragging right (later) lowers it", () => {
+    expect(offsetForDrag(3, 0.2, "year", NOW, items)).toBe(2);
+  });
+  it("clamps at both ends", () => {
+    expect(offsetForDrag(0, 0.5, "year", NOW, items)).toBe(0);
+    expect(offsetForDrag(5, -0.5, "year", NOW, items)).toBe(5);
+  });
+  it("never moves at the all zoom", () => {
+    expect(offsetForDrag(0, -0.5, "all", NOW, items)).toBe(0);
+  });
+});
+
+describe("windowLabel", () => {
+  it("is the year at the year zoom and a range otherwise", () => {
+    expect(windowLabel("year", windowFor("year", NOW, [], 2))).toBe("2024");
+    expect(windowLabel("three-years", windowFor("three-years", NOW, [], 1))).toBe("2022 to 2025");
+    expect(windowLabel("all", windowFor("all", NOW, [mk("a", "learning", "2021-01-15")]))).toBe("2021 to 2026");
   });
 });
