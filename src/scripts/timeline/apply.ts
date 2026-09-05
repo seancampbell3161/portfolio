@@ -103,9 +103,9 @@ export function applyLayout(ctx: Ctx, s: TimelineState): void {
   document.querySelectorAll<HTMLButtonElement>("[data-zoom-control] button").forEach((b) => {
     b.setAttribute("aria-pressed", String(b.dataset.zoom === zoom));
     if (b.dataset.zoom !== "year") return;
-    // Spec §5.3: at the year zoom the button names the year on screen, and while
-    // panned it is the way back to this year.
-    b.textContent = String(zoom === "year" ? win.to.getUTCFullYear() : thisYear);
+    // Spec §5.3: the button always names the last year of the window on screen,
+    // and at the year zoom while panned it is the way back to this year.
+    b.textContent = String(win.to.getUTCFullYear());
     if (zoom === "year" && s.offset > 0) b.setAttribute("aria-label", `Back to ${thisYear}`);
     else b.removeAttribute("aria-label");
   });

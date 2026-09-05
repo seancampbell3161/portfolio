@@ -104,7 +104,7 @@ The whole overview strip (`.tl-ov`) is the control, not only the window box, so 
 
 The offset survives switching between year and three years: offset 2 at year shows 2024, and at three years shows 2022 to 2024. Switching to All resets the offset to zero, and coming from All the offset is zero.
 
-At the year zoom the first button's text is the window's year, not always the current year. When panned, pressing it returns to this year, and its accessible name says so ("Back to 2026"). When not panned its name is the year, as today. The other buttons and the date in the transport bar do not change.
+The first button's text is always the last year of the window on screen (at the year zoom, that year; at three years, the range's last year; at All, this year). When panned, pressing it returns to this year, and its accessible name says so ("Back to 2026"). When not panned its name is the year, as today. The other buttons and the date in the transport bar do not change.
 
 ### 5.4 Keyboard
 
