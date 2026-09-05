@@ -51,7 +51,7 @@ The ruler (`.tl-ruler`, 900px and up) is the scrub bar. Hovering it shows the cu
 
 The cursor's date is `dateAt(fraction, win)`: the pointer's x as a fraction of the ticks area (`[data-ticks]`, the ruler minus the corner label, which is the same width as the clip area), mapped into the current window and floored to a UTC day. The ruler's corner label is not part of the scrub bar. Scrubbing covers the whole window, including months of the current year still ahead of now; planned learning clips then show with their planned wording.
 
-While a cursor is drawn (hovering, or pinned inside the window), every clip that does not touch the cursor's date dims to about a third opacity with no transition. A span touches the date when the date lies between its start and its effective end (its end, or now when ongoing). A moment touches when it lands within 14 days of the date, the same `MOMENT_WINDOW_DAYS` window "Written while" uses.
+While a cursor is drawn (hovering, or pinned inside the window), every clip that does not touch the cursor's date dims to about a third opacity with no transition. A span touches the date when the date lies between its start and its effective end (its end, or now when ongoing). A moment touches when it lands within 14 days of the date, the same `MOMENT_WINDOW_DAYS` window "Written while" uses. Dimming is an arrangement visual: below 900px a pinned date (reached by deep link) opens the panel but dims nothing.
 
 The cursor is positioned by the same `--x` custom property the playhead uses and is never animated.
 

@@ -506,8 +506,11 @@ const iso = (d: Date) => d.toISOString().slice(0, 10);
     outline-offset: -2px;
   }
   /* While a cursor shows, clips that do not touch its date step back. No transition. */
-  .tl[data-scrubbing] .tl-item:not([data-touch]) {
-    opacity: 0.35;
+  /* Arrangement only: the phone graph has no cursor to explain a dimmed row, so a date deep link on a phone opens the panel without dimming. */
+  @media (min-width: 900px) {
+    .tl[data-scrubbing] .tl-item:not([data-touch]) {
+      opacity: 0.35;
+    }
   }
   .tl-gutter,
   .tl-nowline {
