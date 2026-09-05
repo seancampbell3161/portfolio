@@ -10,7 +10,7 @@ const panelFor = (id: string): HTMLElement | null => document.getElementById(`it
 export function openItem(ctx: Ctx, id: string, opts: { scroll?: boolean; focus?: boolean } = {}): void {
   const panel = panelFor(id);
   if (!panel || !ctx.elById.has(id)) return;
-  ctx.store.set({ openId: id });
+  ctx.store.set({ openId: id, pinned: null });
   if (opts.scroll) panel.scrollIntoView({ block: "nearest" });
   if (opts.focus !== false) panel.focus({ preventScroll: !opts.scroll });
 }

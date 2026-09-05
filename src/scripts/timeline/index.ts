@@ -4,12 +4,14 @@
 // panels. Each module exports an init that registers listeners against the
 // shared store; this file reads the page, builds the context and runs them.
 import { ZOOMS, positionIn, windowFor, type Zoom } from "../../lib/timeline/layout";
+import { hashFor } from "../../lib/timeline/scrub";
 import { readItems, makeMeasurer } from "./items";
 import { createStore, readZoom, type Ctx, type TimelineState } from "./state";
 import { applyLayout, initApply } from "./apply";
 import { initInspector, openItem } from "./inspector";
 import { initMotion } from "./motion";
 import { initPan } from "./pan";
+import { initScrub } from "./scrub";
 
 document.documentElement.classList.add("js");
 
@@ -31,16 +33,17 @@ function init(root: HTMLElement): void {
   initApply(ctx);
   initInspector(ctx);
   initPan(ctx);
+  initScrub(ctx);
   applyLayout(ctx, store.get());
 
   const deepLinked = openDeepLink(ctx);
   initMotion(ctx, { skip: deepLinked });
 }
 
-/** The URL is a function of state (spec §8.2): #item-<id>, or nothing. */
+/** The URL is a function of state (spec §8.2): #item-<id>, #on-<date>, or nothing. */
 function syncHash(s: TimelineState, prev: TimelineState): void {
-  if (s.openId === prev.openId) return;
-  const hash = s.openId ? `#item-${s.openId}` : "";
+  if (s.openId === prev.openId && s.pinned?.getTime() === prev.pinned?.getTime()) return;
+  const hash = s.openId ? `#item-${s.openId}` : s.pinned ? hashFor(s.pinned) : "";
   history.replaceState(null, "", location.pathname + location.search + hash);
 }
 
