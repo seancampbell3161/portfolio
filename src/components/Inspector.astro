@@ -196,13 +196,16 @@ const capitalized = (s: string) => (s === "in-progress" ? "In progress" : s[0].t
     list-style: none;
     font-size: 15px;
   }
-  .insp-on li {
+  /* The entries are created by the client script, so they never carry Astro's
+     scope attribute; :global() keeps the descendant part unscoped while the
+     list itself stays scoped. */
+  .insp-on :global(li) {
     display: flex;
     align-items: baseline;
     flex-wrap: wrap;
     gap: 10px;
   }
-  .insp-on li i {
+  .insp-on :global(li i) {
     flex: none;
     align-self: center;
     width: 8px;
@@ -210,16 +213,16 @@ const capitalized = (s: string) => (s === "in-progress" ? "In progress" : s[0].t
     border-radius: 2px;
     background: var(--c);
   }
-  .insp-on a {
+  .insp-on :global(a) {
     color: var(--color-text-primary);
     padding-bottom: 1px;
     border-bottom: 1px solid color-mix(in srgb, var(--c) 40%, transparent);
   }
-  .insp-on small {
+  .insp-on :global(small) {
     font-size: 13px;
     color: var(--color-text-muted);
   }
-  .insp-on .insp-empty {
+  .insp-on :global(.insp-empty) {
     color: var(--color-text-secondary);
   }
 
