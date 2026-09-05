@@ -9,6 +9,7 @@ import { createStore, readZoom, type Ctx, type TimelineState } from "./state";
 import { applyLayout, initApply } from "./apply";
 import { initInspector, openItem } from "./inspector";
 import { initMotion } from "./motion";
+import { initPan } from "./pan";
 
 document.documentElement.classList.add("js");
 
@@ -29,6 +30,7 @@ function init(root: HTMLElement): void {
   store.subscribe(syncHash);
   initApply(ctx);
   initInspector(ctx);
+  initPan(ctx);
   applyLayout(ctx, store.get());
 
   const deepLinked = openDeepLink(ctx);

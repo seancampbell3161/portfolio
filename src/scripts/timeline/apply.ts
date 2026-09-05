@@ -9,6 +9,7 @@ import {
   fraction,
   graphLayout,
   laneSummary,
+  maxOffset,
   packLane,
   ticksFor,
   whenLabel,
@@ -21,7 +22,7 @@ import { saveZoom, type Ctx, type TimelineState } from "./state";
 export function applyLayout(ctx: Ctx, s: TimelineState): void {
   const { root, now, items, itemEls, elById, itemById } = ctx;
   const zoom = s.zoom;
-  const win = windowFor(zoom, now, items);
+  const win = windowFor(zoom, now, items, s.offset);
   const allWin = windowFor("all", now, items);
   const measure = ctx.measure();
 
@@ -98,9 +99,16 @@ export function applyLayout(ctx: Ctx, s: TimelineState): void {
   root.querySelector<HTMLElement>("[data-nowline]")?.style.setProperty("--row", String(g.nowRow));
 
   root.dataset.zoom = zoom;
-  document
-    .querySelectorAll<HTMLButtonElement>("[data-zoom-control] button")
-    .forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.zoom === zoom)));
+  const thisYear = now.getUTCFullYear();
+  document.querySelectorAll<HTMLButtonElement>("[data-zoom-control] button").forEach((b) => {
+    b.setAttribute("aria-pressed", String(b.dataset.zoom === zoom));
+    if (b.dataset.zoom !== "year") return;
+    // Spec §5.3: at the year zoom the button names the year on screen, and while
+    // panned it is the way back to this year.
+    b.textContent = String(zoom === "year" ? win.to.getUTCFullYear() : thisYear);
+    if (zoom === "year" && s.offset > 0) b.setAttribute("aria-label", `Back to ${thisYear}`);
+    else b.removeAttribute("aria-label");
+  });
 }
 
 /** Today's date in the transport bar, the zoom buttons, resize, and the layout listener. */
@@ -112,9 +120,6 @@ export function initApply(ctx: Ctx): void {
     nowLabel.textContent = now.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
     nowLabel.dateTime = now.toISOString().slice(0, 10);
   }
-  const yearButton = document.querySelector<HTMLButtonElement>('[data-zoom-control] button[data-zoom="year"]');
-  if (yearButton) yearButton.textContent = String(now.getUTCFullYear());
-
   store.subscribe((s, prev) => {
     if (s.zoom !== prev.zoom || s.offset !== prev.offset) applyLayout(ctx, s);
   });
@@ -123,7 +128,12 @@ export function initApply(ctx: Ctx): void {
     b.addEventListener("click", () => {
       const z = b.dataset.zoom as Zoom;
       if (!ZOOMS.includes(z)) return;
-      store.set({ zoom: z });
+      const s = store.get();
+      // The offset survives year <-> three-years, resets at "all", and the
+      // pressed year button while panned means "back to this year".
+      let offset = z === "all" ? 0 : Math.min(s.offset, maxOffset(z, now, ctx.items));
+      if (z === "year" && s.zoom === "year" && s.offset > 0) offset = 0;
+      store.set({ zoom: z, offset });
       saveZoom(z);
     }),
   );
