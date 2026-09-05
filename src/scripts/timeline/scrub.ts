@@ -2,8 +2,8 @@
 // The ruler as a scrub bar (interactions spec §4). Hover shows a cursor and dims
 // the clips that do not touch its date; pressing pins it; the pinned date fills
 // the "On this date" panel and lives in the URL. The playhead never moves.
-import { fraction, windowFor } from "../../lib/timeline/layout";
-import { dateAt } from "../../lib/timeline/scrub";
+import { fraction, offsetToShow, windowFor } from "../../lib/timeline/layout";
+import { dateAt, dayIndex, stepDate } from "../../lib/timeline/scrub";
 import { onDate, whenText } from "../../lib/timeline/track";
 import { longDate, monthDayYear } from "../../lib/dates";
 import type { TimelineItem } from "../../lib/timeline/types";
@@ -33,6 +33,21 @@ export function initScrub(ctx: Ctx): void {
   // The script owns the panel from here; .insp stays display:none until data-open.
   panel.hidden = false;
   const allWin = windowFor("all", now, items);
+
+  // ---- the ruler as a slider (spec §4.5): roles come from the script ----
+  ruler.removeAttribute("aria-hidden");
+  ticks.tabIndex = 0;
+  ticks.setAttribute("role", "slider");
+  ticks.setAttribute("aria-label", "Scrub the timeline");
+  ticks.setAttribute("aria-valuemin", "0");
+  ticks.setAttribute("aria-valuemax", String(dayIndex(allWin.to, allWin)));
+  function updateAria(): void {
+    const value = store.get().pinned ?? now;
+    ticks!.setAttribute("aria-valuenow", String(dayIndex(value, allWin)));
+    ticks!.setAttribute("aria-valuetext", longDate(value));
+  }
+  updateAria();
+
   const currentWindow = () => {
     const s = store.get();
     return windowFor(s.zoom, now, items, s.offset);
@@ -109,6 +124,7 @@ export function initScrub(ctx: Ctx): void {
       }
     }
     render();
+    updateAria();
   });
 
   // ---- pointer on the ticks area (spec §4.2) ----
@@ -152,5 +168,45 @@ export function initScrub(ctx: Ctx): void {
     if (e.key !== "Escape" || !store.get().pinned) return;
     unpin(ctx);
     ticks!.focus();
+  });
+
+  // ---- keys: arrows step, Home/End go to the window's edges, Enter enters the panel ----
+  function showDate(date: Date): void {
+    const s = store.get();
+    const win = windowFor(s.zoom, now, items, s.offset);
+    const f = fraction(date, win);
+    if (f < 0 || f > 1) {
+      const offset = offsetToShow(date, s.zoom, now, items, s.offset);
+      if (offset !== s.offset) store.set({ offset });
+    }
+    pin(ctx, date);
+  }
+  ticks.addEventListener("keydown", (e) => {
+    const s = store.get();
+    const base = s.pinned ?? now;
+    const unit = e.shiftKey ? "year" : "month";
+    switch (e.key) {
+      case "ArrowLeft":
+      case "ArrowDown":
+        showDate(stepDate(base, unit, -1, allWin));
+        break;
+      case "ArrowRight":
+      case "ArrowUp":
+        showDate(stepDate(base, unit, 1, allWin));
+        break;
+      case "Home":
+        showDate(dateAt(0, currentWindow()));
+        break;
+      case "End":
+        showDate(dateAt(1, currentWindow()));
+        break;
+      case "Enter":
+        if (!s.pinned) return;
+        panel!.focus();
+        break;
+      default:
+        return;
+    }
+    e.preventDefault();
   });
 }
