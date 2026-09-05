@@ -15,6 +15,35 @@ import { initScrub, pin } from "./scrub";
 
 document.documentElement.classList.add("js");
 
+/**
+ * The URL is a function of state (spec §8.2): #item-<id>, #on-<date>, or
+ * nothing. Pin changes are coalesced (spec §4.4): a drag or a held arrow key
+ * changes the pin many times a second, and browsers rate-limit replaceState
+ * (WebKit throws after 100 calls in 30 s). Item changes and clearing write at
+ * once. A failed write is swallowed: the page must keep rendering even when
+ * the URL falls behind.
+ */
+const HASH_DELAY_MS = 300;
+let hashTimer = 0;
+function writeHash(hash: string): void {
+  try {
+    history.replaceState(null, "", location.pathname + location.search + hash);
+  } catch {
+    /* rate-limited or blocked: the URL lags, nothing else does */
+  }
+}
+function syncHash(s: TimelineState, prev: TimelineState): void {
+  if (s.openId === prev.openId && s.pinned?.getTime() === prev.pinned?.getTime()) return;
+  window.clearTimeout(hashTimer);
+  const hash = s.openId ? `#item-${s.openId}` : s.pinned ? hashFor(s.pinned) : "";
+  const pinMoved = s.pinned !== null && prev.pinned !== null && s.openId === null;
+  if (pinMoved) {
+    hashTimer = window.setTimeout(() => writeHash(hash), HASH_DELAY_MS);
+  } else {
+    writeHash(hash);
+  }
+}
+
 const root = document.querySelector<HTMLElement>("[data-timeline]");
 if (root) init(root);
 
@@ -29,22 +58,17 @@ function init(root: HTMLElement): void {
   });
   const ctx: Ctx = { root, now, ...refs, measure: () => makeMeasurer(root), store };
 
-  store.subscribe(syncHash);
   initApply(ctx);
   initInspector(ctx);
   initPan(ctx);
   initScrub(ctx);
+  // Last: the URL is a courtesy and must never run ahead of rendering, so a
+  // throw or a slow write in here cannot starve the listeners that draw.
+  store.subscribe(syncHash);
   applyLayout(ctx, store.get());
 
   const deepLinked = openDeepLink(ctx);
   initMotion(ctx, { skip: deepLinked });
-}
-
-/** The URL is a function of state (spec §8.2): #item-<id>, #on-<date>, or nothing. */
-function syncHash(s: TimelineState, prev: TimelineState): void {
-  if (s.openId === prev.openId && s.pinned?.getTime() === prev.pinned?.getTime()) return;
-  const hash = s.openId ? `#item-${s.openId}` : s.pinned ? hashFor(s.pinned) : "";
-  history.replaceState(null, "", location.pathname + location.search + hash);
 }
 
 /**
