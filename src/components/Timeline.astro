@@ -159,6 +159,20 @@ const iso = (d: Date) => d.toISOString().slice(0, 10);
     font-size: 10px;
     color: var(--color-text-muted);
   }
+  /* The strip is a control (interactions spec §5.2, §7.5): drag pans, tap jumps,
+     a vertical swipe still scrolls the page. The script adds role=slider. */
+  .tl-ov {
+    cursor: grab;
+    touch-action: pan-y;
+    user-select: none;
+    -webkit-user-select: none;
+  }
+  .tl-ov[data-dragging] {
+    cursor: grabbing;
+  }
+  .tl-ov[aria-disabled="true"] {
+    cursor: default;
+  }
   .tl-ov-yr {
     position: absolute;
     top: 0;
