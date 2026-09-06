@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { longDate, shortDay, shortDate, monthYear, monthDayYear, isoDay, monthYearLong } from "../dates.js";
+import { longDate, longDay, shortDay, shortDate, monthYear, monthDayYear, isoDay, monthYearLong } from "../dates.js";
 
 const sep1 = new Date("2026-09-01T00:00:00Z");
 const dec31 = new Date("2025-12-31T00:00:00Z");
@@ -8,6 +8,10 @@ describe("dates (spec §11, always UTC)", () => {
   it("longDate", () => {
     expect(longDate(sep1)).toBe("1 September 2026");
     expect(longDate(dec31)).toBe("31 December 2025");
+  });
+  it("longDay is longDate without the year", () => {
+    expect(longDay(sep1)).toBe("1 September");
+    expect(longDay(dec31)).toBe("31 December");
   });
   it("shortDay pads the day to two digits", () => {
     expect(shortDay(sep1)).toBe("01 Sep");

@@ -11,9 +11,14 @@ const MONTHS_LONG = [
 
 const pad2 = (n: number): string => String(n).padStart(2, "0");
 
+/** "1 September" */
+export function longDay(d: Date): string {
+  return `${d.getUTCDate()} ${MONTHS_LONG[d.getUTCMonth()]}`;
+}
+
 /** "1 September 2026" */
 export function longDate(d: Date): string {
-  return `${d.getUTCDate()} ${MONTHS_LONG[d.getUTCMonth()]} ${d.getUTCFullYear()}`;
+  return `${longDay(d)} ${d.getUTCFullYear()}`;
 }
 
 /** "01 Sep" */
