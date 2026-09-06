@@ -1,0 +1,294 @@
+---
+// src/components/figures/IoMultiplexing.astro
+// The I/O multiplexing figure (interactions 5, spec §5): one event-loop wake
+// at a time under select, poll or epoll. Server-rendered in its still frame
+// (epoll at 32 with three sockets ready, a completed wake) with the toolbar
+// hidden; src/scripts/figures/io-multiplexing.ts reveals it and runs wakes.
+// The internals are div and span so the reader's prose rules never reach
+// them, and the script rebuilds the grid by cloning the first cell so the
+// scoped-style attribute survives on every cell.
+import {
+  CALL_NAME,
+  COUNTS,
+  MECHANISMS,
+  STILL,
+  callStatus,
+  columns,
+  emptyTallies,
+  numbered,
+  readyLine,
+  stillText,
+  tallyText,
+  type Frame,
+} from "../../lib/figures/io-multiplexing";
+
+// The still frame reads as a completed wake (return wording) with no box lit (idle phase).
+const returned: Frame = { phase: "return", scan: null };
+const status = callStatus(STILL, STILL.mechanism, STILL.count, returned);
+const ready = readyLine(STILL, returned);
+const tallies = emptyTallies();
+const fds = Array.from({ length: STILL.count }, (_, fd) => fd);
+const found = new Set(STILL.ready);
+---
+
+<figure class="iom" data-io-figure data-mechanism={STILL.mechanism} data-count={STILL.count} data-phase="idle">
+  <div class="iom-bar" data-io-controls hidden>
+    <div class="iom-seg" role="group" aria-label="Mechanism">
+      {MECHANISMS.map((m) => (
+        <button type="button" data-io-mechanism={m} aria-pressed={m === STILL.mechanism ? "true" : "false"}>{m}</button>
+      ))}
+    </div>
+    <div class="iom-seg" role="group" aria-label="Sockets">
+      {COUNTS.map((c) => (
+        <button type="button" data-io-count={c} aria-pressed={c === STILL.count ? "true" : "false"}>{c}</button>
+      ))}
+    </div>
+    <div class="iom-run">
+      <button type="button" class="iom-step" data-io-step>Next wake</button>
+      <button type="button" class="iom-play" data-io-play aria-pressed="false">Play</button>
+    </div>
+  </div>
+
+  <div class="iom-grid" data-io-grid aria-hidden="true" style={`--cols:${columns(STILL.count)}`} data-numbered={numbered(STILL.count)}>
+    {fds.map((fd) => (
+      <div class="iom-cell" data-io-cell data-fd={fd} data-state={found.has(fd) ? "found" : undefined}><span>{fd}</span></div>
+    ))}
+  </div>
+
+  <div class="iom-arrow" aria-hidden="true">↓</div>
+  <div class="iom-box iom-call" data-io-call>
+    <b data-io-call-name>{CALL_NAME[STILL.mechanism]}</b>
+    <span data-io-call-status>{status}</span>
+  </div>
+  <div class="iom-arrow" aria-hidden="true">↓</div>
+  <div class="iom-box iom-ready" data-io-ready>
+    <b data-io-ready-title>{ready.title}</b>
+    <span data-io-ready-note>{ready.note}</span>
+  </div>
+  <div class="iom-arrow" aria-hidden="true">↓</div>
+  <div class="iom-box iom-thread" data-io-thread>
+    <b>one thread</b>
+    <span>handles the ready descriptors, then loops back and blocks again</span>
+  </div>
+
+  <div class="iom-readout">
+    <div class="iom-sentence" data-io-readout aria-live="polite">{stillText()}</div>
+    <dl class="iom-tally">
+      {MECHANISMS.map((m) => (
+        <>
+          <dt>{m}</dt>
+          <dd data-io-tally={m}>{tallyText(tallies[m])}</dd>
+        </>
+      ))}
+    </dl>
+  </div>
+
+  <figcaption>One thread, many sockets. Data lands on a few, the wait call reports which, the thread handles those and blocks again. select and poll check every descriptor to find out; epoll is told.</figcaption>
+</figure>
+
+<script>
+  import "../../scripts/figures/io-multiplexing";
+</script>
+
+<style>
+  .iom {
+    margin: 8px 0 32px;
+    font-size: 14px;
+    line-height: 1.4;
+    color: var(--color-text-secondary);
+    /* A checked socket: darker than the page, so the trail reads as "touched". */
+    --seen: color-mix(in srgb, var(--color-bg) 80%, black);
+  }
+
+  /* Toolbar: the zoom control's look (TransportBar.astro). display:flex would
+     beat the hidden attribute, so the hidden state is restated. */
+  .iom-bar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px 14px;
+    margin-bottom: 16px;
+  }
+  .iom-bar[hidden] {
+    display: none;
+  }
+  .iom-seg {
+    display: flex;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    overflow: hidden;
+    font-family: var(--font-mono);
+    font-size: 12px;
+  }
+  .iom-seg button {
+    padding: 5px 11px;
+    background: none;
+    border: 0;
+    border-right: 1px solid var(--color-border);
+    color: var(--color-text-muted);
+    font: inherit;
+    cursor: pointer;
+  }
+  .iom-seg button:last-child {
+    border-right: 0;
+  }
+  .iom-seg button[aria-pressed="true"] {
+    background: var(--color-bg-hover);
+    color: var(--color-text-primary);
+  }
+  .iom-run {
+    display: flex;
+    gap: 8px;
+    margin-left: auto;
+  }
+  .iom-run button {
+    padding: 5px 12px;
+    border: 1px solid var(--color-border-hover);
+    border-radius: var(--radius-md);
+    background: var(--color-bg-elevated);
+    color: var(--color-text-primary);
+    font: inherit;
+    font-size: 13px;
+    cursor: pointer;
+  }
+  .iom-step {
+    border-color: var(--c);
+    color: var(--c);
+  }
+  .iom-step[aria-disabled="true"] {
+    opacity: 0.5;
+    cursor: default;
+  }
+  .iom-play[aria-pressed="true"] {
+    background: var(--color-bg-hover);
+    border-color: var(--c);
+  }
+  .iom button:focus-visible {
+    outline: 2px solid var(--c);
+    outline-offset: 2px;
+  }
+
+  /* The grid: --cols from the model (8 at 8, else 16). */
+  .iom-grid {
+    display: grid;
+    grid-template-columns: repeat(var(--cols), 1fr);
+    gap: 5px;
+  }
+  .iom-cell {
+    aspect-ratio: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid var(--color-border);
+    border-radius: 3px;
+    background: var(--color-bg-elevated);
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--color-text-faint);
+    transition:
+      background-color 150ms,
+      border-color 150ms;
+  }
+  .iom-grid:not([data-numbered]) .iom-cell span {
+    display: none;
+  }
+  .iom-cell[data-state="ready"] {
+    border-color: var(--c);
+    background: color-mix(in srgb, var(--c) 16%, var(--color-bg-elevated));
+    color: var(--c);
+  }
+  .iom-cell[data-seen] {
+    border-color: var(--color-bg-hover);
+    background: var(--seen);
+  }
+  .iom-cell[data-seen][data-state="ready"] {
+    border-color: var(--c);
+    background: color-mix(in srgb, var(--c) 16%, var(--color-bg-elevated));
+  }
+  .iom-cell[data-state="found"],
+  .iom-cell[data-seen][data-state="found"] {
+    border-color: var(--c);
+    background: var(--c);
+    color: var(--color-bg);
+  }
+  .iom-cell[data-scan] {
+    box-shadow: 0 0 0 2px var(--color-text-primary);
+    color: var(--color-text-primary);
+  }
+
+  /* The pipeline under the grid. */
+  .iom-arrow {
+    text-align: center;
+    color: var(--color-text-faint);
+    line-height: 1;
+    padding: 6px 0;
+  }
+  .iom-box {
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    background: var(--color-bg-elevated);
+    padding: 10px 14px;
+    text-align: center;
+    transition: border-color 150ms;
+  }
+  .iom-box b {
+    display: block;
+    color: var(--color-text-primary);
+    font-weight: 600;
+  }
+  .iom-box span {
+    display: block;
+    color: var(--color-text-muted);
+    font-size: 12.5px;
+    min-height: 1.4em;
+  }
+  .iom[data-phase="sweep"] .iom-call,
+  .iom[data-phase="return"] .iom-ready,
+  .iom[data-phase="handle"] .iom-thread {
+    border-color: var(--c);
+  }
+
+  /* The readout and the tally. */
+  .iom-readout {
+    margin-top: 16px;
+    padding-top: 12px;
+    border-top: 1px solid var(--color-border);
+  }
+  .iom-sentence {
+    color: var(--color-text-primary);
+    margin-bottom: 8px;
+  }
+  .iom-tally {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 3px 16px;
+    margin: 0;
+    font-family: var(--font-mono);
+    font-size: 12px;
+  }
+  .iom-tally dt {
+    color: var(--color-text-muted);
+  }
+  .iom-tally dd {
+    margin: 0;
+  }
+
+  @media (max-width: 899.98px) {
+    .iom-grid {
+      gap: 3px;
+    }
+    .iom-cell {
+      border-radius: 2px;
+      font-size: 10px;
+    }
+    .iom-run {
+      margin-left: 0;
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .iom-cell,
+    .iom-box {
+      transition: none;
+    }
+  }
+</style>

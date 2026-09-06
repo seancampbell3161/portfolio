@@ -6,6 +6,8 @@ tags: ["I/O Multiplexing", "Redis", "Performance", "Architecture"]
 draft: false
 ---
 
+import IoMultiplexing from "../../components/figures/IoMultiplexing.astro";
+
 Ever wondered how applications like Redis or nginx are able to handle massive amounts of data throughput without draining a ton of resources from your server?
 
 
@@ -39,9 +41,4 @@ I/O multiplexing allows us to listen to multiple connections using a single thre
 - _epoll_(Linux) / _kqueue_ (macOS): the modern answer. Instead of handing the kernel a fresh list every time, you register your descriptors once, and the kernel maintains that set internally. When you call epoll_wait(), it only returns the descriptors that became ready. This is what makes it practical to watch tens of thousands of connections at once, and it's the backbone of high-concurrency servers.
 
 
-<figure>
-  <a href="/images/io_multiplexing_select_poll_epoll.png" target="_blank" rel="noopener">
-    <img src="/images/io_multiplexing_select_poll_epoll.png" alt="I/O Multiplexing Diagram" />
-  </a>
-  <figcaption>I/O Multiplexing - clients connect and send data. The chosen mechanism notifies and the app handles. Event loops.</figcaption>
-</figure>
+<IoMultiplexing />
