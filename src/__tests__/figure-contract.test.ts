@@ -51,6 +51,8 @@ describe.skipIf(pages.length === 0)("figure client contract (dist/blog/*)", () =
     expect(html).toMatch(/<div class="iom-grid[^"]*" data-io-grid aria-hidden="true" style="--cols:16;?" data-numbered/);
     expect(html.match(/<div class="iom-cell[^"]*" data-io-cell data-fd="\d+"/g)).toHaveLength(32);
     expect(html.match(/<div class="iom-cell[^"]*" data-io-cell data-fd="\d+" data-state="found"/g)).toHaveLength(3);
+    // rebuildGrid renumbers clones through cell.querySelector("span"); every cell must open with one.
+    expect(html.match(/<div class="iom-cell[^"]*" data-io-cell data-fd="\d+"[^>]*><span[^>]*>\d+<\/span>/g)).toHaveLength(32);
   });
 
   it("keeps the boxes the script writes into", () => {

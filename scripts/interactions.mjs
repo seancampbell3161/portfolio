@@ -302,39 +302,65 @@ const cellsOf = (p) => p.evaluate(() => {
 const readoutOf = (p) => p.locator("[data-io-readout]").textContent();
 const tallyOf = (p, m) => p.locator(`[data-io-tally="${m}"]`).textContent();
 const stepDisabled = (p) => p.locator("[data-io-step]").getAttribute("aria-disabled");
+// A snapshot of the cells, the readout and the ready title in one evaluate
+// call, so the three reads cannot straddle the 700ms return window.
+const frameOf = (p) => p.evaluate(() => {
+  const cells = [...document.querySelectorAll("[data-io-cell]")];
+  const grid = document.querySelector("[data-io-grid]");
+  return {
+    cells: {
+      total: cells.length,
+      seen: cells.filter((c) => c.hasAttribute("data-seen")).length,
+      scan: cells.filter((c) => c.hasAttribute("data-scan")).length,
+      found: cells.filter((c) => c.dataset.state === "found").map((c) => Number(c.dataset.fd)),
+      cols: getComputedStyle(grid).getPropertyValue("--cols").trim(),
+      numbered: grid.hasAttribute("data-numbered"),
+    },
+    readout: document.querySelector("[data-io-readout]")?.textContent ?? null,
+    readyTitle: document.querySelector("[data-io-ready-title]")?.textContent ?? null,
+  };
+});
 
 const fig = await fresh(FIGURE);
 check("the figure is live and its toolbar visible", (await fig.locator("[data-io-figure][data-live]").count()) === 1 && (await fig.locator("[data-io-controls]").isVisible()));
 const still = await cellsOf(fig);
 check("the still frame is epoll at 32 with three found", still.total === 32 && still.found.length === 3 && (await fig.locator('[data-io-figure][data-mechanism="epoll"]').count()) === 1);
 
-// select at 32: the sweep leaves every cell seen, the readout names the cost, the wake ends clean
+// switching off the still frame's mechanism paints idle at once, clearing it
 await fig.click('[data-io-mechanism="select"]');
+check(
+  "switching the mechanism from the still frame paints idle",
+  (await fig.locator('[data-io-figure][data-phase="idle"]').count()) === 1 &&
+    (await cellsOf(fig)).found.length === 0 &&
+    (await fig.locator("[data-io-ready-title]").textContent()) === "ready: nothing yet" &&
+    (await fig.locator("[data-io-call-name]").textContent()) === "select()",
+);
+
+// select at 32: the sweep leaves every cell seen, the readout names the cost, the wake ends clean
 await fig.click("[data-io-step]");
 await phaseIs(fig, "sweep");
 check("the step button is disabled during a wake", (await stepDisabled(fig)) === "true");
 await phaseIs(fig, "return");
-const selReturn = await cellsOf(fig);
-const selReadout = await readoutOf(fig);
-check("select's return frame has every cell seen and no scan ring", selReturn.seen === 32 && selReturn.scan === 0 && selReturn.found.length > 0);
-check("select's readout names 32 checked and the found count", selReadout.includes("Wake 1: select checked 32 descriptors") && selReadout.includes(`find ${selReturn.found.length} ready`));
-check("the ready box lists the found sockets", ((await fig.locator("[data-io-ready-title]").textContent()) ?? "").startsWith(`ready: fd ${selReturn.found[0]}`));
+const selFrame = await frameOf(fig);
+check("select's return frame has every cell seen and no scan ring", selFrame.cells.seen === 32 && selFrame.cells.scan === 0 && selFrame.cells.found.length > 0);
+check("select's readout names 32 checked and the found count", selFrame.readout.includes("Wake 1: select checked 32 descriptors") && selFrame.readout.includes(`find ${selFrame.cells.found.length} ready`));
+check("the ready box lists the found sockets", (selFrame.readyTitle ?? "").startsWith(`ready: fd ${selFrame.cells.found[0]}`));
 await phaseIs(fig, "idle");
 const selIdle = await cellsOf(fig);
 check("the wake ends with a clean grid and the button enabled", selIdle.seen === 0 && selIdle.found.length === 0 && selIdle.scan === 0 && (await stepDisabled(fig)) === null);
-check("the select tally fills in; the others stay a dash", (await tallyOf(fig, "select")) === `1 wake · 32 checked · ${selReturn.found.length} ready` && (await tallyOf(fig, "poll")) === "—" && (await tallyOf(fig, "epoll")) === "—");
+check("the select tally fills in; the others stay a dash", (await tallyOf(fig, "select")) === `1 wake · 32 checked · ${selFrame.cells.found.length} ready` && (await tallyOf(fig, "poll")) === "—" && (await tallyOf(fig, "epoll")) === "—");
 
 // epoll: no sweep, the same arrivals as select's first wake
 await fig.click('[data-io-mechanism="epoll"]');
 check("switching the mechanism renames the call at once", (await fig.locator("[data-io-call-name]").textContent()) === "epoll_wait()");
 await fig.click("[data-io-step]");
 await phaseIs(fig, "return");
-const epReturn = await cellsOf(fig);
-check("epoll's return frame has no seen cells", epReturn.seen === 0 && epReturn.scan === 0);
-check("epoll's first wake sees the same sockets as select's", JSON.stringify(epReturn.found) === JSON.stringify(selReturn.found));
-check("epoll's readout says returned without checking", ((await readoutOf(fig)) ?? "").startsWith("Wake 1: epoll_wait returned the"));
+const epFrame = await frameOf(fig);
+check("epoll's return frame has no seen cells", epFrame.cells.seen === 0 && epFrame.cells.scan === 0);
+check("epoll's first wake sees the same sockets as select's", JSON.stringify(epFrame.cells.found) === JSON.stringify(selFrame.cells.found));
+check("epoll's readout says returned without checking", (epFrame.readout ?? "").startsWith("Wake 1: epoll_wait returned the"));
 await phaseIs(fig, "idle");
-check("the epoll tally counts only what was returned", (await tallyOf(fig, "epoll")) === `1 wake · ${epReturn.found.length} checked · ${epReturn.found.length} ready`);
+check("the epoll tally counts only what was returned", (await tallyOf(fig, "epoll")) === `1 wake · ${epFrame.cells.found.length} checked · ${epFrame.cells.found.length} ready`);
 
 // a count change rebuilds the grid and resets the tallies
 await fig.click('[data-io-count="128"]');
@@ -342,9 +368,28 @@ const big = await cellsOf(fig);
 check("128 rebuilds the grid in 16 unnumbered columns", big.total === 128 && big.cols === "16" && !big.numbered && big.found.length === 0);
 check("a count change resets every tally", (await tallyOf(fig, "select")) === "—" && (await tallyOf(fig, "epoll")) === "—");
 check("a count change writes the reset sentence", (await readoutOf(fig)) === "No wakes yet at 128 sockets. Press Next wake.");
+
+// a count change mid-wake cancels it outright, not just when idle
+await fig.click('[data-io-mechanism="select"]');
+await fig.click("[data-io-step]");
+await phaseIs(fig, "sweep");
 await fig.click('[data-io-count="8"]');
+const midCancel = await cellsOf(fig);
+check(
+  "a count change mid-wake cancels it",
+  (await fig.locator('[data-io-figure][data-phase="idle"]').count()) === 1 &&
+    midCancel.total === 8 &&
+    midCancel.seen === 0 &&
+    midCancel.scan === 0 &&
+    midCancel.found.length === 0 &&
+    (await stepDisabled(fig)) === null &&
+    (await fig.locator("[data-io-play]").getAttribute("aria-pressed")) === "false",
+);
 const small = await cellsOf(fig);
 check("8 is one numbered row", small.total === 8 && small.cols === "8" && small.numbered);
+
+// back to epoll so the Play section below reads the tally it expects
+await fig.click('[data-io-mechanism="epoll"]');
 
 // play runs wakes back to back and stops when pressed again
 await fig.click("[data-io-play]");

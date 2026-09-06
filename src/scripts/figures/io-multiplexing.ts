@@ -3,7 +3,8 @@
 // spec §7). Without this the figure is its still frame with no controls. The
 // script reveals the toolbar and runs wakes by painting whatever the model
 // says shows at the elapsed time, on one animation-frame loop, so it holds no
-// timers of its own and a hidden tab pauses a wake cleanly. Re-runnable:
+// timers of its own. A hidden tab stops the loop; when the tab returns the
+// wake fast-forwards to its end, and the wake is still recorded. Re-runnable:
 // initIoFigure() tears the previous run down first, so a view transition can
 // call it again.
 import {
@@ -38,6 +39,8 @@ let current: AbortController | null = null;
 
 export function initIoFigure(): void {
   current?.abort();
+  // The site puts one figure on a page; a second instance on the same page
+  // would be ignored, not upgraded.
   const root = document.querySelector<HTMLElement>("[data-io-figure]");
   if (!root) return;
   const q = <T extends HTMLElement = HTMLElement>(sel: string) => root.querySelector<T>(sel);
@@ -63,7 +66,7 @@ export function initIoFigure(): void {
 
   // One wake at a time. `frame` is the pending animation frame, for a wake or
   // for Play's gap; `gapStart` is when the last wake ended.
-  let run: { wake: Wake; plan: Schedule; start: number; last: Frame | null } | null = null;
+  let run: { wake: Wake; plan: Schedule; start: number; last: Frame | null; recorded: boolean } | null = null;
   let frame = 0;
   let playing = false;
   let gapStart = 0;
@@ -147,8 +150,11 @@ export function initIoFigure(): void {
     if (!run) return;
     const elapsed = now - run.start;
     const f = frameAt(run.plan, run.wake.count, Math.min(elapsed, run.plan.duration));
+    if (!run.recorded && (f.phase === "return" || f.phase === "handle" || f.phase === "idle")) {
+      run.recorded = true;
+      recordWake(run.wake);
+    }
     if (!run.last || f.phase !== run.last.phase || f.scan !== run.last.scan) {
-      if (f.phase === "return" && run.last?.phase !== "return") recordWake(run.wake);
       paint(run.wake, f);
       run.last = f;
     }
@@ -163,7 +169,7 @@ export function initIoFigure(): void {
     clearFrame();
     const w = makeWake(mechanism, count, tallies[mechanism].wakes + 1);
     const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
-    run = { wake: w, plan: schedule(w.mechanism, w.count, reduce), start: performance.now(), last: null };
+    run = { wake: w, plan: schedule(w.mechanism, w.count, reduce), start: performance.now(), last: null, recorded: false };
     step.setAttribute("aria-disabled", "true");
     // The previous wake's frame may still be up (a reduced-motion wake holds its return frame).
     clearCells();
@@ -203,14 +209,14 @@ export function initIoFigure(): void {
   }
 
   function setMechanism(m: Mechanism): void {
+    if (m === mechanism) return;
     mechanism = m;
     root.dataset.mechanism = m;
     pressGroup("ioMechanism", m);
-    // A running wake keeps the mechanism it started with; otherwise the call box follows at once.
-    if (!run) {
-      callName.textContent = CALL_NAME[m];
-      callStatusEl.textContent = callStatus(null, m, count, IDLE);
-    }
+    // A running wake keeps the mechanism it started with; otherwise the idle
+    // frame repaints for the new one, clearing the still frame or a held
+    // reduced-motion frame left over from the previous mechanism.
+    if (!run) paintIdle();
   }
 
   function rebuildGrid(): void {
