@@ -116,3 +116,55 @@ export function addWake(tallies: Tallies, w: Wake): Tallies {
     [w.mechanism]: { wakes: t.wakes + 1, checked: t.checked + w.checked, ready: t.ready + w.ready.length },
   };
 }
+
+// ---- the schedule and the frame (spec §4.5) ----
+
+export type Phase = "idle" | "arrive" | "sweep" | "return" | "handle";
+
+export interface Step {
+  phase: Phase;
+  /** Milliseconds from the wake's start. */
+  at: number;
+}
+
+export interface Schedule {
+  steps: Step[];
+  /** The loop ends here; the last step's phase is what stays on screen. */
+  duration: number;
+}
+
+/** The whole sweep, so 128 is one socket per frame at 60Hz and visibly longer than 8. */
+export const SWEEP_MS: Record<Count, number> = { 8: 640, 32: 1280, 128: 2048 };
+
+export const HOLD_MS = { arrive: 350, return: 700, handle: 450, still: 2000, gap: 500 } as const;
+
+/**
+ * With motion: arrive, sweep (select and poll only), return, handle, idle.
+ * Under reduced motion: a single return frame, held, so the trail and the
+ * count checked are still visible; the next wake clears it.
+ */
+export function schedule(mechanism: Mechanism, count: Count, reduceMotion: boolean): Schedule {
+  if (reduceMotion) return { steps: [{ phase: "return", at: 0 }], duration: HOLD_MS.still };
+  const sweep = mechanism === "epoll" ? 0 : SWEEP_MS[count];
+  const steps: Step[] = [{ phase: "arrive", at: 0 }];
+  if (sweep > 0) steps.push({ phase: "sweep", at: HOLD_MS.arrive });
+  const returned = HOLD_MS.arrive + sweep;
+  const handle = returned + HOLD_MS.return;
+  const idle = handle + HOLD_MS.handle;
+  steps.push({ phase: "return", at: returned }, { phase: "handle", at: handle }, { phase: "idle", at: idle });
+  return { steps, duration: idle };
+}
+
+export interface Frame {
+  phase: Phase;
+  /** During a sweep, the index of the socket under check; every socket up to it is seen. */
+  scan: number | null;
+}
+
+export function frameAt(s: Schedule, count: Count, elapsed: number): Frame {
+  let step = s.steps[0]!;
+  for (const candidate of s.steps) if (candidate.at <= elapsed) step = candidate;
+  if (step.phase !== "sweep") return { phase: step.phase, scan: null };
+  const perSocket = SWEEP_MS[count] / count;
+  return { phase: "sweep", scan: Math.min(count - 1, Math.floor((elapsed - step.at) / perSocket)) };
+}

@@ -2,15 +2,19 @@ import { describe, it, expect } from "vitest";
 import {
   ARRIVAL_CHANCE,
   COUNTS,
+  HOLD_MS,
   MECHANISMS,
+  SWEEP_MS,
   addWake,
   arrivals,
   checked,
   columns,
   emptyTallies,
+  frameAt,
   isCount,
   isMechanism,
   numbered,
+  schedule,
   seedFor,
   seeded,
   wake,
@@ -141,5 +145,72 @@ describe("tallies (spec §4.4)", () => {
     expect(t1).not.toBe(t0);
     expect(t2.select).toEqual({ wakes: 2, checked: 64, ready: 4 });
     expect(t2.epoll).toEqual({ wakes: 0, checked: 0, ready: 0 });
+  });
+});
+
+describe("the schedule (spec §4.5)", () => {
+  it("runs select and poll through arrive, sweep, return, handle, idle", () => {
+    const s = schedule("select", 32, false);
+    expect(s.steps).toEqual([
+      { phase: "arrive", at: 0 },
+      { phase: "sweep", at: 350 },
+      { phase: "return", at: 350 + 1280 },
+      { phase: "handle", at: 350 + 1280 + 700 },
+      { phase: "idle", at: 350 + 1280 + 700 + 450 },
+    ]);
+    expect(s.duration).toBe(2780);
+    expect(schedule("poll", 128, false).steps.find((st) => st.phase === "return")?.at).toBe(350 + 2048);
+    expect(schedule("poll", 8, false).steps.find((st) => st.phase === "return")?.at).toBe(350 + 640);
+  });
+
+  it("has no sweep for epoll", () => {
+    const s = schedule("epoll", 32, false);
+    expect(s.steps.map((st) => st.phase)).toEqual(["arrive", "return", "handle", "idle"]);
+    expect(s.steps.map((st) => st.at)).toEqual([0, 350, 1050, 1500]);
+    expect(s.duration).toBe(1500);
+  });
+
+  it("is a single held return frame under reduced motion", () => {
+    for (const m of ["select", "epoll"] as const) {
+      const s = schedule(m, 128, true);
+      expect(s.steps).toEqual([{ phase: "return", at: 0 }]);
+      expect(s.duration).toBe(HOLD_MS.still);
+    }
+  });
+
+  it("makes 128 one socket per frame at 60Hz", () => {
+    expect(SWEEP_MS[128] / 128).toBe(16);
+    expect(SWEEP_MS).toEqual({ 8: 640, 32: 1280, 128: 2048 });
+    expect(HOLD_MS).toEqual({ arrive: 350, return: 700, handle: 450, still: 2000, gap: 500 });
+  });
+});
+
+describe("the frame at a time (spec §4.5)", () => {
+  const s32 = schedule("select", 32, false);
+  const s128 = schedule("poll", 128, false);
+
+  it("is arrive before the sweep and idle at the end", () => {
+    expect(frameAt(s32, 32, 0)).toEqual({ phase: "arrive", scan: null });
+    expect(frameAt(s32, 32, 349)).toEqual({ phase: "arrive", scan: null });
+    expect(frameAt(s32, 32, s32.duration)).toEqual({ phase: "idle", scan: null });
+  });
+
+  it("points at the middle socket halfway through the sweep and the last at its end", () => {
+    expect(frameAt(s32, 32, 350 + 640)).toEqual({ phase: "sweep", scan: 16 });
+    expect(frameAt(s32, 32, 350 + 1279)).toEqual({ phase: "sweep", scan: 31 });
+    expect(frameAt(s32, 32, 350)).toEqual({ phase: "sweep", scan: 0 });
+    expect(frameAt(s128, 128, 350 + 1024)).toEqual({ phase: "sweep", scan: 64 });
+    expect(frameAt(s128, 128, 350 + 2047)).toEqual({ phase: "sweep", scan: 127 });
+  });
+
+  it("returns then handles with no scan", () => {
+    expect(frameAt(s32, 32, 350 + 1280)).toEqual({ phase: "return", scan: null });
+    expect(frameAt(s32, 32, 350 + 1280 + 700)).toEqual({ phase: "handle", scan: null });
+  });
+
+  it("holds the return frame under reduced motion", () => {
+    const s = schedule("select", 8, true);
+    expect(frameAt(s, 8, 0)).toEqual({ phase: "return", scan: null });
+    expect(frameAt(s, 8, s.duration)).toEqual({ phase: "return", scan: null });
   });
 });
