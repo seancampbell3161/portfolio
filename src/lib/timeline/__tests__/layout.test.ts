@@ -17,6 +17,7 @@ import {
   laneSummary,
   graphLayout,
   whenLabel,
+  rowsNeeded,
 } from "../layout.js";
 
 const d = (s: string) => new Date(s);
@@ -365,5 +366,15 @@ describe("windowLabel", () => {
     expect(windowLabel("year", windowFor("year", NOW, [], 2))).toBe("2024");
     expect(windowLabel("three-years", windowFor("three-years", NOW, [], 1))).toBe("2022 to 2025");
     expect(windowLabel("all", windowFor("all", NOW, [mk("a", "learning", "2021-01-15")]))).toBe("2021 to 2026");
+  });
+});
+
+describe("rowsNeeded (thumbnails spec §6)", () => {
+  it("counts the rows a packed lane uses", () => {
+    expect(rowsNeeded([{ row: 0 }, { row: 2 }, { row: 1 }], 1)).toBe(3);
+  });
+  it("never goes below the floor", () => {
+    expect(rowsNeeded([{ row: 0 }], 2)).toBe(2);
+    expect(rowsNeeded([], 2)).toBe(2);
   });
 });

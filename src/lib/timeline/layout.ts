@@ -376,3 +376,12 @@ export function whenLabel(date: Date, zoom: Zoom): string {
   const m = MONTHS[date.getUTCMonth()];
   return zoom === "year" ? m : `${m} ${date.getUTCFullYear()}`;
 }
+
+/**
+ * Thumbnails spec §6: the rows a packed lane needs, never below `floor`. The
+ * building lane's height derives from this at build and on the client, so
+ * three overlapping projects grow the lane instead of clipping the third row.
+ */
+export function rowsNeeded(placed: readonly { row: number }[], floor: number): number {
+  return Math.max(floor, ...placed.map((p) => p.row + 1));
+}
