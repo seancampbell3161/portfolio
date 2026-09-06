@@ -168,3 +168,68 @@ export function frameAt(s: Schedule, count: Count, elapsed: number): Frame {
   const perSocket = SWEEP_MS[count] / count;
   return { phase: "sweep", scan: Math.min(count - 1, Math.floor((elapsed - step.at) / perSocket)) };
 }
+
+// ---- wording (spec §4.6) ----
+
+const plural = (n: number, one: string, many = `${one}s`): string => `${n} ${n === 1 ? one : many}`;
+
+/** "fd 4, 19, 27", or "fd 4, 19, 27, 61 and 7 more" past four. */
+export function fdList(ready: number[]): string {
+  const shown = ready.slice(0, 4);
+  const rest = ready.length - shown.length;
+  return `fd ${shown.join(", ")}${rest > 0 ? ` and ${rest} more` : ""}`;
+}
+
+/** The call box's one-line status. `w` is null before the first wake. */
+export function callStatus(w: Wake | null, mechanism: Mechanism, count: Count, frame: Frame): string {
+  switch (frame.phase) {
+    case "sweep":
+      return `checking ${mechanism === "poll" ? "entry" : "fd"} ${frame.scan ?? 0} of ${count}`;
+    case "return":
+    case "handle":
+      return mechanism === "epoll" ? `returned ${plural(w?.ready.length ?? 0, "event")}` : `checked all ${count}`;
+    default:
+      return mechanism === "epoll" ? "blocked until the kernel has an event" : "blocked until a descriptor is ready";
+  }
+}
+
+/** The ready box: empty until the call returns. */
+export function readyLine(w: Wake | null, frame: Frame): { title: string; note: string } {
+  if (!w || (frame.phase !== "return" && frame.phase !== "handle")) return { title: "ready: nothing yet", note: "" };
+  const note =
+    w.mechanism === "epoll"
+      ? "the kernel kept the set; nothing else was touched"
+      : `${w.count - w.ready.length} checked for nothing`;
+  return { title: `ready: ${fdList(w.ready)}`, note };
+}
+
+/** The live readout, one sentence per wake. */
+export function readoutText(w: Wake): string {
+  const ready = w.ready.length;
+  switch (w.mechanism) {
+    case "select":
+      return `Wake ${w.n}: select checked ${plural(w.count, "descriptor")} to find ${ready} ready.`;
+    case "poll":
+      return `Wake ${w.n}: poll checked ${plural(w.count, "entry", "entries")} to find ${ready} ready.`;
+    case "epoll":
+      return `Wake ${w.n}: epoll_wait returned the ${plural(ready, "ready descriptor")} without checking the other ${w.count - ready}.`;
+  }
+}
+
+/** After a count change. */
+export function resetText(count: Count): string {
+  return `No wakes yet at ${count} sockets. Press Next wake.`;
+}
+
+export function tallyText(t: Tally): string {
+  if (t.wakes === 0) return "—";
+  return `${plural(t.wakes, "wake")} · ${t.checked} checked · ${t.ready} ready`;
+}
+
+/** The no-JS frame (spec §5): epoll at 32 with three sockets ready, a completed wake. */
+export const STILL: Wake = { n: 0, mechanism: "epoll", count: 32, ready: [4, 19, 27], checked: 3 };
+
+export function stillText(): string {
+  const ready = STILL.ready.length;
+  return `epoll_wait returned the ${ready} ready descriptors of ${STILL.count} without checking the other ${STILL.count - ready}. select or poll would have checked all ${STILL.count}.`;
+}

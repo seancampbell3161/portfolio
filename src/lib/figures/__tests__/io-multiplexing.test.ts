@@ -4,20 +4,30 @@ import {
   COUNTS,
   HOLD_MS,
   MECHANISMS,
+  STILL,
   SWEEP_MS,
   addWake,
   arrivals,
+  callStatus,
   checked,
   columns,
   emptyTallies,
+  fdList,
   frameAt,
   isCount,
   isMechanism,
   numbered,
+  readoutText,
+  readyLine,
+  resetText,
   schedule,
   seedFor,
   seeded,
+  stillText,
+  tallyText,
   wake,
+  type Frame,
+  type Wake,
 } from "../io-multiplexing.js";
 
 describe("mechanisms and counts (spec §4.1)", () => {
@@ -212,5 +222,61 @@ describe("the frame at a time (spec §4.5)", () => {
     const s = schedule("select", 8, true);
     expect(frameAt(s, 8, 0)).toEqual({ phase: "return", scan: null });
     expect(frameAt(s, 8, s.duration)).toEqual({ phase: "return", scan: null });
+  });
+});
+
+const at = (phase: Frame["phase"], scan: number | null = null): Frame => ({ phase, scan });
+const w32 = (mechanism: "select" | "poll" | "epoll"): Wake => ({ n: 3, mechanism, count: 32, ready: [4, 19, 27], checked: mechanism === "epoll" ? 3 : 32 });
+const w128: Wake = { n: 1, mechanism: "select", count: 128, ready: [4, 19, 27, 61, 77, 90, 102, 115, 121, 126, 127], checked: 128 };
+const w1: Wake = { n: 1, mechanism: "epoll", count: 8, ready: [5], checked: 1 };
+
+describe("wording (spec §4.6)", () => {
+  it("lists up to four fds then counts the rest", () => {
+    expect(fdList([4, 19, 27])).toBe("fd 4, 19, 27");
+    expect(fdList([4, 19, 27, 61])).toBe("fd 4, 19, 27, 61");
+    expect(fdList(w128.ready)).toBe("fd 4, 19, 27, 61 and 7 more");
+    expect(fdList([5])).toBe("fd 5");
+  });
+
+  it("gives the call's status by phase and mechanism", () => {
+    expect(callStatus(null, "select", 32, at("idle"))).toBe("blocked until a descriptor is ready");
+    expect(callStatus(null, "epoll", 32, at("idle"))).toBe("blocked until the kernel has an event");
+    expect(callStatus(w32("select"), "select", 32, at("arrive"))).toBe("blocked until a descriptor is ready");
+    expect(callStatus(w32("select"), "select", 32, at("sweep", 13))).toBe("checking fd 13 of 32");
+    expect(callStatus(w32("poll"), "poll", 32, at("sweep", 13))).toBe("checking entry 13 of 32");
+    expect(callStatus(w32("select"), "select", 32, at("return"))).toBe("checked all 32");
+    expect(callStatus(w32("poll"), "poll", 32, at("handle"))).toBe("checked all 32");
+    expect(callStatus(w32("epoll"), "epoll", 32, at("return"))).toBe("returned 3 events");
+    expect(callStatus(w1, "epoll", 8, at("return"))).toBe("returned 1 event");
+  });
+
+  it("fills the ready line from return on", () => {
+    expect(readyLine(null, at("idle"))).toEqual({ title: "ready: nothing yet", note: "" });
+    expect(readyLine(w32("select"), at("sweep", 3))).toEqual({ title: "ready: nothing yet", note: "" });
+    expect(readyLine(w32("select"), at("return"))).toEqual({ title: "ready: fd 4, 19, 27", note: "29 checked for nothing" });
+    expect(readyLine(w32("poll"), at("handle"))).toEqual({ title: "ready: fd 4, 19, 27", note: "29 checked for nothing" });
+    expect(readyLine(w32("epoll"), at("return"))).toEqual({ title: "ready: fd 4, 19, 27", note: "the kernel kept the set; nothing else was touched" });
+    expect(readyLine(w128, at("return")).title).toBe("ready: fd 4, 19, 27, 61 and 7 more");
+  });
+
+  it("states each wake in one sentence", () => {
+    expect(readoutText(w32("select"))).toBe("Wake 3: select checked 32 descriptors to find 3 ready.");
+    expect(readoutText(w32("poll"))).toBe("Wake 3: poll checked 32 entries to find 3 ready.");
+    expect(readoutText(w32("epoll"))).toBe("Wake 3: epoll_wait returned the 3 ready descriptors without checking the other 29.");
+    expect(readoutText(w1)).toBe("Wake 1: epoll_wait returned the 1 ready descriptor without checking the other 7.");
+  });
+
+  it("resets and tallies", () => {
+    expect(resetText(128)).toBe("No wakes yet at 128 sockets. Press Next wake.");
+    expect(tallyText({ wakes: 0, checked: 0, ready: 0 })).toBe("—");
+    expect(tallyText({ wakes: 1, checked: 32, ready: 3 })).toBe("1 wake · 32 checked · 3 ready");
+    expect(tallyText({ wakes: 3, checked: 96, ready: 9 })).toBe("3 wakes · 96 checked · 9 ready");
+  });
+
+  it("keeps the still frame and its sentence together", () => {
+    expect(STILL).toEqual({ n: 0, mechanism: "epoll", count: 32, ready: [4, 19, 27], checked: 3 });
+    expect(stillText()).toBe(
+      "epoll_wait returned the 3 ready descriptors of 32 without checking the other 29. select or poll would have checked all 32.",
+    );
   });
 });
