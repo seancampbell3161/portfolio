@@ -1,7 +1,9 @@
 ---
+import { Image } from "astro:assets";
 import type { Lane, TimelineItem } from "../lib/timeline/types";
 import { rangeText, whenText } from "../lib/timeline/track";
 import { longDate, monthYearLong } from "../lib/dates";
+import { projectImage } from "../lib/images";
 
 interface Props {
   items: TimelineItem[];
@@ -16,6 +18,8 @@ const capitalized = (s: string) => (s === "in-progress" ? "In progress" : s[0].t
 <div class="inspector">
   {items.map((item) => {
     const b = item.body;
+    // Thumbnails spec §7.1: a building panel shows the project's picture; project ids are slugs.
+    const shot = b?.lane === "building" ? projectImage(item.id) : undefined;
     return (
       <section
         class="insp"
@@ -46,6 +50,16 @@ const capitalized = (s: string) => (s === "in-progress" ? "In progress" : s[0].t
           </div>
         </div>
         <aside class="insp-side">
+          {shot && (
+            <Image
+              class="insp-shot"
+              src={shot}
+              alt=""
+              widths={[480, 960]}
+              sizes="(max-width: 899px) 100vw, 420px"
+              loading="lazy"
+            />
+          )}
           {b?.lane === "building" && (
             <dl class="insp-facts">
               <dt>Stack</dt><dd>{b.stack.join(", ")}</dd>
@@ -166,6 +180,15 @@ const capitalized = (s: string) => (s === "in-progress" ? "In progress" : s[0].t
     margin-left: auto;
     color: var(--color-text-muted);
     border-bottom-color: transparent;
+  }
+  /* Thumbnails spec §7.1: the project's picture above its facts. */
+  .insp-shot {
+    display: block;
+    width: 100%;
+    height: auto;
+    margin: 0 0 18px;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
   }
   .insp-facts {
     display: grid;

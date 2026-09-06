@@ -77,4 +77,8 @@ describe.skipIf(!built)("home client contract (dist/index.html)", () => {
   it("writes the building lane's row count on the root, which the layout pass keeps", () => {
     expect(html).toMatch(/<section class="tl"[^>]*--rows-building:\s*\d+/);
   });
+
+  it("keeps the panel's picture, lazy since panels start hidden", () => {
+    expect(html).toMatch(/<img[^>]*class="insp-shot"[^>]*loading="lazy"|<img[^>]*loading="lazy"[^>]*class="insp-shot"/);
+  });
 });
