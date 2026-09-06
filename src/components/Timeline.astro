@@ -117,7 +117,7 @@ const iso = (d: Date) => d.toISOString().slice(0, 10);
             <span class="tl-when">{when(item)}</span>
             <a class="tl-clip" href={item.href} data-item-link={item.id}>
               <span class="tl-sr">{item.lane[0].toUpperCase() + item.lane.slice(1)}: </span>
-              {shot && <Image class="tl-thumb" src={shot} alt="" widths={[180, 360]} sizes="90px" loading="eager" />}
+              {shot && <Image class="tl-thumb" src={shot} alt="" width={360} widths={[180, 360]} sizes="90px" loading="eager" />}
               <span class="tl-title">{item.title}</span>
               {item.subtitle && <small class="tl-sub">{item.subtitle}</small>}
             </a>
@@ -435,9 +435,11 @@ const iso = (d: Date) => d.toISOString().slice(0, 10);
   }
   .tl-item[data-lane="building"][data-kind="span"] .tl-title {
     grid-row: 1;
+    align-self: end;
   }
   .tl-item[data-lane="building"][data-kind="span"] .tl-sub {
     grid-row: 2;
+    align-self: start;
     margin-top: 1px;
   }
   .tl-thumb {
