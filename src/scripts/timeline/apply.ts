@@ -11,6 +11,7 @@ import {
   laneSummary,
   maxOffset,
   packLane,
+  rowsNeeded,
   ticksFor,
   whenLabel,
   windowFor,
@@ -28,7 +29,10 @@ export function applyLayout(ctx: Ctx, s: TimelineState): void {
 
   const placedIds = new Set<string>();
   LANES.forEach((lane, laneIndex) => {
-    for (const p of packLane(items, lane, win, now, measure)) {
+    const packed = packLane(items, lane, win, now, measure);
+    // Thumbnails spec §6: the building lane follows its packed rows, floor two.
+    if (lane === "building") root.style.setProperty("--rows-building", String(rowsNeeded(packed, 2)));
+    for (const p of packed) {
       const el = elById.get(p.item.id);
       if (!el) continue;
       el.style.setProperty("--lane", String(laneIndex));

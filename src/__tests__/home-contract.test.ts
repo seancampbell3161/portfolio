@@ -73,4 +73,8 @@ describe.skipIf(!built)("home client contract (dist/index.html)", () => {
   it("keeps the clip thumbnail", () => {
     expect(html).toContain('class="tl-thumb"');
   });
+
+  it("writes the building lane's row count on the root, which the layout pass keeps", () => {
+    expect(html).toMatch(/<section class="tl"[^>]*--rows-building:\s*\d+/);
+  });
 });

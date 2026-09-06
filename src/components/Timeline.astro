@@ -8,6 +8,7 @@ import {
   laneSummary,
   packLane,
   positionIn,
+  rowsNeeded,
   ticksFor,
   whenLabel,
   windowFor,
@@ -36,8 +37,12 @@ const when = (item: TimelineItem) =>
 
 // Arrangement positions, per lane, then indexed by item id.
 const placed = new Map<string, { lane: number; row: number; x: number; w: number; labeled: boolean }>();
+// Thumbnails spec §6: the building lane is as tall as its rows, never under two.
+let buildingRows = 2;
 LANES.forEach((lane, laneIndex) => {
-  for (const p of packLane(items, lane, win, now, estimate)) {
+  const packed = packLane(items, lane, win, now, estimate);
+  if (lane === "building") buildingRows = rowsNeeded(packed, 2);
+  for (const p of packed) {
     placed.set(p.item.id, { lane: laneIndex, row: p.row, x: p.x, w: p.w, labeled: p.labeled });
   }
 });
@@ -60,7 +65,7 @@ const overview = LANES.map((lane) =>
 const iso = (d: Date) => d.toISOString().slice(0, 10);
 ---
 
-<section class="tl" data-timeline data-now={now.toISOString()} data-zoom={zoom} aria-label={`Timeline, ${label}`}>
+<section class="tl" data-timeline data-now={now.toISOString()} data-zoom={zoom} style={`--rows-building:${buildingRows}`} aria-label={`Timeline, ${label}`}>
   <div class="tl-ov" aria-hidden="true">
     {allTicks.map((t) => <span class="tl-ov-yr" style={`--x:${t.x}`}>{t.label}</span>)}
     {LANES.map((lane, li) => (
@@ -145,6 +150,14 @@ const iso = (d: Date) => d.toISOString().slice(0, 10);
     --lane-h: 120px;
     --row-pitch: 36px;
     --row-top: 12px;
+    /* Thumbnails spec §6: the building lane holds 66px clips at a 70px pitch and
+       is as tall as its packed rows (the inline style and the layout pass set
+       --rows-building; two is the floor). The other lanes keep --lane-h. */
+    --row-pitch-building: 70px;
+    --rows-building: 2;
+    --lane-h-building: calc(var(--row-top) + var(--rows-building) * var(--row-pitch-building));
+    --lane-2-top: calc(var(--lane-h) + var(--lane-h-building));
+    --lane-3-top: calc(2 * var(--lane-h) + var(--lane-h-building));
     --head-w: 160px;
     --ruler-h: 32px;
     --row-h: 50px;
@@ -228,7 +241,7 @@ const iso = (d: Date) => d.toISOString().slice(0, 10);
     position: relative;
     display: grid;
     grid-template-columns: var(--head-w) 1fr;
-    grid-template-rows: var(--ruler-h) repeat(4, var(--lane-h));
+    grid-template-rows: var(--ruler-h) var(--lane-h) var(--lane-h-building) var(--lane-h) var(--lane-h);
     border: 1px solid var(--color-border);
     border-radius: var(--radius-md);
     background: var(--color-bg-elevated);
@@ -314,17 +327,35 @@ const iso = (d: Date) => d.toISOString().slice(0, 10);
     list-style: none;
     margin: 0;
     padding: 0;
-    background-image: linear-gradient(var(--color-border) 1px, transparent 1px);
-    background-size: 100% var(--lane-h);
-    background-position: 0 -1px;
+    /* One 1px rule under each of the first three lanes; the lanes are no longer equal. */
+    background-image: linear-gradient(
+      to bottom,
+      transparent calc(var(--lane-h) - 1px),
+      var(--color-border) calc(var(--lane-h) - 1px),
+      var(--color-border) var(--lane-h),
+      transparent var(--lane-h),
+      transparent calc(var(--lane-2-top) - 1px),
+      var(--color-border) calc(var(--lane-2-top) - 1px),
+      var(--color-border) var(--lane-2-top),
+      transparent var(--lane-2-top),
+      transparent calc(var(--lane-3-top) - 1px),
+      var(--color-border) calc(var(--lane-3-top) - 1px),
+      var(--color-border) var(--lane-3-top),
+      transparent var(--lane-3-top)
+    );
   }
   .tl-item {
     position: absolute;
     left: calc(var(--x) * 100%);
     width: calc(var(--w) * 100%);
-    top: calc(var(--lane) * var(--lane-h) + var(--row-top) + var(--row) * var(--row-pitch));
+    top: calc(var(--lane-top) + var(--row-top) + var(--row) * var(--pitch));
     margin: 0;
   }
+  /* Each lane's top edge and row pitch, by lane; --lane stays for the strip and gutter. */
+  .tl-item[data-lane="writing"]   { --lane-top: 0px; --pitch: var(--row-pitch); }
+  .tl-item[data-lane="building"]  { --lane-top: var(--lane-h); --pitch: var(--row-pitch-building); }
+  .tl-item[data-lane="learning"]  { --lane-top: var(--lane-2-top); --pitch: var(--row-pitch); }
+  .tl-item[data-lane="community"] { --lane-top: var(--lane-3-top); --pitch: var(--row-pitch); }
   /* !important: an out-of-window item must stay hidden in both layouts. Without
      it, the mobile media query's same-specificity `.tl-item[data-kind="moment"]`
      rule (later in source order) would win the tie and re-show it. */

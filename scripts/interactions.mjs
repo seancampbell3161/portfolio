@@ -184,6 +184,14 @@ const clipState = await thumbs.$$eval('.tl-item[data-lane="building"][data-kind=
 );
 check("a thumbnail shows exactly when its clip is at least 200px wide", clipState.filter((c) => c.hasImg).every((c) => c.shown === (c.width >= 200)));
 check("at least one building clip shows its thumbnail", clipState.some((c) => c.shown));
+const laneHeights = await thumbs.$$eval(".tl-head", (els) => els.map((el) => el.getBoundingClientRect().height));
+const buildingRows = Number(await thumbs.$eval(".tl", (el) => getComputedStyle(el).getPropertyValue("--rows-building")));
+check("the building lane is 12 + rows x 70 tall", Math.abs(laneHeights[1] - (12 + buildingRows * 70)) < 1);
+check("the other lanes keep 120px", [0, 2, 3].every((i) => Math.abs(laneHeights[i] - 120) < 1));
+check("building clips sit inside their lane", await thumbs.$$eval('.tl-item[data-lane="building"]:not([data-out])', (els) => {
+  const lane = document.querySelectorAll(".tl-head")[1].getBoundingClientRect();
+  return els.every((el) => { const r = el.getBoundingClientRect(); return r.top >= lane.top && r.bottom <= lane.bottom + 1; });
+}));
 await thumbs.close();
 
 // ---- phone ----
@@ -198,6 +206,7 @@ await phone.mouse.up();
 const afterWhen = await phone.locator(".tl-item:not([data-out]) .tl-when").first().textContent();
 check("phone drag changes the graph's rows", firstWhen !== afterWhen);
 check("phone has no cursor", await phone.locator("[data-cursor]").isHidden());
+check("a phone building row shows its picture", (await phone.locator('.tl-item[data-lane="building"]:not([data-out]) .tl-thumb:visible').count()) > 0);
 
 // ---- nothing threw anywhere ----
 check(`no uncaught page errors${errors.length ? `: ${errors.join(" | ")}` : ""}`, errors.length === 0);
