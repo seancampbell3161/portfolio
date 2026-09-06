@@ -67,4 +67,10 @@ describe.skipIf(!built)("home client contract (dist/index.html)", () => {
     expect(links.length).toBeGreaterThan(0);
     for (const a of links) expect(a, `readout link without data-item-link: ${a}`).toContain("data-item-link=");
   });
+
+  // A building clip's picture (thumbnails spec §5). Present as long as a project
+  // with a picture is on the timeline; two are committed.
+  it("keeps the clip thumbnail", () => {
+    expect(html).toContain('class="tl-thumb"');
+  });
 });

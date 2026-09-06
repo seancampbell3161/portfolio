@@ -14,6 +14,8 @@ import {
   windowLabel,
   type Zoom,
 } from "../lib/timeline/layout";
+import { Image } from "astro:assets";
+import { projectImage } from "../lib/images";
 
 interface Props {
   items: TimelineItem[];
@@ -91,6 +93,8 @@ const iso = (d: Date) => d.toISOString().slice(0, 10);
     <ol class="tl-items">
       {items.map((item) => {
         const p = placed.get(item.id);
+        // Thumbnails spec §5: a building span carries its site's picture; project ids are slugs.
+        const shot = item.lane === "building" && item.kind === "span" ? projectImage(item.id) : undefined;
         const style = p ? `--lane:${p.lane};--row:${p.row};--x:${p.x};--w:${p.w};--c:var(--lane-${item.lane})` : `--c:var(--lane-${item.lane})`;
         return (
           <li
@@ -108,6 +112,7 @@ const iso = (d: Date) => d.toISOString().slice(0, 10);
             <span class="tl-when">{when(item)}</span>
             <a class="tl-clip" href={item.href} data-item-link={item.id}>
               <span class="tl-sr">{item.lane[0].toUpperCase() + item.lane.slice(1)}: </span>
+              {shot && <Image class="tl-thumb" src={shot} alt="" widths={[180, 360]} sizes="90px" loading="eager" />}
               <span class="tl-title">{item.title}</span>
               {item.subtitle && <small class="tl-sub">{item.subtitle}</small>}
             </a>
@@ -373,6 +378,52 @@ const iso = (d: Date) => d.toISOString().slice(0, 10);
     line-height: 1.15;
     color: var(--color-text-muted);
   }
+  /* A building span carries its picture beside the title (thumbnails spec §5.1).
+     The item is a size container so the picture can hide on a narrow clip in
+     CSS alone; moments keep width:auto and must not be containers. */
+  .tl-item[data-lane="building"][data-kind="span"] {
+    container-type: inline-size;
+  }
+  .tl-item[data-lane="building"][data-kind="span"] .tl-clip {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    grid-template-rows: auto auto;
+    align-content: center;
+    column-gap: 10px;
+    height: 66px;
+    padding: 0 10px 0 0;
+    white-space: normal;
+  }
+  .tl-item[data-lane="building"][data-kind="span"] :is(.tl-title, .tl-sub) {
+    grid-column: 2;
+    display: block;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .tl-item[data-lane="building"][data-kind="span"] .tl-title {
+    grid-row: 1;
+  }
+  .tl-item[data-lane="building"][data-kind="span"] .tl-sub {
+    grid-row: 2;
+    margin-top: 1px;
+  }
+  .tl-thumb {
+    grid-column: 1;
+    grid-row: 1 / 3;
+    width: 90px;
+    height: 56px;
+    margin-left: 5px;
+    border-radius: 2px;
+    object-fit: cover;
+    object-position: 50% 0;
+  }
+  @container (width < 200px) {
+    .tl-thumb {
+      display: none;
+    }
+  }
   .tl-item[data-status="in-progress"] .tl-clip {
     background: repeating-linear-gradient(
       -45deg,
@@ -631,6 +682,23 @@ const iso = (d: Date) => d.toISOString().slice(0, 10);
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
+    }
+    /* Thumbnails spec §5.2: the row keeps its text and gains the picture at the right. */
+    .tl-item[data-lane="building"][data-kind="span"] .tl-clip {
+      grid-template-columns: minmax(0, 1fr) auto;
+      height: auto;
+      padding: 0;
+    }
+    .tl-item[data-lane="building"][data-kind="span"] :is(.tl-title, .tl-sub) {
+      grid-column: 1;
+    }
+    .tl-thumb {
+      grid-column: 2;
+      grid-row: 1 / 3;
+      align-self: start;
+      width: 56px;
+      height: 35px;
+      margin: 0;
     }
     .tl-item[data-labeled="false"] .tl-title,
     .tl-item[data-labeled="false"] .tl-sub {

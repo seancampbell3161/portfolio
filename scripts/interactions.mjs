@@ -166,6 +166,26 @@ for (const [label, ms] of [["sixty days on", 60 * DAY], ["three years on", 3 * 3
   check(`${label}, a phrase shows exactly when its entry is alone in its row`, r.rows.every((row) => row.shown === (row.ids.length === 1 ? 1 : 0)));
 }
 
+// ---- project thumbnails (interactions 3) ----
+// The all-time zoom shows every project at its narrowest, so the 200px rule is
+// exercised both ways when clips straddle it.
+const thumbs = await fresh(`${BASE}/`);
+await thumbs.locator('[data-zoom-control] button[data-zoom="all"]').click();
+const clipState = await thumbs.$$eval('.tl-item[data-lane="building"][data-kind="span"]:not([data-out])', (els) =>
+  els.map((el) => {
+    const img = el.querySelector(".tl-thumb");
+    return {
+      id: el.dataset.id,
+      width: el.getBoundingClientRect().width,
+      hasImg: !!img,
+      shown: !!img && getComputedStyle(img).display !== "none",
+    };
+  }),
+);
+check("a thumbnail shows exactly when its clip is at least 200px wide", clipState.filter((c) => c.hasImg).every((c) => c.shown === (c.width >= 200)));
+check("at least one building clip shows its thumbnail", clipState.some((c) => c.shown));
+await thumbs.close();
+
 // ---- phone ----
 const phone = watch(await browser.newPage({ viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true }));
 await phone.goto(`${BASE}/`, { waitUntil: "networkidle" });
