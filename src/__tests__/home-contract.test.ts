@@ -52,4 +52,19 @@ describe.skipIf(!built)("home client contract (dist/index.html)", () => {
       expect(html, `missing ${hook}`).toContain(hook);
     }
   });
+
+  // The readout renders only when something touches the build day; the roadmap
+  // threads keep that true into 2027. When this fails on an empty timeline, the
+  // timeline itself is the news.
+  it("keeps the hero readout the script prunes: block, rows, entries with ids, phrases", () => {
+    const start = html.indexOf("data-right-now");
+    expect(start, "missing data-right-now").toBeGreaterThan(-1);
+    const block = html.slice(start, html.indexOf("</dl>", start));
+    for (const hook of ['data-now-row="', "<dd data-id=", "data-now-when"]) {
+      expect(block, `missing ${hook}`).toContain(hook);
+    }
+    const links = block.match(/<a [^>]*>/g) ?? [];
+    expect(links.length).toBeGreaterThan(0);
+    for (const a of links) expect(a, `readout link without data-item-link: ${a}`).toContain("data-item-link=");
+  });
 });

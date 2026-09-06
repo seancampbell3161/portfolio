@@ -4,6 +4,7 @@ import TransportBar from "../components/TransportBar.astro";
 import Timeline from "../components/Timeline.astro";
 import Inspector from "../components/Inspector.astro";
 import ContactBlock from "../components/ContactBlock.astro";
+import RightNow from "../components/RightNow.astro";
 import Footer from "../components/Footer.astro";
 import { getTimeline } from "../lib/timeline/astro";
 
@@ -16,7 +17,10 @@ const { items, now } = await getTimeline();
   <main class="home">
     <section class="hero">
       <h1>Everything I've built, written and taught, in the order it happened.</h1>
-      <p>Software engineer in Dallas. Python, TypeScript, Go, Rust and .NET. Click any clip to open it.</p>
+      <div class="hero-side">
+        <p>Software engineer in Dallas. Python, TypeScript, Go, Rust and .NET. Click any clip to open it.</p>
+        <RightNow items={items} now={now} />
+      </div>
     </section>
 
     <Timeline items={items} now={now} />
