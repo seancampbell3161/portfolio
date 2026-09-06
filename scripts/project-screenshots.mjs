@@ -46,14 +46,18 @@ async function run() {
     const out = thumbFile(slug);
     try {
       const page = await context.newPage();
+      let response;
       try {
-        await page.goto(url, { waitUntil: "networkidle", timeout: 45000 });
+        response = await page.goto(url, { waitUntil: "networkidle", timeout: 45000 });
       } catch (err) {
         // A map or a live feed can keep the network busy for good; the page is
         // still there, so shoot what loaded.
         if (!String(err).includes("Timeout")) throw err;
         console.log(`  ${url} never went idle; shooting as loaded`);
+        await page.waitForLoadState("load", { timeout: 5000 });
       }
+      // A 404, a parking page or a half-loaded navigation must never replace a committed picture.
+      if (response && !response.ok()) throw new Error(`${url} answered ${response.status()}`);
       // Tiles, fonts and entrance animations.
       await page.waitForTimeout(2500);
       await mkdir(dirname(out), { recursive: true });
