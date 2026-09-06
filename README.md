@@ -13,6 +13,9 @@ while pages that show live numbers, like the roadmap, stay usable but render at 
 The home timeline's zoom, scrubbing and panning are enhancements too: without
 scripting the page shows the current year and every clip stays a link, and the
 hero's "Right now" readout stands as built rather than following the real day.
+So are the reading line along the transport bar and the sticky sidebar on essays
+and case studies: without scripting the line stays hidden and the sidebar
+scrolls with the page.
 
 ## Commands
 
@@ -24,7 +27,7 @@ hero's "Right now" readout stands as built rather than following the real day.
 | `npm test` | Vitest unit suite |
 | `npm run check` | Build, then the full suite (includes the roadmap contract test) |
 | `npm run shots` | Review screenshots of the main pages at two widths, into `screenshots/` (needs `npm run preview` running) |
-| `npm run e2e` | Playwright pass over the home timeline's scrub and pan interactions and the hero readout's links and pruning, at two widths (needs `npm run preview` running) |
+| `npm run e2e` | Playwright pass over the home timeline's scrub and pan interactions, the hero readout's links and pruning, and the reader frame's reading line and sticky sidebar, at two widths (needs `npm run preview` running) |
 | `npm run og` | Regenerate the Open Graph share images against the live site |
 | `npm run thumbs` | Screenshot every project that has a `url` into `src/assets/projects/`, for the clips, panels and case studies |
 
