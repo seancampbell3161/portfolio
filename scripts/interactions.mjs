@@ -211,6 +211,58 @@ check("phone drag changes the graph's rows", firstWhen !== afterWhen);
 check("phone has no cursor", await phone.locator("[data-cursor]").isHidden());
 check("a phone building row shows its picture", (await phone.locator('.tl-item[data-lane="building"]:not([data-out]) .tl-thumb:visible').count()) > 0);
 
+// ---- the reader frame (interactions 4) ----
+// Data-dependent: the first essay on the index must run past one screen, and
+// the DAW engine case study must fit on one; both hold by a wide margin.
+const settle = (p) => p.evaluate(() => new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r))));
+// The site scrolls smoothly (global.css); the checks need to land, not glide.
+const scrollTo = async (p, y) => { await p.evaluate((y) => window.scrollTo({ top: y, behavior: "instant" }), y); await settle(p); };
+const progressOf = (p) => p.$eval("[data-reader-progress]", (el) => ({ hidden: el.hidden, p: Number(getComputedStyle(el).getPropertyValue("--p") || 0) }));
+const asideOf = (p) => p.$eval("[data-reader-aside]", (el) => ({ fits: el.hasAttribute("data-fits"), top: Math.round(el.getBoundingClientRect().top), position: getComputedStyle(el).position }));
+const index = await fresh(`${BASE}/blog`);
+const essayHref = await index.locator('a[href^="/blog/"]').first().getAttribute("href");
+await index.close();
+
+const essay = await fresh(`${BASE}${essayHref}`);
+await settle(essay);
+let pr = await progressOf(essay);
+check("an essay shows the reading line, empty, at the top", !pr.hidden && pr.p === 0);
+await scrollTo(essay, 100000);
+pr = await progressOf(essay);
+check("the line is full at the end of the essay", !pr.hidden && pr.p === 1);
+const essayHeight = await essay.evaluate(() => document.documentElement.scrollHeight);
+await scrollTo(essay, essayHeight / 2);
+pr = await progressOf(essay);
+check("the line is part way in the middle", pr.p > 0 && pr.p < 1);
+await scrollTo(essay, 0);
+check("the line empties again at the top", (await progressOf(essay)).p === 0);
+await scrollTo(essay, 400);
+const stuckA = await asideOf(essay);
+await scrollTo(essay, 900);
+const stuckB = await asideOf(essay);
+check("the essay's sidebar fits and sticks", stuckA.fits && stuckA.position === "sticky" && stuckA.top === stuckB.top);
+check("the sidebar sticks at --stick", stuckA.top === 84);
+await essay.setViewportSize({ width: 1280, height: 480 });
+await settle(essay);
+check("a viewport too short for the sidebar releases it", !(await asideOf(essay)).fits);
+await essay.setViewportSize({ width: 1280, height: 900 });
+await settle(essay);
+check("a tall enough viewport sticks it again", (await asideOf(essay)).fits);
+await essay.close();
+
+const short = await fresh(`${BASE}/building/daw-engine`);
+await settle(short);
+check("a case study that fits one screen shows no line", (await progressOf(short)).hidden);
+await short.close();
+
+const phoneEssay = watch(await browser.newPage({ viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true }));
+await phoneEssay.goto(`${BASE}${essayHref}`, { waitUntil: "networkidle" });
+await scrollTo(phoneEssay, 100000);
+pr = await progressOf(phoneEssay);
+check("a phone shows the line and fills it at the end", !pr.hidden && pr.p === 1);
+check("a phone's sidebar never sticks", (await asideOf(phoneEssay)).position === "static");
+await phoneEssay.close();
+
 // ---- nothing threw anywhere ----
 check(`no uncaught page errors${errors.length ? `: ${errors.join(" | ")}` : ""}`, errors.length === 0);
 
