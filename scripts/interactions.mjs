@@ -282,6 +282,113 @@ check("a phone shows the line and fills it at the end", !pr.hidden && pr.p === 1
 check("a phone's sidebar never sticks", (await asideOf(phoneEssay)).position === "static");
 await phoneEssay.close();
 
+// ---- the I/O multiplexing figure (interactions 5) ----
+// The figure lives in one essay; a wrong path here fails loudly (no figure),
+// unlike the contract test, which finds the page by hook.
+const FIGURE = `${BASE}/blog/io-multiplexing`;
+const phaseIs = (p, phase) => p.waitForSelector(`[data-io-figure][data-phase="${phase}"]`, { timeout: 8000 });
+const cellsOf = (p) => p.evaluate(() => {
+  const cells = [...document.querySelectorAll("[data-io-cell]")];
+  const grid = document.querySelector("[data-io-grid]");
+  return {
+    total: cells.length,
+    seen: cells.filter((c) => c.hasAttribute("data-seen")).length,
+    scan: cells.filter((c) => c.hasAttribute("data-scan")).length,
+    found: cells.filter((c) => c.dataset.state === "found").map((c) => Number(c.dataset.fd)),
+    cols: getComputedStyle(grid).getPropertyValue("--cols").trim(),
+    numbered: grid.hasAttribute("data-numbered"),
+  };
+});
+const readoutOf = (p) => p.locator("[data-io-readout]").textContent();
+const tallyOf = (p, m) => p.locator(`[data-io-tally="${m}"]`).textContent();
+const stepDisabled = (p) => p.locator("[data-io-step]").getAttribute("aria-disabled");
+
+const fig = await fresh(FIGURE);
+check("the figure is live and its toolbar visible", (await fig.locator("[data-io-figure][data-live]").count()) === 1 && (await fig.locator("[data-io-controls]").isVisible()));
+const still = await cellsOf(fig);
+check("the still frame is epoll at 32 with three found", still.total === 32 && still.found.length === 3 && (await fig.locator('[data-io-figure][data-mechanism="epoll"]').count()) === 1);
+
+// select at 32: the sweep leaves every cell seen, the readout names the cost, the wake ends clean
+await fig.click('[data-io-mechanism="select"]');
+await fig.click("[data-io-step]");
+await phaseIs(fig, "sweep");
+check("the step button is disabled during a wake", (await stepDisabled(fig)) === "true");
+await phaseIs(fig, "return");
+const selReturn = await cellsOf(fig);
+const selReadout = await readoutOf(fig);
+check("select's return frame has every cell seen and no scan ring", selReturn.seen === 32 && selReturn.scan === 0 && selReturn.found.length > 0);
+check("select's readout names 32 checked and the found count", selReadout.includes("Wake 1: select checked 32 descriptors") && selReadout.includes(`find ${selReturn.found.length} ready`));
+check("the ready box lists the found sockets", ((await fig.locator("[data-io-ready-title]").textContent()) ?? "").startsWith(`ready: fd ${selReturn.found[0]}`));
+await phaseIs(fig, "idle");
+const selIdle = await cellsOf(fig);
+check("the wake ends with a clean grid and the button enabled", selIdle.seen === 0 && selIdle.found.length === 0 && selIdle.scan === 0 && (await stepDisabled(fig)) === null);
+check("the select tally fills in; the others stay a dash", (await tallyOf(fig, "select")) === `1 wake · 32 checked · ${selReturn.found.length} ready` && (await tallyOf(fig, "poll")) === "—" && (await tallyOf(fig, "epoll")) === "—");
+
+// epoll: no sweep, the same arrivals as select's first wake
+await fig.click('[data-io-mechanism="epoll"]');
+check("switching the mechanism renames the call at once", (await fig.locator("[data-io-call-name]").textContent()) === "epoll_wait()");
+await fig.click("[data-io-step]");
+await phaseIs(fig, "return");
+const epReturn = await cellsOf(fig);
+check("epoll's return frame has no seen cells", epReturn.seen === 0 && epReturn.scan === 0);
+check("epoll's first wake sees the same sockets as select's", JSON.stringify(epReturn.found) === JSON.stringify(selReturn.found));
+check("epoll's readout says returned without checking", ((await readoutOf(fig)) ?? "").startsWith("Wake 1: epoll_wait returned the"));
+await phaseIs(fig, "idle");
+check("the epoll tally counts only what was returned", (await tallyOf(fig, "epoll")) === `1 wake · ${epReturn.found.length} checked · ${epReturn.found.length} ready`);
+
+// a count change rebuilds the grid and resets the tallies
+await fig.click('[data-io-count="128"]');
+const big = await cellsOf(fig);
+check("128 rebuilds the grid in 16 unnumbered columns", big.total === 128 && big.cols === "16" && !big.numbered && big.found.length === 0);
+check("a count change resets every tally", (await tallyOf(fig, "select")) === "—" && (await tallyOf(fig, "epoll")) === "—");
+check("a count change writes the reset sentence", (await readoutOf(fig)) === "No wakes yet at 128 sockets. Press Next wake.");
+await fig.click('[data-io-count="8"]');
+const small = await cellsOf(fig);
+check("8 is one numbered row", small.total === 8 && small.cols === "8" && small.numbered);
+
+// play runs wakes back to back and stops when pressed again
+await fig.click("[data-io-play]");
+check("play reads pressed", (await fig.locator("[data-io-play]").getAttribute("aria-pressed")) === "true");
+await phaseIs(fig, "return");
+await phaseIs(fig, "idle");
+await phaseIs(fig, "return");
+await phaseIs(fig, "idle");
+await fig.click("[data-io-play]");
+check("play stops when pressed again", (await fig.locator("[data-io-play]").getAttribute("aria-pressed")) === "false");
+const wakesAtStop = Number(((await tallyOf(fig, "epoll")) ?? "").match(/^(\d+) wake/)?.[1] ?? 0);
+await fig.waitForTimeout(2600);
+const wakesLater = Number(((await tallyOf(fig, "epoll")) ?? "").match(/^(\d+) wake/)?.[1] ?? 0);
+check("no new wake starts after play stops", wakesAtStop >= 2 && wakesLater <= wakesAtStop + 1);
+await phaseIs(fig, "idle");
+
+// reduced motion: no sweep, the return frame with the trail, held
+await fig.emulateMedia({ reducedMotion: "reduce" });
+await fig.click('[data-io-mechanism="select"]');
+await fig.click("[data-io-step]");
+await phaseIs(fig, "return");
+const rm = await cellsOf(fig);
+check("reduced motion jumps to the return frame with the whole trail", rm.seen === 8 && rm.scan === 0 && rm.found.length > 0);
+await fig.waitForTimeout(2300);
+check("reduced motion holds the return frame and frees the button", (await fig.locator('[data-io-figure][data-phase="return"]').count()) === 1 && (await stepDisabled(fig)) === null);
+await fig.click("[data-io-step]");
+await phaseIs(fig, "return");
+check("the next reduced-motion wake replaces the frame", ((await readoutOf(fig)) ?? "").startsWith("Wake 2: select"));
+await fig.close();
+
+// a phone keeps the columns and runs a wake
+const phoneFig = watch(await browser.newPage({ viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true }));
+await phoneFig.goto(FIGURE, { waitUntil: "networkidle" });
+await phoneFig.click('[data-io-count="128"]');
+const pf = await phoneFig.evaluate(() => {
+  const g = document.querySelector("[data-io-grid]");
+  return { cols: getComputedStyle(g).getPropertyValue("--cols").trim(), width: g.getBoundingClientRect().width, page: document.documentElement.scrollWidth, vw: innerWidth };
+});
+check("a phone keeps 16 columns at 128 and nothing overflows", pf.cols === "16" && pf.width <= pf.vw && pf.page <= pf.vw);
+await phoneFig.click("[data-io-step]");
+await phaseIs(phoneFig, "return");
+check("a phone runs a wake", (await cellsOf(phoneFig)).found.length > 0);
+await phoneFig.close();
+
 // ---- nothing threw anywhere ----
 check(`no uncaught page errors${errors.length ? `: ${errors.join(" | ")}` : ""}`, errors.length === 0);
 
