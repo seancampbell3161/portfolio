@@ -188,10 +188,13 @@ const laneHeights = await thumbs.$$eval(".tl-head", (els) => els.map((el) => el.
 const buildingRows = Number(await thumbs.$eval(".tl", (el) => getComputedStyle(el).getPropertyValue("--rows-building")));
 check("the building lane is 12 + rows x 70 tall", Math.abs(laneHeights[1] - (12 + buildingRows * 70)) < 1);
 check("the other lanes keep 120px", [0, 2, 3].every((i) => Math.abs(laneHeights[i] - 120) < 1));
-check("building clips sit inside their lane", await thumbs.$$eval('.tl-item[data-lane="building"]:not([data-out])', (els) => {
-  const lane = document.querySelectorAll(".tl-head")[1].getBoundingClientRect();
-  return els.every((el) => { const r = el.getBoundingClientRect(); return r.top >= lane.top && r.bottom <= lane.bottom + 1; });
-}));
+check("every lane's clips sit inside their lane", await thumbs.evaluate((lanes) => {
+  return lanes.every((lane, i) => {
+    const head = document.querySelectorAll(".tl-head")[i].getBoundingClientRect();
+    const els = document.querySelectorAll(`.tl-item[data-lane="${lane}"]:not([data-out])`);
+    return [...els].every((el) => { const r = el.getBoundingClientRect(); return r.top >= head.top && r.bottom <= head.bottom + 1; });
+  });
+}, LANES));
 await thumbs.close();
 
 // ---- phone ----

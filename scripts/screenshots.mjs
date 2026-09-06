@@ -17,7 +17,7 @@ const PAGES = [
   { name: "roadmap", path: "/roadmap" },
   { name: "essay", path: "/blog/i-wont-stop-coding" },
   { name: "essay-code", path: "/blog/composition-over-inheritance-angular" },
-  { name: "project", path: "/building/rswebtwain" },
+  { name: "project", path: "/building/roaming-camp" },
   { name: "not-found", path: "/nope" },
   { name: "newsletter", path: "/newsletter/confirmed" },
 ];
