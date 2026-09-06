@@ -18,6 +18,7 @@ export function initReader(): void {
   const line = document.querySelector<HTMLElement>("[data-reader-progress]");
   const aside = document.querySelector<HTMLElement>("[data-reader-aside]");
   if (!body) return;
+  const measured = body;
   current = new AbortController();
   const { signal } = current;
 
@@ -26,7 +27,7 @@ export function initReader(): void {
   let last = "";
   function draw(): void {
     if (!line) return;
-    const rect = body!.getBoundingClientRect();
+    const rect = measured.getBoundingClientRect();
     const p = readingProgress({
       scrollY: window.scrollY,
       viewport: window.innerHeight,
@@ -52,16 +53,26 @@ export function initReader(): void {
 
   // Scroll only moves the line. Anything that changes a height (the viewport,
   // a late image or font in the body, the sidebar's own content) redoes both.
+  // One frame serves every event that arrives before it runs; a resize that
+  // lands while a scroll's frame is pending still gets its fit.
   let frame = 0;
-  function schedule(task: () => void): void {
+  let needFit = false;
+  function schedule(): void {
     if (frame) return;
     frame = requestAnimationFrame(() => {
       frame = 0;
-      task();
+      if (needFit) {
+        needFit = false;
+        fit();
+      }
+      draw();
     });
   }
-  const onScroll = () => schedule(draw);
-  const onResize = () => schedule(() => { fit(); draw(); });
+  const onScroll = () => schedule();
+  const onResize = () => {
+    needFit = true;
+    schedule();
+  };
   window.addEventListener("scroll", onScroll, { passive: true, signal });
   window.addEventListener("resize", onResize, { signal });
   const sizes = new ResizeObserver(onResize);

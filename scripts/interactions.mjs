@@ -218,7 +218,7 @@ const settle = (p) => p.evaluate(() => new Promise((r) => requestAnimationFrame(
 // The site scrolls smoothly (global.css); the checks need to land, not glide.
 const scrollTo = async (p, y) => { await p.evaluate((y) => window.scrollTo({ top: y, behavior: "instant" }), y); await settle(p); };
 const progressOf = (p) => p.$eval("[data-reader-progress]", (el) => ({ hidden: el.hidden, p: Number(getComputedStyle(el).getPropertyValue("--p") || 0) }));
-const asideOf = (p) => p.$eval("[data-reader-aside]", (el) => ({ fits: el.hasAttribute("data-fits"), top: Math.round(el.getBoundingClientRect().top), position: getComputedStyle(el).position }));
+const asideOf = (p) => p.$eval("[data-reader-aside]", (el) => ({ fits: el.hasAttribute("data-fits"), top: Math.round(el.getBoundingClientRect().top), position: getComputedStyle(el).position, stick: parseFloat(getComputedStyle(el).getPropertyValue("--stick")) }));
 const index = await fresh(`${BASE}/blog`);
 const essayHref = await index.locator('a[href^="/blog/"]').first().getAttribute("href");
 await index.close();
@@ -230,10 +230,19 @@ check("an essay shows the reading line, empty, at the top", !pr.hidden && pr.p =
 await scrollTo(essay, 100000);
 pr = await progressOf(essay);
 check("the line is full at the end of the essay", !pr.hidden && pr.p === 1);
-const essayHeight = await essay.evaluate(() => document.documentElement.scrollHeight);
-await scrollTo(essay, essayHeight / 2);
+// Halfway through the reading range itself (from the body's top passing under
+// the bar to its bottom entering the viewport), so the check does not depend
+// on how much of the page is body.
+const midway = await essay.evaluate(() => {
+  const r = document.querySelector("[data-reader-body]").getBoundingClientRect();
+  const bar = document.querySelector("[data-reader-progress]").parentElement.getBoundingClientRect().bottom;
+  const start = Math.max(0, r.top + scrollY - bar);
+  const end = r.bottom + scrollY - innerHeight;
+  return (start + end) / 2;
+});
+await scrollTo(essay, midway);
 pr = await progressOf(essay);
-check("the line is part way in the middle", pr.p > 0 && pr.p < 1);
+check("the line is half full halfway through the reading range", Math.abs(pr.p - 0.5) < 0.01);
 await scrollTo(essay, 0);
 check("the line empties again at the top", (await progressOf(essay)).p === 0);
 await scrollTo(essay, 400);
@@ -241,13 +250,23 @@ const stuckA = await asideOf(essay);
 await scrollTo(essay, 900);
 const stuckB = await asideOf(essay);
 check("the essay's sidebar fits and sticks", stuckA.fits && stuckA.position === "sticky" && stuckA.top === stuckB.top);
-check("the sidebar sticks at --stick", stuckA.top === 84);
+check("the sidebar sticks at --stick", stuckA.stick > 0 && stuckA.top === stuckA.stick);
 await essay.setViewportSize({ width: 1280, height: 480 });
 await settle(essay);
 check("a viewport too short for the sidebar releases it", !(await asideOf(essay)).fits);
 await essay.setViewportSize({ width: 1280, height: 900 });
 await settle(essay);
 check("a tall enough viewport sticks it again", (await asideOf(essay)).fits);
+// A resize that lands in the same frame as a scroll must still re-fit the
+// sidebar. Raising --stick changes what fits without changing any size, so
+// nothing but the resize handler can notice it.
+await essay.evaluate(() => {
+  document.querySelector("[data-reader-aside]").style.setProperty("--stick", "600px");
+  window.dispatchEvent(new Event("scroll"));
+  window.dispatchEvent(new Event("resize"));
+});
+await settle(essay);
+check("a resize in a scroll's frame still re-fits the sidebar", !(await asideOf(essay)).fits);
 await essay.close();
 
 const short = await fresh(`${BASE}/building/daw-engine`);
