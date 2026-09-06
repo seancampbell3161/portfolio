@@ -45,7 +45,7 @@ const { title, description, pubDate, updatedDate, heroImage, tags } = entry.data
   <p class="standfirst">{description}</p>
   {tags.length > 0 && <p class="tags">{tags.join(", ")}</p>}
   {heroImage && <img src={heroImage} alt="" class="hero" />}
-  <div class="body">
+  <div class="body" data-reader-body>
     <slot />
   </div>
   <div class="subscribe">

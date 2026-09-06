@@ -9,9 +9,15 @@ interface Props {
   showZoom?: boolean;
   /** Build time; the client script replaces the label with the real date. */
   now?: Date;
+  /**
+   * Carry the reading line (interactions 4): a 2px line along the bar's bottom
+   * edge in the active lane's color, hidden until src/scripts/reader.ts has a
+   * body taller than the viewport to measure. The reader frame asks for it.
+   */
+  progress?: boolean;
 }
 
-const { active, showZoom = false, now = new Date() } = Astro.props;
+const { active, showZoom = false, now = new Date(), progress = false } = Astro.props;
 
 const links: { key: Lane | "contact"; label: string; href: string }[] = [
   { key: "writing", label: "Writing", href: "/blog" },
@@ -85,6 +91,10 @@ const dateLabel = now.toLocaleDateString("en-US", { month: "short", day: "numeri
       ))}
     </div>
   </div>
+
+  {progress && (
+    <div class="tb-progress" data-reader-progress hidden aria-hidden="true" style={active ? `--c: var(--lane-${active})` : undefined}></div>
+  )}
 </header>
 
 <script>
@@ -238,6 +248,21 @@ const dateLabel = now.toLocaleDateString("en-US", { month: "short", day: "numeri
     display: none;
   }
   .tb-mobile[hidden] {
+    display: none;
+  }
+  /* The reading line (interactions 4) lies over the bar's bottom border and
+     grows with --p, which the reader script sets from 0 to 1 on every scroll
+     frame. No transition: it follows the scroll exactly. */
+  .tb-progress {
+    position: absolute;
+    left: 0;
+    bottom: -1px;
+    height: 2px;
+    width: calc(var(--p, 0) * 100%);
+    background: var(--c, var(--color-text-primary));
+    pointer-events: none;
+  }
+  .tb-progress[hidden] {
     display: none;
   }
 

@@ -46,7 +46,7 @@ const shot = projectImage(entry.slug);
   {shot && (
     <Image class="hero" src={shot} alt={`A screenshot of ${title}`} width={1500} widths={[800, 1500]} sizes="(max-width: 899px) 100vw, 744px" loading="eager" />
   )}
-  <div class="body">
+  <div class="body" data-reader-body>
     <slot />
   </div>
 

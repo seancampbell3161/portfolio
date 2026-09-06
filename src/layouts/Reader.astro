@@ -21,13 +21,13 @@ const { title, description, image, active } = Astro.props;
 ---
 
 <Layout title={title} description={description} image={image}>
-  <TransportBar active={active} />
+  <TransportBar active={active} progress />
 
   <main class="reader" style={`--c: var(--lane-${active})`}>
     <article class="article">
       <slot />
     </article>
-    <aside class="aside">
+    <aside class="aside" data-reader-aside>
       <slot name="aside" />
     </aside>
   </main>

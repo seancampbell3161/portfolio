@@ -155,10 +155,21 @@
   margin: 32px 0;
 }
 
-/* Sidebar */
+/* Sidebar. At 900px and up it stays in view while the article scrolls
+   (interactions 4), but only when it fits under the transport bar: the reader
+   script measures it against --stick and the viewport and sets data-fits, so
+   a sidebar taller than the screen (a long "While building" list) scrolls
+   with the page and stays reachable. Without the script nothing sticks. */
 .reader .aside {
+  --stick: 84px;
   padding-top: 8px;
   font-size: 14px;
+}
+@media (min-width: 900px) {
+  .reader .aside[data-fits] {
+    position: sticky;
+    top: var(--stick);
+  }
 }
 .reader .aside .kicker {
   margin-bottom: 14px;
