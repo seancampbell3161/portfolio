@@ -10,6 +10,7 @@ import { createStore, readZoom, type Ctx, type TimelineState } from "./state";
 import { applyLayout, initApply } from "./apply";
 import { initInspector, openItem } from "./inspector";
 import { initMotion } from "./motion";
+import { initNow } from "./now";
 import { initPan } from "./pan";
 import { initScrub, pin } from "./scrub";
 
@@ -59,6 +60,7 @@ function init(root: HTMLElement): void {
   const ctx: Ctx = { root, now, ...refs, measure: () => makeMeasurer(root), store };
 
   initApply(ctx);
+  initNow(ctx);
   initInspector(ctx);
   initPan(ctx);
   initScrub(ctx);

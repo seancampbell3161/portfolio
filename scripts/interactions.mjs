@@ -117,6 +117,55 @@ check("deep link before every item shows the empty line", ((await empty.locator(
 check("deep link before every item hides the cursor", await empty.locator("[data-cursor]").isHidden());
 await empty.close();
 
+// ---- the hero readout (interactions 2) ----
+const hero = await fresh(`${BASE}/`);
+const firstLink = hero.locator("[data-right-now] a[data-item-link]").first();
+const linkedId = await firstLink.getAttribute("data-item-link");
+await firstLink.click();
+check("a readout link opens its item in the inspector", (await hero.evaluate(() => location.hash)) === `#item-${linkedId}`);
+check("a readout link does not leave the page", (await hero.evaluate(() => location.pathname)) === "/");
+// The build stamps now; the client prunes whatever no longer touches the real
+// day. A fixed clock past the build day makes that visible.
+const buildDay = new Date(await hero.getAttribute("[data-timeline]", "data-now"));
+await hero.close();
+const DAY = 86400000;
+const LANES = ["writing", "building", "learning", "community"];
+async function readoutAt(msAfterBuild) {
+  const p = watch(await browser.newPage({ viewport: { width: 1280, height: 900 } }));
+  await p.clock.setFixedTime(new Date(buildDay.getTime() + msAfterBuild));
+  await p.goto(`${BASE}/`, { waitUntil: "networkidle" });
+  const state = await p.evaluate(() => {
+    const now = Date.now();
+    // Spans touching the (fake) day, by the timeline's rule. A moment is never
+    // within 14 days of a day this far past the build, so every moment must be gone.
+    const running = [...document.querySelectorAll(".tl-item[data-kind=span]")]
+      .filter((el) => {
+        const start = Date.parse(el.dataset.start);
+        const end = el.dataset.end ? Date.parse(el.dataset.end) : now;
+        return start <= now && end >= now;
+      })
+      .map((el) => ({ id: el.dataset.id, lane: el.dataset.lane }));
+    const rows = [...document.querySelectorAll("[data-right-now] [data-now-row]")].map((r) => ({
+      lane: r.dataset.nowRow,
+      ids: [...r.querySelectorAll("dd[data-id]")].map((dd) => dd.dataset.id),
+      kinds: [...r.querySelectorAll("dd[data-id]")].map((dd) => document.querySelector(`.tl-item[data-id="${dd.dataset.id}"]`)?.dataset.kind),
+      shown: [...r.querySelectorAll("[data-now-when]")].filter((s) => !s.hidden).length,
+    }));
+    return { running, rows };
+  });
+  await p.close();
+  return state;
+}
+const sameIds = (a, b) => a.length === b.length && a.every((id) => b.includes(id));
+for (const [label, ms] of [["sixty days on", 60 * DAY], ["three years on", 3 * 365 * DAY]]) {
+  const r = await readoutAt(ms);
+  const listed = r.rows.flatMap((row) => row.ids);
+  check(`${label}, every moment has left the readout`, r.rows.flatMap((row) => row.kinds).every((k) => k === "span"));
+  check(`${label}, the readout lists exactly the spans still running`, sameIds(listed, r.running.map((x) => x.id)));
+  check(`${label}, rows are the lanes with something running, in lane order`, r.rows.map((row) => row.lane).join() === LANES.filter((l) => r.running.some((x) => x.lane === l)).join());
+  check(`${label}, a phrase shows exactly when its entry is alone in its row`, r.rows.every((row) => row.shown === (row.ids.length === 1 ? 1 : 0)));
+}
+
 // ---- phone ----
 const phone = watch(await browser.newPage({ viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true }));
 await phone.goto(`${BASE}/`, { waitUntil: "networkidle" });
