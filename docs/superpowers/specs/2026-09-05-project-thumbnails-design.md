@@ -69,7 +69,7 @@ Every placement uses `<Image>` from `astro:assets` with `widths` and `sizes`, so
 
 ### 5.1 Desktop
 
-A building span clip becomes a 66px flex row: the picture at 90×56 with a 2px radius after the lane border, then the title and the stack stacked beside it, vertically centered, each on one line with an ellipsis. Without a picture the clip is the same height and holds the text alone. The clip's tint, the in-progress stripes and the dashed right edge are unchanged.
+A building span clip becomes a 66px grid: the picture in the first column, at 90×56 with a 2px radius, spanning both rows; the title and the stack in the second column, hugging the middle, each on one line with an ellipsis — so no wrapper element is needed and the client's item rebuild and the screen-reader prefix stay untouched. Without a picture the clip is the same height and holds the text alone. The clip's tint, the in-progress stripes and the dashed right edge are unchanged.
 
 `.tl-item` becomes a size container (`container-type: inline-size`), and a container query hides the picture when the clip is narrower than 200px. The rule is in CSS alone, so the same markup serves every zoom and no script measures anything.
 
