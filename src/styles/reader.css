@@ -60,6 +60,8 @@
 }
 .reader .hero {
   width: 100%;
+  height: auto;
+  border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
   margin-bottom: 36px;
 }

@@ -4,6 +4,7 @@
 // kicker says where it sits in time, the body is the MDX, and the sidebar
 // carries the facts, the neighbouring projects, and what else was happening.
 import type { CollectionEntry } from "astro:content";
+import { Image } from "astro:assets";
 import Reader from "./Reader.astro";
 import Track from "../components/Track.astro";
 import WhileList from "../components/WhileList.astro";
@@ -12,6 +13,7 @@ import type { TrackRow } from "../lib/timeline/track";
 import type { TimelineItem } from "../lib/timeline/types";
 import { monthYearLong } from "../lib/dates";
 import { ogImagePath } from "../lib/og.mjs";
+import { projectImage } from "../lib/images";
 
 interface Props {
   entry: CollectionEntry<"projects">;
@@ -25,6 +27,8 @@ const { title, description, start, end, status, stack, url, source } = entry.dat
 const capitalized = (s: string) => (s === "in-progress" ? "In progress" : s[0].toUpperCase() + s.slice(1));
 // Build-time only: the schema already validated these as absolute URLs.
 const host = (u: string) => new URL(u).host.replace(/^www\./, "");
+// Thumbnails spec §7.2: the case study opens with the site's picture when one is committed.
+const shot = projectImage(entry.slug);
 ---
 
 <Reader
@@ -39,6 +43,9 @@ const host = (u: string) => new URL(u).host.replace(/^www\./, "");
   </p>
   <h1>{title}</h1>
   <p class="standfirst">{description}</p>
+  {shot && (
+    <Image class="hero" src={shot} alt={`A screenshot of ${title}`} widths={[800, 1500]} sizes="(max-width: 899px) 100vw, 744px" loading="eager" />
+  )}
   <div class="body">
     <slot />
   </div>
