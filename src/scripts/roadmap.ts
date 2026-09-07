@@ -1,5 +1,6 @@
 import { deriveStats } from "../data/roadmap";
 import type { LogEntry } from "../data/roadmap";
+import { onPage, type PageCtx } from "./lifecycle";
 
 const API = "/api/progress";
 const TOKEN_KEY = "roadmap-admin-token";
@@ -222,17 +223,38 @@ function onEditClick() {
   setEditable(true);
 }
 
-function init() {
-  document.addEventListener("change", onToggle);
-  document.addEventListener("input", onLogFieldChange);
-  document.addEventListener("change", onLogFieldChange);
-  document.getElementById("rm-edit")?.addEventListener("click", onEditClick);
+export function initRoadmap({ signal }: PageCtx): void {
+  if (!document.querySelector(".roadmap-page")) return;
+
+  // Module state is per-page: a navigation must not carry one page's edits into
+  // the next run.
+  completed.clear();
+  for (const key of Object.keys(logEntries)) delete logEntries[key];
+  editing = false;
+  if (saveTimer) {
+    clearTimeout(saveTimer);
+    saveTimer = undefined;
+  }
+
+  document.addEventListener("change", onToggle, { signal });
+  document.addEventListener("input", onLogFieldChange, { signal });
+  document.addEventListener("change", onLogFieldChange, { signal });
+  document.getElementById("rm-edit")?.addEventListener("click", onEditClick, { signal });
+
+  // Abort means FLUSH here, not cancel -- the opposite of everywhere else on
+  // the site. Saves are debounced by 500ms, and under client-side routing
+  // leaving the page is something the app does in process: tick a checkbox,
+  // click "Writing" within half a second, and the edit would evaporate with the
+  // timer. The write is fired instead, and outlives the page.
+  signal.addEventListener("abort", () => {
+    if (!saveTimer) return;
+    clearTimeout(saveTimer);
+    saveTimer = undefined;
+    void save();
+  });
+
   if (sessionStorage.getItem(TOKEN_KEY)) setEditable(true);
   void load();
 }
 
-if (document.readyState === "loading") {
-  document.addEventListener("DOMContentLoaded", init);
-} else {
-  init();
-}
+onPage(initRoadmap);

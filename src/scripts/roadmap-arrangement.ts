@@ -13,11 +13,18 @@
 // stored preference applied.
 import { roadmapWindow, quarterTicks, type RoadmapClip, type RoadmapZoom } from "../lib/roadmap/arrange";
 import { positionIn, packRows, estimateLabelWidth, fraction } from "../lib/timeline/layout";
+import { onPage, type PageCtx } from "./lifecycle";
 
 const ZOOM_KEY = "roadmap-zoom";
-const arr = document.querySelector<HTMLElement>(".rm-arr");
-const dataEl = document.getElementById("rm-clip-data");
-if (arr && dataEl) {
+
+export function initRoadmapArrangement({ signal }: PageCtx): void {
+  const arr = document.querySelector<HTMLElement>(".rm-arr");
+  const dataEl = document.getElementById("rm-clip-data");
+  if (!arr || !dataEl) return;
+  // Fresh, definitely-non-null bindings: narrowing above does not reach into
+  // apply()'s closure, since arr/dataEl keep their declared nullable type there.
+  const root: HTMLElement = arr;
+
   const now = new Date();
   const raw = JSON.parse(dataEl.textContent || "[]") as Array<{
     id: string; track: RoadmapClip["track"]; title: string; sublabel?: string;
@@ -34,7 +41,7 @@ if (arr && dataEl) {
     for (const track of ["build", "reading", "foundations"] as const) {
       const placed = clips.filter((c) => c.track === track).flatMap((c) => positionIn(c, win, now) ?? []);
       const rows = packRows(placed, estimate);
-      const lane = arr!.querySelector<HTMLElement>(`.rm-clips[data-track="${track}"]`);
+      const lane = root.querySelector<HTMLElement>(`.rm-clips[data-track="${track}"]`);
       if (!lane) continue;
       let rowCount = 1;
       for (const p of rows) {
@@ -50,7 +57,7 @@ if (arr && dataEl) {
       lane.closest<HTMLElement>(".rm-lane")?.style.setProperty("--rows", String(rowCount));
     }
     // redraw ruler
-    const ruler = arr!.querySelector<HTMLElement>(".rm-ruler");
+    const ruler = root.querySelector<HTMLElement>(".rm-ruler");
     if (ruler) {
       ruler.innerHTML = "";
       for (const t of quarterTicks(win)) {
@@ -61,7 +68,7 @@ if (arr && dataEl) {
         ruler.appendChild(s);
       }
     }
-    const ph = arr!.querySelector<HTMLElement>("[data-rm-playhead]");
+    const ph = root.querySelector<HTMLElement>("[data-rm-playhead]");
     if (ph) ph.style.setProperty("--ph", String(fraction(now, win)));
     for (const b of zoomButtons) {
       b.setAttribute("aria-pressed", String(b.dataset.rmZoom === zoom));
@@ -73,10 +80,12 @@ if (arr && dataEl) {
   // server-rendered layout stands and a stored preference is meaningless.
   if (zoomButtons.length > 0) {
     for (const b of zoomButtons) {
-      b.addEventListener("click", () => apply(b.dataset.rmZoom as RoadmapZoom));
+      b.addEventListener("click", () => apply(b.dataset.rmZoom as RoadmapZoom), { signal });
     }
     let initial: RoadmapZoom = "span";
     try { if (localStorage.getItem(ZOOM_KEY) === "all") initial = "all"; } catch {}
     apply(initial);
   }
 }
+
+onPage(initRoadmapArrangement);

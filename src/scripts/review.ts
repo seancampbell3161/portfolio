@@ -2,6 +2,7 @@ import { reviewCards, type ReviewCard } from "../data/review-cards";
 import { unlockedCards, dueCards, completedIdsFromProgress } from "../lib/review/generator";
 import { schedule, updateStreak, displayStreak, todayStr } from "../lib/review/sm2";
 import { emptyReviewState, type ReviewState, type Rating } from "../lib/review/types";
+import { onPage, type PageCtx } from "./lifecycle";
 
 const PROGRESS_API = "/api/progress";
 const REVIEW_API = "/api/review";
@@ -197,31 +198,60 @@ function scheduleSave() {
 }
 
 // ---- wiring ----
-function init() {
-  byId("rv-reveal")?.addEventListener("click", () => setRevealed(true));
+export function initReview({ signal }: PageCtx): void {
+  if (!byId("rv-runner")) return;
+
+  completedIds = new Set<string>();
+  state = emptyReviewState();
+  queue = [];
+  authed = false;
+  revealed = false;
+  if (saveTimer) {
+    clearTimeout(saveTimer);
+    saveTimer = undefined;
+  }
+
+  byId("rv-reveal")?.addEventListener("click", () => setRevealed(true), { signal });
   for (const btn of document.querySelectorAll<HTMLElement>("[data-rv-rate]")) {
-    btn.addEventListener("click", () => onRate(Number(btn.dataset.rvRate) as Rating));
+    btn.addEventListener("click", () => onRate(Number(btn.dataset.rvRate) as Rating), { signal });
   }
 
   // The progress "Edit" button collects the shared token via a synchronous
   // window.prompt. Re-check for it right after any click and light up the runner.
-  byId("rm-edit")?.addEventListener("click", () => {
-    window.setTimeout(() => {
-      if (!authed && sessionStorage.getItem(TOKEN_KEY)) void loadReview();
-    }, 0);
-  });
+  byId("rm-edit")?.addEventListener(
+    "click",
+    () => {
+      window.setTimeout(() => {
+        if (!authed && sessionStorage.getItem(TOKEN_KEY)) void loadReview();
+      }, 0);
+    },
+    { signal },
+  );
 
   // Keyboard: space reveals, 1–4 rate (ignore while focus is in a form field).
-  document.addEventListener("keydown", (e) => {
-    if (!authed || (byId("rv-runner")?.hidden ?? true)) return;
-    if ((e.target as HTMLElement)?.tagName === "INPUT") return;
-    if (e.key === " " && !revealed) {
-      e.preventDefault();
-      setRevealed(true);
-    } else if (revealed && ["1", "2", "3", "4"].includes(e.key)) {
-      e.preventDefault();
-      onRate((Number(e.key) - 1) as Rating);
-    }
+  document.addEventListener(
+    "keydown",
+    (e) => {
+      if (!authed || (byId("rv-runner")?.hidden ?? true)) return;
+      if ((e.target as HTMLElement)?.tagName === "INPUT") return;
+      if (e.key === " " && !revealed) {
+        e.preventDefault();
+        setRevealed(true);
+      } else if (revealed && ["1", "2", "3", "4"].includes(e.key)) {
+        e.preventDefault();
+        onRate((Number(e.key) - 1) as Rating);
+      }
+    },
+    { signal },
+  );
+
+  // Abort means FLUSH, as in roadmap.ts: a rating given moments before leaving
+  // the page must still reach /api/review.
+  signal.addEventListener("abort", () => {
+    if (!saveTimer) return;
+    clearTimeout(saveTimer);
+    saveTimer = undefined;
+    void save();
   });
 
   void (async () => {
@@ -230,8 +260,4 @@ function init() {
   })();
 }
 
-if (document.readyState === "loading") {
-  document.addEventListener("DOMContentLoaded", init);
-} else {
-  init();
-}
+onPage(initReview);
