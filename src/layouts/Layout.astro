@@ -1,5 +1,6 @@
 ---
 import { ogImagePath } from "../lib/og.mjs";
+import { ClientRouter } from "astro:transitions";
 
 interface Props {
   title: string;
@@ -46,6 +47,7 @@ const canonicalURL = new URL(Astro.url.pathname, Astro.site);
     <!-- Fonts are loaded via CSS import in global.css -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <ClientRouter fallback="swap" />
   </head>
   <body>
     <slot />

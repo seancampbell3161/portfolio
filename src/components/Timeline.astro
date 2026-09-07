@@ -115,7 +115,7 @@ const iso = (d: Date) => d.toISOString().slice(0, 10);
             style={style}
           >
             <span class="tl-when">{when(item)}</span>
-            <a class="tl-clip" href={item.href} data-item-link={item.id}>
+            <a class="tl-clip" href={item.href} data-item-link={item.id} data-astro-prefetch="false">
               <span class="tl-sr">{item.lane[0].toUpperCase() + item.lane.slice(1)}: </span>
               {shot && <Image class="tl-thumb" src={shot} alt="" width={360} widths={[180, 360]} sizes="90px" loading="eager" />}
               <span class="tl-title">{item.title}</span>

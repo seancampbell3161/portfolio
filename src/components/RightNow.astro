@@ -29,7 +29,7 @@ const laneName = (lane: string) => lane[0].toUpperCase() + lane.slice(1);
         <div class="now-row" data-now-row={row.lane} style={`--c: var(--lane-${row.lane})`}>
           <dt><i aria-hidden="true"></i>{laneName(row.lane)}</dt>
           {row.entries.map((item) => (
-            <dd data-id={item.id}><a href={item.href} data-item-link={item.id}>{item.title}</a><small data-now-when hidden={row.entries.length > 1}>{nowText(item)}</small></dd>
+            <dd data-id={item.id}><a href={item.href} data-item-link={item.id} data-astro-prefetch="false">{item.title}</a><small data-now-when hidden={row.entries.length > 1}>{nowText(item)}</small></dd>
           ))}
         </div>
       ))}
