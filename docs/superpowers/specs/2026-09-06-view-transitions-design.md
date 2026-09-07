@@ -107,45 +107,41 @@ so it is unit-testable in the suite's `node` environment.
 export type PageInit = (ctx: { first: boolean; signal: AbortSignal }) => void;
 
 export function createLifecycle(target: EventTarget) {
-  let generation = 0;
-  let navigating = false;
-  target.addEventListener("astro:before-preparation", () => { navigating = true; });
-  target.addEventListener("astro:page-load", () => { navigating = false; generation++; });
-
   return function onPage(init: PageInit): void {
-    let runs = 0, ranFor = -1;
+    let runs = 0;
     let ctl: AbortController | null = null;
 
-    const start = () => {
-      if (ranFor === generation) return;
-      ranFor = generation;
+    target.addEventListener("astro:page-load", () => {
       ctl?.abort();
       ctl = new AbortController();
       init({ first: runs++ === 0, signal: ctl.signal });
-    };
-    target.addEventListener("astro:page-load", start);
-    target.addEventListener("astro:before-swap", () => { ctl?.abort(); ctl = null; });
-    if (!navigating && generation > 0) start();
+    });
+    target.addEventListener("astro:before-swap", () => {
+      ctl?.abort();
+      ctl = null;
+    });
   };
 }
 ```
 
-Three properties earn their lines:
+Two properties earn their lines:
 
 - **Teardown fires on `astro:before-swap`**, before the DOM is replaced, so a
-  script can still see the elements it is cleaning up.
+  script can still see the elements it is cleaning up. The `abort()` at the head
+  of the page-load handler is belt and braces for a swap that never announced
+  itself.
 - **`first`** is true only on the run that follows a cold load (§3.3).
-- **The trailing `start()`** covers a module arriving mid-session: land on an
-  essay, navigate to Home, and `timeline/index.ts` executes for the first time
-  *inside* a swap. `navigating` distinguishes "imported during a navigation, so
-  `astro:page-load` is imminent" from "imported after one, so it has already
-  fired and will never fire again for this document". `ranFor` makes the two
-  paths idempotent.
 
-Whether Astro executes newly-arrived scripts before or after firing
-`astro:page-load` is the one empirical assumption in this design. It is settled
-by test, not by reading: see §10, e2e check 1, which is the first task of the
-plan.
+A module arriving mid-session needs no special handling. Land on an essay,
+navigate to Home, and `timeline/index.ts` executes for the first time *inside*
+the swap — but Astro's router does `await runScripts(); onPageLoad();`
+(`astro/dist/transitions/router.js`), executing and awaiting newly-arrived
+scripts **before** dispatching `astro:page-load`. The listener registered during
+that execution receives the very event that follows it. An earlier draft of this
+spec carried a `generation`/`navigating`/`ranFor` guard for the opposite
+ordering; reading the router settled it, and the guard was deleted rather than
+kept "just in case" — it would have been dead code defending against a case the
+framework does not produce.
 
 ### 6.2 The rule every init obeys
 
@@ -364,8 +360,10 @@ carries `.tb { view-transition-name: bar }` and the
 
 **e2e** (a new section in `scripts/interactions.mjs`):
 
-1. Cold-load an essay, navigate to Home, assert the arrangement upgraded — this
-   settles §6.1's assumption and is the plan's first task.
+1. Cold-load an essay, navigate to Home, assert the arrangement upgraded. §6.1
+   establishes from the router's source that this must work; the check guards it
+   against a future Astro that reorders `runScripts()` and `onPageLoad()`, which
+   would otherwise fail silently and only on the second page a visitor opens.
 2. Home → open a building panel → "Read the case study": assert the morph armed
    and the case study's reading line initialised.
 3. Edit the roadmap and navigate within the 500 ms debounce window: assert the
