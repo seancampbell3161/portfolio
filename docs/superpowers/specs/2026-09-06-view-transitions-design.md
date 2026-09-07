@@ -334,8 +334,10 @@ transition can be read without cross-referencing components:
 html[data-astro-transition] { scroll-behavior: auto; }
 
 @media (prefers-reduced-motion: reduce) {
-  ::view-transition-old(root), ::view-transition-new(root),
-  ::view-transition-group(shot), ::view-transition-group(ptitle) {
+  ::view-transition-group(root), ::view-transition-old(root), ::view-transition-new(root),
+  ::view-transition-group(bar), ::view-transition-old(bar), ::view-transition-new(bar),
+  ::view-transition-group(shot), ::view-transition-old(shot), ::view-transition-new(shot),
+  ::view-transition-group(ptitle), ::view-transition-old(ptitle), ::view-transition-new(ptitle) {
     animation-duration: 1ms !important;
   }
 }
@@ -350,6 +352,19 @@ which can strand the old snapshot on screen. The block is not redundant with
 Astro's own handling: the router disables only the animations *it* defines
 (`transition:animate` and the fallback), and warns about it in dev. The rules
 above are ours, and nothing else turns them off.
+
+Twelve selectors, not four: every name the site declares -- `root`, `bar`,
+`shot`, `ptitle` -- produces three animated pseudo-elements, not one, a
+`group` (which flies the named box from its old position and size to its new
+one) and an `old`/`new` pair inside it (which cross-fades the two snapshots on
+its own timeline). Collapsing only the group still leaves the cross-fade
+running at the UA default of about 250 ms, and vice versa, so every name needs
+all three layers listed -- `root` and `bar` included, since they run on every
+navigation, not only a morph, so leaving either uncollapsed is a site-wide gap,
+not a morph-only one. Enumerated on purpose rather than
+`::view-transition-group(*)` / `::view-transition-old(*)`: one unsupported
+selector in a comma list drops the whole rule, so a wildcard risks losing
+reduced-motion handling entirely instead of partially.
 
 `html[data-astro-transition]` disables `global.css`'s `scroll-behavior: smooth`
 for the duration of a navigation: Astro scrolls the incoming page to the top as
@@ -400,6 +415,17 @@ Hooks, added to three components:
   component.
 - `WhileList.astro` — the same two attributes, so "Written while" and "While
   building" behave like every other list of links.
+
+A page can be both a morph source and a morph destination at once: every
+reader page's sidebar carries `Track` and/or `WhileList` rows (sources)
+alongside its own `<h1>` (a destination, named permanently by
+[data-morph-dest] in §7.2). Arming a row the visitor clicked would then leave
+two elements holding "ptitle" in the outgoing document -- the same
+duplicate-name case §7.2's stylesheet comment warns about, and the one the
+browser answers by skipping the whole transition. So arming a source must also
+suppress the page's own destination for that name, for the one navigation
+that's arming it: set its `view-transition-name` to `none` and let `disarm()`
+hand it back afterwards, same as any other armed element.
 
 ### 7.4 Back does not morph
 
