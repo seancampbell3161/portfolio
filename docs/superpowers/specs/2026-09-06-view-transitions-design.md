@@ -107,6 +107,13 @@ so it is unit-testable in the suite's `node` environment.
 export type PageInit = (ctx: { first: boolean; signal: AbortSignal }) => void;
 
 export function createLifecycle(target: EventTarget) {
+  // Shared by every init this helper ever produces, not scoped inside onPage --
+  // see "first is not just a run count" below for why that placement matters.
+  let cold = true;
+  target.addEventListener("astro:before-swap", () => {
+    cold = false;
+  });
+
   return function onPage(init: PageInit): void {
     let runs = 0;
     let ctl: AbortController | null = null;
@@ -114,7 +121,7 @@ export function createLifecycle(target: EventTarget) {
     target.addEventListener("astro:page-load", () => {
       ctl?.abort();
       ctl = new AbortController();
-      init({ first: runs++ === 0, signal: ctl.signal });
+      init({ first: runs++ === 0 && cold, signal: ctl.signal });
     });
     target.addEventListener("astro:before-swap", () => {
       ctl?.abort();
@@ -130,18 +137,43 @@ Two properties earn their lines:
   script can still see the elements it is cleaning up. The `abort()` at the head
   of the page-load handler is belt and braces for a swap that never announced
   itself.
-- **`first`** is true only on the run that follows a cold load (§3.3).
+- **`first`** is `runs++ === 0 && cold`, not a run count on its own. It is true
+  only on the run that follows a cold load (§3.3).
 
-A module arriving mid-session needs no special handling. Land on an essay,
-navigate to Home, and `timeline/index.ts` executes for the first time *inside*
-the swap — but Astro's router does `await runScripts(); onPageLoad();`
+A module arriving mid-session needs no special handling to *run*. Land on an
+essay, navigate to Home, and `timeline/index.ts` executes for the first time
+*inside* the swap — but Astro's router does `await runScripts(); onPageLoad();`
 (`astro/dist/transitions/router.js`), executing and awaiting newly-arrived
 scripts **before** dispatching `astro:page-load`. The listener registered during
-that execution receives the very event that follows it. An earlier draft of this
-spec carried a `generation`/`navigating`/`ranFor` guard for the opposite
+that execution receives the very event that follows it, so the module upgrades
+its page on cue regardless of when it first happened to load. An earlier draft
+of this spec carried a `generation`/`navigating`/`ranFor` guard for the opposite
 ordering; reading the router settled it, and the guard was deleted rather than
 kept "just in case" — it would have been dead code defending against a case the
 framework does not produce.
+
+Knowing *what it is* — cold load or navigation — is a different question, and a
+per-init run count cannot answer it. `timeline/index.ts`'s first-ever execution,
+above, is also `runs++ === 0` for that init: nothing in the count distinguishes
+"the first time this script has ever run, because this is the first navigation
+to a page that carries it" from "the first time this script has ever run,
+because this is a cold load." A per-init `astro:before-swap` listener doesn't
+rescue the count either: one registered during that same swap's script
+execution is added *after* that swap's own `astro:before-swap` has already
+fired (the router runs scripts after that event, not before), so it would never
+see the very swap it needs to know about, and would report `first: true` for a
+page the visitor only reached by navigating. Getting this wrong is not
+hypothetical — it is what made the home page replay its playhead draw-in on a
+real navigation before this was caught. The `cold` flag is the fix: it is
+flipped by a listener that already existed before this swap started, registered
+once in `createLifecycle` itself the first time any script called `onPage`
+this session, so by the time any init's page-load handler runs — this swap's
+or a later one's — `cold` already reflects whether a swap has happened yet,
+independent of which init is asking or when its own bundle first loaded. This
+is a separate concern from the registration-ordering question the previous
+paragraph settles: that question is "does the listener see the event"; this one
+is "what does the event mean," and the two need different mechanisms because a
+per-init counter and a per-init flag both live at the wrong scope to answer it.
 
 ### 6.2 The rule every init obeys
 
@@ -192,6 +224,38 @@ sent.
 For these two scripts only, the abort handler **flushes** the pending save
 instead of cancelling it. This is the opposite of what abort means everywhere
 else in the codebase and is called out in a comment at both sites.
+
+### 6.6 Delegated anchor interceptors run in the capture phase
+
+Neither this spec nor the plan built from it anticipated ordering against the
+router's own click listener; it surfaced during implementation and belongs
+here as a rule the whole codebase now follows, not just a fix to one file.
+
+`timeline/inspector.ts` and `timeline/scrub.ts` each delegate a `click`
+listener to `document` to catch `a[data-item-link]` and the panels' close
+links, calling `preventDefault()` on the match to open something in place
+instead of letting the browser navigate. Both register with `{ capture: true }`,
+and this is load-bearing, not stylistic.
+
+`<ClientRouter />` registers its own `click` listener on `document` too, at
+module-parse time — earlier than either of ours, which register on
+`astro:page-load`, an event the router itself dispatches. Its listener runs in
+the bubble phase and starts a navigation only when `ev.defaultPrevented` is
+still false by the time it inspects the event
+(`node_modules/astro/components/ClientRouter.astro:67-106`). Two bubble-phase
+listeners on the same target run in registration order, so a bubble-phase
+`preventDefault()` in either of ours would always execute *after* the router
+had already read `defaultPrevented` and moved on — the router would win,
+navigate, and a clip click would stop opening the inspector in place. The
+capture phase runs before any bubble-phase listener regardless of registration
+order, which is what makes that ordering stop mattering.
+
+The rule generalizes beyond these two files: **any delegated interceptor on
+this site that calls `preventDefault()` on an anchor's click must register in
+the capture phase**, because the router's own listener is registered earlier
+and defers to `ev.defaultPrevented` in the bubble phase. A future interceptor
+that skips this will work in isolation and fail only once the router also
+holds an opinion about the same click.
 
 ## 7. The morph
 

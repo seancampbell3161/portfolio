@@ -5,8 +5,8 @@
 // says shows at the elapsed time, on one animation-frame loop, so it holds no
 // timers of its own. A hidden tab stops the loop; when the tab returns the
 // wake fast-forwards to its end, and the wake is still recorded. Re-runnable:
-// initIoFigure() tears the previous run down first, so a view transition can
-// call it again.
+// registered through onPage, so every navigation gets a fresh run and the
+// previous one is aborted before the swap.
 import {
   CALL_NAME,
   HOLD_MS,

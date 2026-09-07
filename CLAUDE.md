@@ -15,7 +15,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Architecture
 
-This is a static portfolio site built with **Astro 5**. Everything renders at build time and ships no framework or client-side rendering. Most of the JavaScript is progressive enhancement layered over markup that already works without it, but not all of it is — without scripting, the mobile navigation menu (`src/components/TransportBar.astro`) and the newsletter form (`src/components/Newsletter.astro`) stop working outright, while the roadmap's live numbers (`src/components/roadmap/RoadmapMeters.astro`, `RoadmapInspector.astro`, `RetentionSection.astro`) stay usable but render at zero. The home timeline's zoom, scrubbing and panning are enhancements too: without scripting the page shows the current year and every clip is a link. So are the reader frame's reading line and sticky sidebar (`src/scripts/reader.ts`): without scripting the line stays hidden and the sidebar scrolls with the page. The I/O multiplexing essay's figure (`src/components/figures/IoMultiplexing.astro`) is the same: without scripting it shows a completed epoll wake at 32 sockets and no controls.
+This is a static portfolio site built with **Astro 5**. Everything renders at build time and ships no framework, though navigation is client-side: `<ClientRouter />` swaps pages in over a cross-fade rather than reloading. Most of the JavaScript is progressive enhancement layered over markup that already works without it, but not all of it is — without scripting, the mobile navigation menu (`src/components/TransportBar.astro`) and the newsletter form (`src/components/Newsletter.astro`) stop working outright, while the roadmap's live numbers (`src/components/roadmap/RoadmapMeters.astro`, `RoadmapInspector.astro`, `RetentionSection.astro`) stay usable but render at zero. The home timeline's zoom, scrubbing and panning are enhancements too: without scripting the page shows the current year and every clip is a link. So are the reader frame's reading line and sticky sidebar (`src/scripts/reader.ts`): without scripting the line stays hidden and the sidebar scrolls with the page. The I/O multiplexing essay's figure (`src/components/figures/IoMultiplexing.astro`) is the same: without scripting it shows a completed epoll wake at 32 sockets and no controls.
 
 **Key integrations:** MDX (blog posts), Sitemap, RSS
 
@@ -34,6 +34,46 @@ This is a static portfolio site built with **Astro 5**. Everything renders at bu
 **Building pages:** `src/pages/building/index.astro` renders the Building lane as a vertical track; `src/pages/building/[...slug].astro` renders a case study through `src/layouts/ProjectPage.astro`. Both that layout and `src/layouts/BlogPost.astro` fill `src/layouts/Reader.astro`, whose frame and prose styles are the global `src/styles/reader.css`, because Astro's scoped styles do not reach slotted content. `src/components/WhileList.astro` renders "Written while" and "While building".
 
 **Reader frame interactions:** `Reader.astro` asks `TransportBar` for the reading line (a hidden 2px line at the bar's bottom edge in the lane colour, `data-reader-progress`) and imports `src/scripts/reader.ts`, which on every scroll frame measures the body (`data-reader-body`) and writes `--p` on the line, hiding it while the body fits the viewport, so a short case study shows none. The same script marks the sidebar (`data-reader-aside`) with `data-fits` when it sits under the bar with room to spare, and `reader.css` turns that into `position: sticky` at 900px and up with the offset in `--stick`; a sidebar taller than the screen scrolls with the page. The math is `src/lib/reading.ts` (`readingProgress`, unit-tested with pixel fixtures). `src/__tests__/reader-contract.test.ts` reads one built essay and one built case study to keep the three hooks and the no-script state.
+
+**Navigation and the lifecycle contract:** `Layout.astro` carries
+`<ClientRouter fallback="swap" />`, so every navigation is a client-side swap
+with a cross-fade, and the transport bar is named (`src/styles/view-transitions.css`)
+so it stays out of it. Astro executes a bundled module script once per session,
+so nothing initialises at import: every enhancement registers through
+`onPage(init)` (`src/scripts/lifecycle.ts`, logic in `src/lib/lifecycle.ts`),
+which re-runs it on `astro:page-load` and aborts the previous run on
+`astro:before-swap`. Each init takes `{ first, signal }` — `first` is true only
+after a cold load, so an intro like the playhead draw-in never replays on a
+navigation, and `signal` must be passed to every listener. `roadmap.ts` and
+`review.ts` are the exception to what abort means: they *flush* their debounced
+save rather than cancelling it. `src/scripts/morph.ts` is the one script that
+stays a top-level module; it arms the clicked link's picture and title
+(`data-morph`, `data-morph-shot`, `data-morph-title`) so they morph into the
+destination's (`data-morph-dest`). All view-transition names live in
+`src/styles/view-transitions.css`; Astro's `transition:*` directives are unused.
+`src/__tests__/transitions-contract.test.ts` reads `dist/` to keep the router,
+the names and the prefetch opt-outs in place.
+
+Two details here are the easiest to get wrong. First, `first` is not simply "the
+first run of this init" — a page reached only by navigating there (an essay,
+then Home) has its own script bundle fetched and executed *during* the swap
+that lands on it, so that init's first-ever run can itself be a real navigation,
+not a cold load. `createLifecycle` handles this with one `cold` flag shared by
+every init and flipped false by a single `astro:before-swap` listener registered
+once, in the helper itself, rather than one flag per init: a per-init listener
+registered during that same swap would be too late to see the very swap it
+needs to know about, and would wrongly call its own arrival a cold load — this
+is exactly what once made the home page replay its playhead intro on a real
+navigation. Second, a delegated click interceptor that calls `preventDefault()`
+on an anchor — `timeline/inspector.ts`'s and `timeline/scrub.ts`'s handling of
+`a[data-item-link]` and the panel-close links — must register in the *capture*
+phase. `<ClientRouter />` registers its own `document` click listener at
+module-parse time, in the bubble phase, and starts its own navigation only when
+`ev.defaultPrevented` is still false by the time that listener runs
+(`node_modules/astro/components/ClientRouter.astro:67-106`); ours register
+later, on `astro:page-load`, which the router itself dispatches, so a
+bubble-phase `preventDefault()` here always loses that race and the router
+navigates anyway.
 
 **Figures:** interactive figures inside essays follow one shape, set by the I/O multiplexing figure: a pure model in `src/lib/figures/` (unit-tested; every number and sentence the figure prints), an Astro component in `src/components/figures/` that server-renders a meaningful still frame with its controls `hidden` and imports its script, and a re-runnable init in `src/scripts/figures/` that reveals the controls and animates by writing data attributes the scoped CSS styles. The MDX imports the component in place of a picture. `IoMultiplexing.astro` plays one event-loop wake at a time under select, poll or epoll at 8, 32 or 128 sockets: arrivals come from a generator seeded by count and wake number, so every mechanism sees the same data and the per-mechanism tally is an honest comparison; the wake's phases and the frame at any elapsed time come from the model (`schedule`, `frameAt`), so the script holds no timers, and one animation-frame loop paints only when the frame changes. select and poll leave a trail on every cell; epoll lights the ready ones alone. Under reduced motion a wake is a single held return frame. The grid is `aria-hidden` and the one live region is the readout sentence. The script rebuilds the grid on a count change by cloning the first cell, which keeps Astro's scoped-style attribute. `src/__tests__/figure-contract.test.ts` finds the essay that carries the figure by hook and keeps the hooks and the no-script state.
 
