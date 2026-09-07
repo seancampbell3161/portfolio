@@ -22,6 +22,19 @@ export interface PageCtx {
 export type PageInit = (ctx: PageCtx) => void;
 
 export function createLifecycle(target: EventTarget): (init: PageInit) => void {
+  // A swap means this document was reached from inside the site. The flag is
+  // shared by every registration and set by a listener registered here, once:
+  // a per-init listener would be registered too late by a module that first
+  // executes during the very swap it needs to know about. That is exactly how
+  // a page-specific bundle behaves: Astro runs its scripts (runScripts, which
+  // is where an `onPage` call first executes) after astro:before-swap has
+  // already fired, so a per-init listener would never see that swap and would
+  // wrongly call its own arrival a cold load.
+  let cold = true;
+  target.addEventListener("astro:before-swap", () => {
+    cold = false;
+  });
+
   return function onPage(init: PageInit): void {
     let runs = 0;
     let ctl: AbortController | null = null;
@@ -31,7 +44,7 @@ export function createLifecycle(target: EventTarget): (init: PageInit) => void {
       // two runs alive at once.
       ctl?.abort();
       ctl = new AbortController();
-      init({ first: runs++ === 0, signal: ctl.signal });
+      init({ first: runs++ === 0 && cold, signal: ctl.signal });
     });
 
     // Before the DOM is replaced, not after: teardown must still be able to see

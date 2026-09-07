@@ -73,7 +73,7 @@ describe("createLifecycle", () => {
     expect(signals[1].aborted).toBe(false);
   });
 
-  it("keeps registrations independent", () => {
+  it("keeps registrations' run counts independent", () => {
     const target = new EventTarget();
     const onPage = createLifecycle(target);
     const a: boolean[] = [];
@@ -84,7 +84,41 @@ describe("createLifecycle", () => {
     swap(target);
     load(target);
 
+    // b registers before the swap, but a swap still lands before its own
+    // first run: that run is no less a mid-navigation arrival for it than
+    // for a. Independence is about each registration's own run count (b
+    // starts counting from its own zero, not from a's), not about b getting
+    // a cold-load "first" it did not actually see.
     expect(a).toEqual([true, false]);
-    expect(b).toEqual([true]);
+    expect(b).toEqual([false]);
+  });
+
+  it("reports a mid-swap arrival as not a cold load, even on its very first run", () => {
+    // A page-specific bundle's onPage() call executes inside runScripts(),
+    // which Astro runs after astro:before-swap has already fired. A module
+    // seeing the world for the first time there must not mistake the swap
+    // it missed for a cold load.
+    const target = new EventTarget();
+    const onPage = createLifecycle(target);
+    swap(target);
+    const first: boolean[] = [];
+    onPage((ctx) => first.push(ctx.first));
+
+    load(target);
+
+    expect(first).toEqual([false]);
+  });
+
+  it("still reports a cold load when nothing has registered or swapped yet", () => {
+    // Guard against over-correcting: the shared flag must default to "cold"
+    // so an ordinary cold load, with no prior swap, is unaffected.
+    const target = new EventTarget();
+    const onPage = createLifecycle(target);
+    const first: boolean[] = [];
+    onPage((ctx) => first.push(ctx.first));
+
+    load(target);
+
+    expect(first).toEqual([true]);
   });
 });

@@ -61,9 +61,18 @@ await page.waitForTimeout(400);
 check("the hash settles on the date the drag ended on", (await page.evaluate(() => location.hash)) === `#on-${isoDay(dragTo)}`);
 
 // opening an item unpins
+const titleBeforeItemClick = await page.title();
 await page.locator(".tl-item:not([data-out]) .tl-clip").first().click();
 check("item hash replaces on hash", (await page.evaluate(() => location.hash)).startsWith("#item-"));
 check("date panel closed by item", await page.locator("#on-date[data-open]").count() === 0);
+// The clip's own href is a real page (spec: the page works without JS). The
+// hash above proves the in-place open ran; it does not prove the router's
+// own click listener didn't ALSO win and start navigating there anyway --
+// that soft navigation used to land about a second later, after every
+// immediate assertion had already passed. Settle past that window.
+await page.waitForTimeout(1500);
+check("clip click still hasn't navigated away", (await page.evaluate(() => location.pathname)) === "/");
+check("clip click still hasn't changed the title", (await page.title()) === titleBeforeItemClick);
 await page.keyboard.press("Escape");
 
 // keyboard scrub on the ruler
@@ -119,11 +128,18 @@ await empty.close();
 
 // ---- the hero readout (interactions 2) ----
 const hero = await fresh(`${BASE}/`);
+const heroTitleBeforeClick = await hero.title();
 const firstLink = hero.locator("[data-right-now] a[data-item-link]").first();
 const linkedId = await firstLink.getAttribute("data-item-link");
 await firstLink.click();
 check("a readout link opens its item in the inspector", (await hero.evaluate(() => location.hash)) === `#item-${linkedId}`);
 check("a readout link does not leave the page", (await hero.evaluate(() => location.pathname)) === "/");
+// Same race as the clip click above: the router's own soft navigation to
+// the item's real page used to complete about a second after these
+// immediate checks, so settle past that window before trusting it stuck.
+await hero.waitForTimeout(1500);
+check("a readout link still hasn't navigated away", (await hero.evaluate(() => location.pathname)) === "/");
+check("a readout link still hasn't changed the title", (await hero.title()) === heroTitleBeforeClick);
 // The build stamps now; the client prunes whatever no longer touches the real
 // day. A fixed clock past the build day makes that visible.
 const buildDay = new Date(await hero.getAttribute("[data-timeline]", "data-now"));
