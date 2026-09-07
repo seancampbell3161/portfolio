@@ -510,15 +510,22 @@ const vt2Prog = await vt2.$eval("[data-reader-progress]", (el) => ({ hidden: el.
 check("the case study's reading line initialised", !vt2Prog.hidden);
 await vt2.close();
 
-// Check 3: a pending save survives a navigation. This preview server has no
-// Netlify Functions, so /api/progress 404s locally -- the POST is intercepted
-// and asserted as ATTEMPTED, which is what proves the flush fires during the
-// swap, not that it authenticates.
+// Check 3: a pending save survives a navigation -- and specifically because
+// it was FLUSHED, not merely because the ordinary 500ms debounce happened to
+// fire anyway. Deleting the flush handler wouldn't stop the timer; it would
+// still fire on its own and still POST, so "a POST arrived" alone cannot tell
+// the two apart. What distinguishes them is timing: a real flush fires from
+// astro:before-swap, at the moment of the nav click, so it always lands well
+// under 500ms after the toggle; the ordinary timer, by definition of
+// setTimeout, can never fire in LESS than its own delay. So this asserts the
+// POST landed before toggle + 500ms, not merely that one landed at all. This
+// preview server has no Netlify Functions, so /api/progress 404s locally --
+// the POST is intercepted, which is enough to prove it fired.
 const vt3 = watch(await browser.newPage({ viewport: { width: 1280, height: 900 } }));
 await vt3.addInitScript(() => sessionStorage.setItem("roadmap-admin-token", "e2e-dummy-token"));
-let vt3Posted = false;
+let vt3PostAt = null;
 await vt3.route("**/api/progress", async (route) => {
-  if (route.request().method() === "POST") vt3Posted = true;
+  if (route.request().method() === "POST") vt3PostAt = Date.now();
   await route.fulfill({ status: 200, contentType: "application/json", body: "{}" });
 });
 await vt3.goto(`${BASE}/roadmap`, { waitUntil: "networkidle" });
@@ -528,12 +535,26 @@ check("roadmap: a stored admin token turns editing on", (await vt3.locator(".roa
 const vt3ClipId = await vt3.evaluate(() => document.querySelector(".rm-clip[data-clip-id]")?.dataset.clipId ?? null);
 await vt3.locator(`.rm-clip[data-clip-id="${vt3ClipId}"]`).click();
 await vt3.waitForSelector(`#clip-${vt3ClipId}:target`);
+// The site scrolls smoothly (global.css); the hash navigation above starts an
+// animated scroll to the panel that can still be settling when the checkbox
+// click below waits for its target to stop moving, adding the scroll's whole
+// duration to that wait. Jump instantly instead, same ruling as elsewhere in
+// this file (scroll with behavior: "instant").
+await vt3.evaluate((id) => document.getElementById(`clip-${id}`)?.scrollIntoView({ behavior: "instant", block: "center" }), vt3ClipId);
+// Recorded BEFORE the click, not after: the debounce timer starts at the real
+// browser-side "change" event, which this timestamp can only ever precede, so
+// toggleAt + 500 stays a true lower bound on the ordinary timer's fire time
+// regardless of this process's own IPC latency.
+const vt3ToggleAt = Date.now();
 await vt3.locator(`#clip-${vt3ClipId} input[data-id]`).first().click();
-await vt3.waitForTimeout(200); // well inside the 500ms debounce
+await vt3.waitForTimeout(200); // a nav link clicked well inside the 500ms debounce
 await vt3.locator(".tb-link", { hasText: "Writing" }).click();
 await vt3.waitForURL(/\/blog\/?$/);
 await vt3.waitForTimeout(500);
-check("a pending save survives a navigation (the POST still fired)", vt3Posted);
+check(
+  "a pending save survives a navigation (the POST landed before the ordinary debounce could have fired it)",
+  vt3PostAt !== null && vt3PostAt < vt3ToggleAt + 500,
+);
 await vt3.close();
 
 // Check 4: listeners do not stack. Leaving and returning to /roadmap must not
@@ -556,6 +577,8 @@ await vt4.waitForSelector(".roadmap-page.rm-editing");
 const vt4ClipId = await vt4.evaluate(() => document.querySelector(".rm-clip[data-clip-id]")?.dataset.clipId ?? null);
 await vt4.locator(`.rm-clip[data-clip-id="${vt4ClipId}"]`).click();
 await vt4.waitForSelector(`#clip-${vt4ClipId}:target`);
+// See check 3: jump instantly rather than waiting out the smooth scroll.
+await vt4.evaluate((id) => document.getElementById(`clip-${id}`)?.scrollIntoView({ behavior: "instant", block: "center" }), vt4ClipId);
 await vt4.locator(`#clip-${vt4ClipId} input[data-id]`).first().click();
 await vt4.waitForTimeout(700); // past the 500ms debounce
 check("listeners do not stack: one toggle after a navigate-away-and-back saves exactly once", vt4Posts === 1);
@@ -590,7 +613,11 @@ const vt5Elapsed = await vt5.evaluate(
           document.querySelector("h1") &&
           !document.documentElement.hasAttribute("data-astro-transition")
         ) {
-          resolve(performance.now() - (window.__navStart ?? performance.now()));
+          // null, not a fallback to performance.now() (which would read as
+          // "0ms elapsed" and pass): a missing __navStart means the click
+          // listener never recorded a start, which must fail the check below,
+          // not silently satisfy it.
+          resolve(window.__navStart == null ? null : performance.now() - window.__navStart);
           return;
         }
         requestAnimationFrame(poll);
@@ -598,7 +625,7 @@ const vt5Elapsed = await vt5.evaluate(
       requestAnimationFrame(poll);
     }),
 );
-check("reduced motion completes the swap within 100ms of the click", vt5Elapsed < 100);
+check("reduced motion completes the swap within 100ms of the click", vt5Elapsed !== null && vt5Elapsed < 100);
 await vt5.close();
 
 // Check 6: back restores the open panel, and does not replay the playhead

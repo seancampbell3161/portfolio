@@ -242,7 +242,7 @@ module-parse time — earlier than either of ours, which register on
 `astro:page-load`, an event the router itself dispatches. Its listener runs in
 the bubble phase and starts a navigation only when `ev.defaultPrevented` is
 still false by the time it inspects the event
-(`node_modules/astro/components/ClientRouter.astro:67-106`). Two bubble-phase
+(`node_modules/astro/components/ClientRouter.astro:67-108`). Two bubble-phase
 listeners on the same target run in registration order, so a bubble-phase
 `preventDefault()` in either of ours would always execute *after* the router
 had already read `defaultPrevented` and moved on — the router would win,
@@ -256,6 +256,43 @@ the capture phase**, because the router's own listener is registered earlier
 and defers to `ev.defaultPrevented` in the bubble phase. A future interceptor
 that skips this will work in isolation and fail only once the router also
 holds an opinion about the same click.
+
+### 6.7 A hash write must carry `history.state` forward, never `null`
+
+Like §6.6, this is a rule the implementation surfaced rather than one either
+document anticipated, and by the same reasoning it earns its own section
+rather than living only as a comment at its one call site today.
+
+`<ClientRouter />` owns `history.state` for every entry it creates. On load it
+stamps the current entry with `{ index, scrollX, scrollY }` if nothing has
+already
+(`node_modules/astro/dist/transitions/router.js:42-50`), and its `onPopState`
+reads that stamp back to decide direction and to drive the transition — but it
+returns immediately, doing nothing at all, when `ev.state === null`
+(`router.js:386-399`, the check itself at 391-393). A `history.state` of
+`null` is not "no opinion, proceed as normal": to the router it means "this
+entry was never one of mine," and it leaves the address bar to update on its
+own while the DOM stays exactly as it was.
+
+Any code that changes the URL of the *current* entry without navigating —
+`timeline/index.ts`'s `writeHash()`, pinning `#on-<date>` or opening
+`#item-<id>`, is the one example on the site today — calls
+`history.replaceState()` directly, and `replaceState`'s first argument
+**replaces** the entry's state outright; it does not merge into it. Passing
+`null` there, as `writeHash()` did until this was found, discards whatever the
+router had stamped on that entry. The visitor never notices at the time — the
+hash updates, the panel opens — until the next time they press Back to that
+exact entry, at which point the router reads `null`, does nothing, and the
+back button appears to have silently stopped working: the address bar changes,
+the page does not.
+
+**The rule: a hash write must carry `history.state` forward
+(`history.replaceState(history.state, "", url)`), never discard it.** This
+predates the router — `writeHash()` was untouched by any earlier sub-project
+and was harmless as `replaceState(null, ...)` when there was no SPA router to
+have an opinion about `history.state` — so a future script that touches the
+URL without navigating is the likeliest place to reintroduce it, not a place
+already converted to the lifecycle contract.
 
 ## 7. The morph
 

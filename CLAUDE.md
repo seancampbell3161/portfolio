@@ -9,7 +9,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - `npm run check` — Production build followed by the full Vitest suite, including the roadmap client-contract test that reads `dist/roadmap/index.html`
 - `npm run preview` — Preview production build locally
 - `npm run shots` — Full-page screenshots of the home page, the writing index, the Building index, the roadmap, two essays (one with code blocks), a project page, the 404 page and a newsletter page, at desktop and phone widths (`screenshots/`, gitignored). Needs `npm run preview` running.
-- `npm run e2e` — Playwright pass over the home timeline's scrub and pan interactions at desktop and phone widths (hover, pin, drag, tap, keys, deep links), the hero readout's links and its pruning under a fixed clock past the build day, the reader frame's reading line and sticky sidebar on an essay, a short case study and a phone, and the I/O multiplexing figure's wakes, tallies, count changes, play and reduced motion. Needs `npm run preview` running.
+- `npm run e2e` — Playwright pass over the home timeline's scrub and pan interactions at desktop and phone widths (hover, pin, drag, tap, keys, deep links), the hero readout's links and its pruning under a fixed clock past the build day, the reader frame's reading line and sticky sidebar on an essay, a short case study and a phone, the I/O multiplexing figure's wakes, tallies, count changes, play and reduced motion, and the view transitions section: a script arriving mid-swap still upgrading its page, the morph naming the clicked element, a roadmap save flushing (not merely surviving) a navigation, listeners not stacking across a navigate-away-and-back, reduced motion completing a swap immediately, and back restoring an open panel without replaying the playhead draw-in. Needs `npm run preview` running.
 - `npm run thumbs` — Playwright screenshots of every project that has a `url` in its frontmatter, into `src/assets/projects/<slug>.jpg`; committed. A project without a `url` can carry a hand-placed `.jpg` or `.png` under its slug instead.
 - `npm test` — Run the Vitest unit suite
 
@@ -54,7 +54,7 @@ destination's (`data-morph-dest`). All view-transition names live in
 `src/__tests__/transitions-contract.test.ts` reads `dist/` to keep the router,
 the names and the prefetch opt-outs in place.
 
-Two details here are the easiest to get wrong. First, `first` is not simply "the
+Three details here are the easiest to get wrong. First, `first` is not simply "the
 first run of this init" — a page reached only by navigating there (an essay,
 then Home) has its own script bundle fetched and executed *during* the swap
 that lands on it, so that init's first-ever run can itself be a real navigation,
@@ -70,10 +70,16 @@ on an anchor — `timeline/inspector.ts`'s and `timeline/scrub.ts`'s handling of
 phase. `<ClientRouter />` registers its own `document` click listener at
 module-parse time, in the bubble phase, and starts its own navigation only when
 `ev.defaultPrevented` is still false by the time that listener runs
-(`node_modules/astro/components/ClientRouter.astro:67-106`); ours register
+(`node_modules/astro/components/ClientRouter.astro:67-108`); ours register
 later, on `astro:page-load`, which the router itself dispatches, so a
 bubble-phase `preventDefault()` here always loses that race and the router
-navigates anyway.
+navigates anyway. Third, a hash write must carry `history.state` forward —
+`history.replaceState(history.state, "", url)`, never `null` — because
+`<ClientRouter />` stamps its own `{ index, scrollX, scrollY }` on every entry
+and goes permanently inert on `popstate` for that entry when it reads that
+state back as `null` (`node_modules/astro/dist/transitions/router.js:391-393`);
+`timeline/index.ts`'s `writeHash()` got this wrong until it was caught, and the
+back button silently stopped working for any entry it had touched.
 
 **Figures:** interactive figures inside essays follow one shape, set by the I/O multiplexing figure: a pure model in `src/lib/figures/` (unit-tested; every number and sentence the figure prints), an Astro component in `src/components/figures/` that server-renders a meaningful still frame with its controls `hidden` and imports its script, and a re-runnable init in `src/scripts/figures/` that reveals the controls and animates by writing data attributes the scoped CSS styles. The MDX imports the component in place of a picture. `IoMultiplexing.astro` plays one event-loop wake at a time under select, poll or epoll at 8, 32 or 128 sockets: arrivals come from a generator seeded by count and wake number, so every mechanism sees the same data and the per-mechanism tally is an honest comparison; the wake's phases and the frame at any elapsed time come from the model (`schedule`, `frameAt`), so the script holds no timers, and one animation-frame loop paints only when the frame changes. select and poll leave a trail on every cell; epoll lights the ready ones alone. Under reduced motion a wake is a single held return frame. The grid is `aria-hidden` and the one live region is the readout sentence. The script rebuilds the grid on a count change by cloning the first cell, which keeps Astro's scoped-style attribute. `src/__tests__/figure-contract.test.ts` finds the essay that carries the figure by hook and keeps the hooks and the no-script state.
 
