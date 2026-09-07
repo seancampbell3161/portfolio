@@ -32,11 +32,23 @@ html[data-astro-transition] { scroll-behavior: auto; }
 @media (prefers-reduced-motion: reduce) {
   /* 1ms, never `animation: none` -- `none` can strand the old snapshot on
      screen. Astro's own reduced-motion handling covers only the animations the
-     router defines, not these. */
+     router defines, not these.
+
+     The group alone is not enough: it only animates the morph's transform and
+     size, while the old/new snapshots inside that group cross-fade on their
+     own timeline -- left uncollapsed, they keep the UA default of about 250ms,
+     so the picture and title would still visibly dissolve. Both layers have to
+     be listed. Enumerated on purpose, not `::view-transition-old(*)`: one
+     unsupported selector in a comma list drops the whole rule, so a wildcard
+     here risks losing reduced-motion handling entirely instead of partially. */
   ::view-transition-old(root),
   ::view-transition-new(root),
   ::view-transition-group(shot),
-  ::view-transition-group(ptitle) {
+  ::view-transition-group(ptitle),
+  ::view-transition-old(shot),
+  ::view-transition-new(shot),
+  ::view-transition-old(ptitle),
+  ::view-transition-new(ptitle) {
     animation-duration: 1ms !important;
   }
 }
