@@ -52,7 +52,7 @@ const lanes: { key: Lane; label: string; href: string }[] = [
   <Footer />
 </Layout>
 
-<script is:inline>
+<script is:inline data-astro-rerun>
   const lost = document.querySelector("[data-lost-path]");
   if (lost) {
     lost.querySelector("code").textContent = location.pathname;

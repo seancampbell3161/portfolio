@@ -3,24 +3,21 @@
 // line along the transport bar's bottom edge, and the sidebar that stays in
 // view while the article scrolls. Without this the line stays hidden and
 // nothing sticks; the page reads the same. The math is in src/lib/reading.ts;
-// this file only measures and writes. Re-runnable: initReader() tears down the
-// previous run first, so a view transition can call it again.
+// this file only measures and writes. Re-runnable: registered through onPage,
+// so every navigation gets a fresh run and the previous one is aborted before
+// the swap.
 import { readingProgress } from "../lib/reading";
+import { onPage, type PageCtx } from "./lifecycle";
 
 /** Room kept under the sidebar when deciding that it fits (the sticky offset comes from CSS). */
 const GAP = 24;
 
-let current: AbortController | null = null;
-
-export function initReader(): void {
-  current?.abort();
+export function initReader({ signal }: PageCtx): void {
   const body = document.querySelector<HTMLElement>("[data-reader-body]");
   const line = document.querySelector<HTMLElement>("[data-reader-progress]");
   const aside = document.querySelector<HTMLElement>("[data-reader-aside]");
   if (!body) return;
   const measured = body;
-  current = new AbortController();
-  const { signal } = current;
 
   // The line: --p from 0 to 1, hidden while the body fits the viewport. The
   // bar's bottom edge is the reader's eyeline, wherever the line's bar ends.
@@ -88,4 +85,4 @@ export function initReader(): void {
   draw();
 }
 
-initReader();
+onPage(initReader);

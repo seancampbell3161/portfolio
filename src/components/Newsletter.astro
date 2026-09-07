@@ -31,48 +31,7 @@ const {
 </section>
 
 <script>
-  const form = document.querySelector<HTMLFormElement>("[data-newsletter-form]");
-  const message = document.querySelector<HTMLParagraphElement>("[data-newsletter-message]");
-  if (form && message) {
-    form.addEventListener("submit", async (e) => {
-      e.preventDefault();
-      const button = form.querySelector<HTMLButtonElement>("button");
-      const input = form.querySelector<HTMLInputElement>("input[name=email]");
-      if (!input || !button) return;
-      const email = input.value.trim();
-      if (!email) {
-        message.textContent = "Please enter an email address.";
-        message.dataset.state = "error";
-        return;
-      }
-      button.disabled = true;
-      message.textContent = "";
-      message.dataset.state = "";
-      try {
-        const res = await fetch("/api/subscribe", {
-          method: "POST",
-          headers: { "content-type": "application/json" },
-          body: JSON.stringify({ email }),
-        });
-        if (res.ok) {
-          form.reset();
-          message.textContent = "Check your inbox for a confirmation email.";
-          message.dataset.state = "success";
-        } else if (res.status === 429) {
-          message.textContent = "Too many attempts. Please try again in a few minutes.";
-          message.dataset.state = "error";
-        } else {
-          message.textContent = "That didn't look right — please check the email address.";
-          message.dataset.state = "error";
-        }
-      } catch {
-        message.textContent = "Network error. Please try again.";
-        message.dataset.state = "error";
-      } finally {
-        button.disabled = false;
-      }
-    });
-  }
+  import "../scripts/newsletter";
 </script>
 
 <style>

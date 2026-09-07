@@ -98,22 +98,7 @@ const dateLabel = now.toLocaleDateString("en-US", { month: "short", day: "numeri
 </header>
 
 <script>
-  const bar = document.querySelector<HTMLElement>(".tb");
-  const toggle = bar?.querySelector<HTMLButtonElement>(".tb-menu");
-  const panel = bar?.querySelector<HTMLElement>(".tb-mobile");
-
-  function setOpen(open: boolean) {
-    if (!toggle || !panel) return;
-    toggle.setAttribute("aria-expanded", String(open));
-    panel.hidden = !open;
-    bar?.classList.toggle("menu-open", open);
-  }
-
-  toggle?.addEventListener("click", () => setOpen(toggle.getAttribute("aria-expanded") !== "true"));
-  panel?.querySelectorAll("a").forEach((a) => a.addEventListener("click", () => setOpen(false)));
-  document.addEventListener("keydown", (e) => {
-    if (e.key === "Escape" && toggle?.getAttribute("aria-expanded") === "true") setOpen(false);
-  });
+  import "../scripts/transport-bar";
 </script>
 
 <style>
