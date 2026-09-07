@@ -450,6 +450,181 @@ await phaseIs(phoneFig, "return");
 check("a phone runs a wake", (await cellsOf(phoneFig)).found.length > 0);
 await phoneFig.close();
 
+// ---- view transitions (interactions 6) ----
+
+// Check 1: a script that first executes DURING a swap -- not a cold load --
+// still upgrades its page. The essay ships no timeline script at all, so
+// clicking Home fetches and runs the home bundle for the first time as part
+// of THIS navigation. The overview strip only becomes a role="slider" once
+// src/scripts/timeline/index.ts runs; the built HTML ships it aria-hidden.
+// This guards the ordering the whole lifecycle contract depends on: Astro
+// runs a newly-arrived page's scripts before it dispatches astro:page-load,
+// so a listener registered during that very execution still catches it.
+const vt1 = watch(await browser.newPage({ viewport: { width: 1280, height: 900 } }));
+await vt1.goto(`${BASE}${essayHref}`, { waitUntil: "networkidle" });
+await vt1.locator(".tb-name").click();
+await vt1.waitForURL(`${BASE}/`);
+await vt1.waitForSelector('.tl-ov[role="slider"]', { timeout: 4000 }).catch(() => {});
+check(
+  "a script arriving mid-session still upgrades its page (the overview strip becomes a slider)",
+  (await vt1.locator(".tl-ov").getAttribute("role")) === "slider",
+);
+await vt1.close();
+
+// Check 2: the morph arms the element that was clicked. A building panel with
+// a picture is found by attribute, not by slug, so the check does not depend
+// on which project happens to carry a screenshot.
+// A short viewport, so whichever case study is picked is reliably taller than
+// it -- every case study is short enough to fit a normal 900px-tall viewport.
+const vt2 = watch(await browser.newPage({ viewport: { width: 1280, height: 600 } }));
+await vt2.goto(`${BASE}/`, { waitUntil: "networkidle" });
+// "All" zoom, so the picked clip is on screen regardless of which year it falls in.
+await vt2.locator('[data-zoom-control] button[data-zoom="all"]').click();
+const morphId = await vt2.evaluate(() => {
+  const visible = new Set([...document.querySelectorAll(".tl-item:not([data-out])")].map((el) => el.dataset.id));
+  const ids = [...document.querySelectorAll(".insp[data-morph] [data-morph-shot]")].map((img) => img.closest(".insp").id.replace(/^item-/, ""));
+  return ids.find((id) => visible.has(id)) ?? null;
+});
+check("home ships at least one visible building panel with a picture to morph", morphId !== null);
+await vt2.locator(`.tl-item[data-id="${morphId}"] .tl-clip`).click();
+await vt2.waitForSelector(`#item-${morphId}[data-open]`);
+await vt2.evaluate((id) => {
+  window.__morphName = null;
+  document.addEventListener(
+    "astro:before-preparation",
+    () => {
+      const img = document.querySelector(`#item-${id} [data-morph-shot]`);
+      window.__morphName = img ? getComputedStyle(img).viewTransitionName : null;
+    },
+    { once: true },
+  );
+}, morphId);
+await vt2.locator(`#item-${morphId} .insp-links a`, { hasText: "Read the case study" }).click();
+await vt2.waitForURL(/\/building\//);
+check("the morph arms the clicked panel's picture with the shot name", (await vt2.evaluate(() => window.__morphName)) === "shot");
+check("the case study rendered", (await vt2.evaluate(() => location.pathname)).startsWith("/building/"));
+await vt2.waitForFunction(() => document.querySelector("[data-reader-body]"));
+const vt2Tall = await vt2.evaluate(() => document.querySelector("[data-reader-body]").getBoundingClientRect().height > window.innerHeight);
+check("the case study picked for the morph has a body taller than the viewport", vt2Tall);
+const vt2Prog = await vt2.$eval("[data-reader-progress]", (el) => ({ hidden: el.hidden }));
+check("the case study's reading line initialised", !vt2Prog.hidden);
+await vt2.close();
+
+// Check 3: a pending save survives a navigation. This preview server has no
+// Netlify Functions, so /api/progress 404s locally -- the POST is intercepted
+// and asserted as ATTEMPTED, which is what proves the flush fires during the
+// swap, not that it authenticates.
+const vt3 = watch(await browser.newPage({ viewport: { width: 1280, height: 900 } }));
+await vt3.addInitScript(() => sessionStorage.setItem("roadmap-admin-token", "e2e-dummy-token"));
+let vt3Posted = false;
+await vt3.route("**/api/progress", async (route) => {
+  if (route.request().method() === "POST") vt3Posted = true;
+  await route.fulfill({ status: 200, contentType: "application/json", body: "{}" });
+});
+await vt3.goto(`${BASE}/roadmap`, { waitUntil: "networkidle" });
+check("roadmap: a stored admin token turns editing on", (await vt3.locator(".roadmap-page.rm-editing").count()) === 1);
+// The checkboxes live in the roadmap's own :target-gated panels (spec §6),
+// same as the home Inspector; a clip's plain hash link opens one with no JS.
+const vt3ClipId = await vt3.evaluate(() => document.querySelector(".rm-clip[data-clip-id]")?.dataset.clipId ?? null);
+await vt3.locator(`.rm-clip[data-clip-id="${vt3ClipId}"]`).click();
+await vt3.waitForSelector(`#clip-${vt3ClipId}:target`);
+await vt3.locator(`#clip-${vt3ClipId} input[data-id]`).first().click();
+await vt3.waitForTimeout(200); // well inside the 500ms debounce
+await vt3.locator(".tb-link", { hasText: "Writing" }).click();
+await vt3.waitForURL(/\/blog\/?$/);
+await vt3.waitForTimeout(500);
+check("a pending save survives a navigation (the POST still fired)", vt3Posted);
+await vt3.close();
+
+// Check 4: listeners do not stack. Leaving and returning to /roadmap must not
+// leave a stale run's listeners registered alongside the fresh run's --
+// otherwise a single toggle would schedule more than one save.
+const vt4 = watch(await browser.newPage({ viewport: { width: 1280, height: 900 } }));
+let vt4Posts = 0;
+await vt4.route("**/api/progress", async (route) => {
+  if (route.request().method() === "POST") vt4Posts++;
+  await route.fulfill({ status: 200, contentType: "application/json", body: "{}" });
+});
+await vt4.goto(`${BASE}/roadmap`, { waitUntil: "networkidle" });
+await vt4.locator(".tb-link", { hasText: "Writing" }).click();
+await vt4.waitForURL(/\/blog\/?$/);
+await vt4.goBack();
+await vt4.waitForURL(/\/roadmap\/?$/);
+vt4.once("dialog", (d) => d.accept("e2e-dummy-token"));
+await vt4.locator("#rm-edit").click();
+await vt4.waitForSelector(".roadmap-page.rm-editing");
+const vt4ClipId = await vt4.evaluate(() => document.querySelector(".rm-clip[data-clip-id]")?.dataset.clipId ?? null);
+await vt4.locator(`.rm-clip[data-clip-id="${vt4ClipId}"]`).click();
+await vt4.waitForSelector(`#clip-${vt4ClipId}:target`);
+await vt4.locator(`#clip-${vt4ClipId} input[data-id]`).first().click();
+await vt4.waitForTimeout(700); // past the 500ms debounce
+check("listeners do not stack: one toggle after a navigate-away-and-back saves exactly once", vt4Posts === 1);
+await vt4.close();
+
+// Check 5: reduced motion completes the swap immediately -- nothing makes the
+// visitor wait out a cross-fade they asked not to see. data-astro-transition
+// stays on <html> for exactly as long as the transition's animations run
+// (astro/dist/transitions/router.js), so its removal is "the swap is over."
+const vt5 = watch(await browser.newPage({ viewport: { width: 1280, height: 900 } }));
+await vt5.emulateMedia({ reducedMotion: "reduce" });
+await vt5.goto(`${BASE}/`, { waitUntil: "networkidle" });
+await vt5.locator('[data-zoom-control] button[data-zoom="all"]').click();
+const vt5Id = await vt5.evaluate(() => document.querySelector('.tl-item[data-lane="writing"]:not([data-out])')?.dataset.id ?? null);
+await vt5.locator(`.tl-item[data-id="${vt5Id}"] .tl-clip`).click();
+await vt5.waitForSelector(`#item-${vt5Id}[data-open]`);
+await vt5.evaluate(() => {
+  window.__navStart = null;
+  document.addEventListener(
+    "click",
+    () => { window.__navStart = performance.now(); },
+    { capture: true, once: true },
+  );
+});
+await vt5.locator(`#item-${vt5Id} .insp-links a`, { hasText: "Read the essay" }).click();
+const vt5Elapsed = await vt5.evaluate(
+  () =>
+    new Promise((resolve) => {
+      function poll() {
+        if (
+          location.pathname.startsWith("/blog/") &&
+          document.querySelector("h1") &&
+          !document.documentElement.hasAttribute("data-astro-transition")
+        ) {
+          resolve(performance.now() - (window.__navStart ?? performance.now()));
+          return;
+        }
+        requestAnimationFrame(poll);
+      }
+      requestAnimationFrame(poll);
+    }),
+);
+check("reduced motion completes the swap within 100ms of the click", vt5Elapsed < 100);
+await vt5.close();
+
+// Check 6: back restores the open panel, and does not replay the playhead
+// draw-in. Its URL carries #item-<id> (a deep link), which openDeepLink()
+// reads to reopen the panel and to skip the intro on its own -- proving that
+// path still runs is exactly what is at stake here.
+const vt6 = await fresh(`${BASE}/`);
+await vt6.locator('[data-zoom-control] button[data-zoom="all"]').click();
+const vt6Id = await vt6.evaluate(() => document.querySelector('.tl-item[data-lane="building"]:not([data-out])')?.dataset.id ?? null);
+await vt6.locator(`.tl-item[data-id="${vt6Id}"] .tl-clip`).click();
+await vt6.waitForSelector(`#item-${vt6Id}[data-open]`);
+await vt6.locator(`#item-${vt6Id} .insp-links a`, { hasText: "Read the case study" }).click();
+await vt6.waitForURL(/\/building\//);
+await vt6.goBack();
+// The panel opened via history.replaceState (spec §8.2), so this history entry's
+// URL is "/#item-<id>", not the bare path -- match on pathname, not the whole URL.
+await vt6.waitForURL((url) => url.pathname === "/");
+await vt6.waitForSelector(`#item-${vt6Id}[data-open]`, { timeout: 4000 }).catch(() => {});
+check("back restores the URL to the item hash", (await vt6.evaluate(() => location.hash)) === `#item-${vt6Id}`);
+check("back restores the open panel", (await vt6.locator(`#item-${vt6Id}[data-open]`).count()) === 1);
+check(
+  "back does not replay the playhead draw-in",
+  !((await vt6.locator("[data-playhead]").getAttribute("style")) ?? "").includes("transition"),
+);
+await vt6.close();
+
 // ---- nothing threw anywhere ----
 check(`no uncaught page errors${errors.length ? `: ${errors.join(" | ")}` : ""}`, errors.length === 0);
 

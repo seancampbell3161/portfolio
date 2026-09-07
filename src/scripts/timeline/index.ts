@@ -46,7 +46,15 @@ export function initTimeline({ first, signal }: PageCtx): void {
 
   function writeHash(hash: string): void {
     try {
-      history.replaceState(null, "", location.pathname + location.search + hash);
+      // The state argument carries history.state forward, not null: this predates
+      // <ClientRouter />, which stamps every entry with { index, scrollX, scrollY }
+      // and reads it back on popstate (astro/dist/transitions/router.js) -- when
+      // its own state comes back null it treats the entry as untransitioned and
+      // does nothing. Passing null here wiped that stamp, so any back navigation
+      // to a page whose hash this had touched left the router permanently inert:
+      // the address bar changed, the DOM did not. Only the URL changes below; the
+      // router's bookkeeping is not this function's to touch, only to preserve.
+      history.replaceState(history.state, "", location.pathname + location.search + hash);
     } catch {
       /* rate-limited or blocked: the URL lags, nothing else does */
     }
