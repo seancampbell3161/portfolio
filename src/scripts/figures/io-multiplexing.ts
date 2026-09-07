@@ -32,13 +32,11 @@ import {
   type Tallies,
   type Wake,
 } from "../../lib/figures/io-multiplexing";
+import { onPage, type PageCtx } from "../lifecycle";
 
 const IDLE: Frame = { phase: "idle", scan: null };
 
-let current: AbortController | null = null;
-
-export function initIoFigure(): void {
-  current?.abort();
+export function initIoFigure({ signal }: PageCtx): void {
   // The site puts one figure on a page; a second instance on the same page
   // would be ignored, not upgraded.
   const root = document.querySelector<HTMLElement>("[data-io-figure]");
@@ -54,8 +52,6 @@ export function initIoFigure(): void {
   const readyNote = q("[data-io-ready-note]");
   const readout = q("[data-io-readout]");
   if (!controls || !grid || !step || !play || !callName || !callStatusEl || !readyTitle || !readyNote || !readout) return;
-  current = new AbortController();
-  const { signal } = current;
 
   const mechanismAttr = root.dataset.mechanism;
   let mechanism: Mechanism = isMechanism(mechanismAttr) ? mechanismAttr : "epoll";
@@ -300,8 +296,18 @@ export function initIoFigure(): void {
     cancelWake();
   });
 
+  // State and DOM agree from the first frame: the run starts with empty
+  // tallies, so the rows say so, whatever the markup shipped.
+  for (const m of MECHANISMS) {
+    const row = q(`[data-io-tally="${m}"]`);
+    if (row) row.textContent = tallyText(tallies[m]);
+  }
+
+  // Never paintIdle() here: the server-rendered still frame is the figure's
+  // resting state and must survive the upgrade, on a cold load and on every
+  // navigation back to this essay.
   controls.hidden = false;
   root.toggleAttribute("data-live", true);
 }
 
-initIoFigure();
+onPage(initIoFigure);
