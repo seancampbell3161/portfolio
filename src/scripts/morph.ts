@@ -13,6 +13,10 @@
 // is exactly what this one wants.
 import type { TransitionBeforePreparationEvent } from "astro:transitions/client";
 
+// One CSS selector per name, scoped to the box the visitor clicked. Keyed the
+// same as the names view-transitions.css hands to [data-morph-dest].
+const NAMES = { shot: "[data-morph-shot]", ptitle: "[data-morph-title]" } as const;
+
 const armed: HTMLElement[] = [];
 
 function disarm(): void {
@@ -36,8 +40,24 @@ document.addEventListener("astro:before-preparation", (e) => {
   const source = (e as TransitionBeforePreparationEvent).sourceElement;
   const box = source?.closest("[data-morph]");
   if (!box) return;
-  arm(box.querySelector("[data-morph-shot]"), "shot");
-  arm(box.querySelector("[data-morph-title]"), "ptitle");
+  for (const [name, selector] of Object.entries(NAMES)) {
+    const src = box.querySelector(selector);
+    if (!(src instanceof HTMLElement)) continue;
+    // The outgoing document can itself be a reader page: its own <h1> (and,
+    // on a case study, its hero) already holds this name permanently, from
+    // view-transitions.css's [data-morph-dest] rule. Arming the element the
+    // visitor actually clicked -- a sidebar row, say -- would then leave TWO
+    // elements holding the same view-transition-name at once, and the spec's
+    // answer to a duplicate name is to skip the ENTIRE transition, silently:
+    // no morph, no cross-fade, not even the held transport bar. So the page's
+    // own destination has to give up the name for this one navigation; it is
+    // in `armed` alongside the source, so disarm() hands it back (via the
+    // empty string, which falls through to the stylesheet rule) the moment
+    // this run ends, whether that is a completed swap or an abandoned one.
+    const dest = document.querySelector<HTMLElement>(`[data-morph-dest="${name}"]`);
+    if (dest && dest !== src) arm(dest, "none");
+    arm(src, name);
+  }
 });
 
 document.addEventListener("astro:page-load", disarm);
