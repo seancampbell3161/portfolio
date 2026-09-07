@@ -51,6 +51,9 @@ const canonicalURL = new URL(Astro.url.pathname, Astro.site);
   </head>
   <body>
     <slot />
+    <script>
+      import "../scripts/morph";
+    </script>
   </body>
 </html>
 

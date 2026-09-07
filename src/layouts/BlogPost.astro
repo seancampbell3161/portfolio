@@ -41,7 +41,7 @@ const { title, description, pubDate, updatedDate, heroImage, tags } = entry.data
       )}
     </span>
   </p>
-  <h1>{title}</h1>
+  <h1 data-morph-dest="ptitle">{title}</h1>
   <p class="standfirst">{description}</p>
   {tags.length > 0 && <p class="tags">{tags.join(", ")}</p>}
   {heroImage && <img src={heroImage} alt="" class="hero" />}

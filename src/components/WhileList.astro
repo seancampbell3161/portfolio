@@ -28,10 +28,10 @@ const STATUS_WORD: Record<Status, string> = {
     </p>
     <ul class="while-list" aria-label={label}>
       {items.map((item) => (
-        <li style={`--c: var(--lane-${item.lane})`}>
+        <li style={`--c: var(--lane-${item.lane})`} data-morph>
           <i class="dot"></i>
           <div>
-            <a href={item.href}>{item.title}</a>
+            <a href={item.href} data-morph-title>{item.title}</a>
             <small>{item.lane}, {STATUS_WORD[item.status]}</small>
           </div>
         </li>

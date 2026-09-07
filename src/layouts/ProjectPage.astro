@@ -41,10 +41,10 @@ const shot = projectImage(entry.slug);
     <i class="sq"></i>
     <span>Building, {whenText({ status, start, end })}</span>
   </p>
-  <h1>{title}</h1>
+  <h1 data-morph-dest="ptitle">{title}</h1>
   <p class="standfirst">{description}</p>
   {shot && (
-    <Image class="hero" src={shot} alt={`A screenshot of ${title}`} width={1500} widths={[800, 1500]} sizes="(max-width: 899px) 100vw, 744px" loading="eager" />
+    <Image class="hero" data-morph-dest="shot" src={shot} alt={`A screenshot of ${title}`} width={1500} widths={[800, 1500]} sizes="(max-width: 899px) 100vw, 744px" loading="eager" />
   )}
   <div class="body" data-reader-body>
     <slot />

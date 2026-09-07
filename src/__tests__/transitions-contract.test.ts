@@ -7,10 +7,19 @@ import { describe, it, expect } from "vitest";
 import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 
-function firstPage(dir: string): string | null {
+// Some projects (in-progress ones, mostly) have no committed screenshot, so
+// their case study renders no hero. `requireHero` picks the first entry that
+// does, so the shot-destination assertion below exercises a page that
+// actually has one rather than whichever slug a directory listing surfaces
+// first.
+function firstPage(dir: string, requireHero = false): string | null {
   if (!existsSync(dir)) return null;
-  const slug = readdirSync(dir, { withFileTypes: true }).find((d) => d.isDirectory())?.name;
-  return slug ? join(dir, slug, "index.html") : null;
+  const slugs = readdirSync(dir, { withFileTypes: true }).filter((d) => d.isDirectory()).map((d) => d.name);
+  if (requireHero) {
+    const withHero = slugs.find((slug) => readFileSync(join(dir, slug, "index.html"), "utf8").includes('class="hero"'));
+    if (withHero) return join(dir, withHero, "index.html");
+  }
+  return slugs[0] ? join(dir, slugs[0], "index.html") : null;
 }
 
 const PAGES: Record<string, string | null> = {
@@ -19,7 +28,7 @@ const PAGES: Record<string, string | null> = {
   building: "dist/building/index.html",
   roadmap: "dist/roadmap/index.html",
   essay: firstPage("dist/blog"),
-  "case study": firstPage("dist/building"),
+  "case study": firstPage("dist/building", true),
 };
 
 const built = Object.values(PAGES).every((p) => p !== null && existsSync(p));
@@ -68,5 +77,30 @@ describe.skipIf(!built)("view transitions contract (dist/)", () => {
     const links = html.match(/<a[^>]*data-item-link[^>]*>/g) ?? [];
     expect(links.length).toBeGreaterThan(0);
     for (const a of links) expect(a).toContain('data-astro-prefetch="false"');
+  });
+
+  it("home: every inspector panel offers a morph source", () => {
+    const html = read("dist/index.html");
+    const panels = html.match(/<section class="insp"[^>]*>/g) ?? [];
+    expect(panels.length).toBeGreaterThan(0);
+    for (const p of panels) expect(p).toContain("data-morph");
+    expect(html).toContain("data-morph-title");
+    expect(html).toContain("data-morph-shot");
+  });
+
+  it("building index: rows offer a title to morph", () => {
+    const html = read("dist/building/index.html");
+    expect(html).toContain("data-morph");
+    expect(html).toContain("data-morph-title");
+  });
+
+  it("case study: names both destinations", () => {
+    const html = read(PAGES["case study"]!);
+    expect(html).toContain('data-morph-dest="ptitle"');
+    expect(html).toContain('data-morph-dest="shot"');
+  });
+
+  it("essay: names its heading as a destination", () => {
+    expect(read(PAGES.essay!)).toContain('data-morph-dest="ptitle"');
   });
 });

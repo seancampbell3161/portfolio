@@ -28,10 +28,11 @@ const capitalized = (s: string) => (s === "in-progress" ? "In progress" : s[0].t
         role="region"
         aria-labelledby={`item-${item.id}-title`}
         style={`--c:var(--lane-${item.lane})`}
+        data-morph
       >
         <div class="insp-main">
           <p class="insp-k"><i aria-hidden="true"></i>{laneName(item.lane)}, {whenText(item)}</p>
-          <h2 id={`item-${item.id}-title`}>{item.title}</h2>
+          <h2 id={`item-${item.id}-title`} data-morph-title>{item.title}</h2>
           {b && <p class="insp-desc">{b.description}</p>}
           <div class="insp-links">
             {b?.lane === "writing" && <a href={b.href}>Read the essay</a>}
@@ -53,6 +54,7 @@ const capitalized = (s: string) => (s === "in-progress" ? "In progress" : s[0].t
           {shot && (
             <Image
               class="insp-shot"
+              data-morph-shot
               src={shot}
               alt=""
               width={960}

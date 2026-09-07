@@ -67,6 +67,7 @@ const index = density === "index";
             "tr-entry",
             { "is-current": row.current, "is-span": span, "is-progress": row.status === "in-progress" },
           ]}
+          data-morph
         >
           {index && (
             <span class="tr-meta">
@@ -91,11 +92,11 @@ const index = density === "index";
           )}
           <span class="tr-body">
             {index ? (
-              <h2 class="tr-title">
+              <h2 class="tr-title" data-morph-title>
                 <a href={row.href} aria-current={row.current ? "page" : undefined}>{row.title}</a>
               </h2>
             ) : (
-              <span class="tr-title">
+              <span class="tr-title" data-morph-title>
                 <a href={row.href} aria-current={row.current ? "page" : undefined}>{row.title}</a>
               </span>
             )}
