@@ -180,6 +180,9 @@ export function initScrub(ctx: Ctx): void {
   ticks.addEventListener("pointercancel", (e) => release(e, true), { signal: ctx.signal });
 
   // ---- close: the panel's Close link, and Escape while pinned ----
+  // Captured, not bubbled: this claims an anchor (the Close link), and the
+  // router's own document click listener runs first in the bubble phase and
+  // navigates unless ev.defaultPrevented is already set by the time it looks.
   document.addEventListener(
     "click",
     (e) => {
@@ -188,7 +191,7 @@ export function initScrub(ctx: Ctx): void {
       unpin(ctx);
       ticks!.focus();
     },
-    { signal: ctx.signal },
+    { capture: true, signal: ctx.signal },
   );
   document.addEventListener(
     "keydown",

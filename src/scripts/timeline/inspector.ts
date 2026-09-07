@@ -37,6 +37,10 @@ export function initInspector(ctx: Ctx): void {
 
   // Delegated on the document, not the timeline root, so a link to an item from
   // anywhere on the page (later: the "On this date" panel) opens it in place.
+  // Captured, not bubbled: the router's own document click listener runs at
+  // import time, in the bubble phase, and only starts a page navigation when
+  // ev.defaultPrevented is still false. A bubble-phase preventDefault() here
+  // would arrive after the router has already read that flag and moved on.
   document.addEventListener(
     "click",
     (e) => {
@@ -53,7 +57,7 @@ export function initInspector(ctx: Ctx): void {
         closeItem(ctx);
       }
     },
-    { signal: ctx.signal },
+    { capture: true, signal: ctx.signal },
   );
   document.addEventListener(
     "keydown",
