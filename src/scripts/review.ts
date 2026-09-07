@@ -258,9 +258,17 @@ export function initReview({ signal }: PageCtx): void {
   byId("rm-edit")?.addEventListener(
     "click",
     () => {
-      window.setTimeout(() => {
+      // Tethered to this run's signal (spec §6.2), unlike every other timer or
+      // observer here which is registered up front: this one is scheduled
+      // from inside an event handler instead, at click time, so there is
+      // nowhere else to hang the abort listener. Without it, a click on
+      // "Edit" moments before navigating away would leave the timer to fire
+      // after the DOM (and the `authed`/`state` this closure reads) belong to
+      // whatever run replaced it.
+      const t = window.setTimeout(() => {
         if (!authed && sessionStorage.getItem(TOKEN_KEY)) void loadReview(signal);
       }, 0);
+      signal.addEventListener("abort", () => window.clearTimeout(t), { once: true });
     },
     { signal },
   );
