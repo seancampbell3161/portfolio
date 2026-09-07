@@ -37,21 +37,29 @@ export function initInspector(ctx: Ctx): void {
 
   // Delegated on the document, not the timeline root, so a link to an item from
   // anywhere on the page (later: the "On this date" panel) opens it in place.
-  document.addEventListener("click", (e) => {
-    const target = e.target as Element;
-    const a = target.closest<HTMLAnchorElement>("a[data-item-link]");
-    if (a) {
-      if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button !== 0) return;
-      e.preventDefault();
-      openItem(ctx, a.dataset.itemLink ?? "", { scroll: true });
-      return;
-    }
-    if (target.closest("[data-inspector-close]")) {
-      e.preventDefault();
-      closeItem(ctx);
-    }
-  });
-  document.addEventListener("keydown", (e) => {
-    if (e.key === "Escape" && ctx.store.get().openId) closeItem(ctx);
-  });
+  document.addEventListener(
+    "click",
+    (e) => {
+      const target = e.target as Element;
+      const a = target.closest<HTMLAnchorElement>("a[data-item-link]");
+      if (a) {
+        if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button !== 0) return;
+        e.preventDefault();
+        openItem(ctx, a.dataset.itemLink ?? "", { scroll: true });
+        return;
+      }
+      if (target.closest("[data-inspector-close]")) {
+        e.preventDefault();
+        closeItem(ctx);
+      }
+    },
+    { signal: ctx.signal },
+  );
+  document.addEventListener(
+    "keydown",
+    (e) => {
+      if (e.key === "Escape" && ctx.store.get().openId) closeItem(ctx);
+    },
+    { signal: ctx.signal },
+  );
 }

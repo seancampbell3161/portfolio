@@ -34,33 +34,37 @@ export function initPan(ctx: Ctx): void {
 
   // Slider convention: left and down lower the value (an earlier year, a higher
   // offset); Home is the earliest year, End the current one.
-  strip.addEventListener("keydown", (e) => {
-    if (e.altKey || e.ctrlKey || e.metaKey) return;
-    const s = store.get();
-    const max = maxOffset(s.zoom, now, items);
-    if (max === 0) return;
-    let offset = s.offset;
-    switch (e.key) {
-      case "ArrowLeft":
-      case "ArrowDown":
-        offset = Math.min(max, s.offset + 1);
-        break;
-      case "ArrowRight":
-      case "ArrowUp":
-        offset = Math.max(0, s.offset - 1);
-        break;
-      case "Home":
-        offset = max;
-        break;
-      case "End":
-        offset = 0;
-        break;
-      default:
-        return;
-    }
-    e.preventDefault();
-    store.set({ offset });
-  });
+  strip.addEventListener(
+    "keydown",
+    (e) => {
+      if (e.altKey || e.ctrlKey || e.metaKey) return;
+      const s = store.get();
+      const max = maxOffset(s.zoom, now, items);
+      if (max === 0) return;
+      let offset = s.offset;
+      switch (e.key) {
+        case "ArrowLeft":
+        case "ArrowDown":
+          offset = Math.min(max, s.offset + 1);
+          break;
+        case "ArrowRight":
+        case "ArrowUp":
+          offset = Math.max(0, s.offset - 1);
+          break;
+        case "Home":
+          offset = max;
+          break;
+        case "End":
+          offset = 0;
+          break;
+        default:
+          return;
+      }
+      e.preventDefault();
+      store.set({ offset });
+    },
+    { signal: ctx.signal },
+  );
 
   // ---- pointer: drag pans, a tap jumps (spec §5.2) ----
   const box = strip.querySelector<HTMLElement>("[data-ov-window]");
@@ -86,35 +90,43 @@ export function initPan(ctx: Ctx): void {
     box.style.setProperty("--w", String(fraction(win.to, allWin) - x));
   }
 
-  strip.addEventListener("pointerdown", (e) => {
-    if (e.button !== 0 || pointerId !== null) return;
-    const s = store.get();
-    if (maxOffset(s.zoom, now, items) === 0) return;
-    pointerId = e.pointerId;
-    strip!.setPointerCapture(e.pointerId);
-    startX = e.clientX;
-    startOffset = s.offset;
-    dragging = false;
-    const win = windowFor(s.zoom, now, items, s.offset);
-    boxX0 = fraction(win.from, allWin);
-    boxW = fraction(win.to, allWin) - boxX0;
-    e.preventDefault();
-  });
+  strip.addEventListener(
+    "pointerdown",
+    (e) => {
+      if (e.button !== 0 || pointerId !== null) return;
+      const s = store.get();
+      if (maxOffset(s.zoom, now, items) === 0) return;
+      pointerId = e.pointerId;
+      strip!.setPointerCapture(e.pointerId);
+      startX = e.clientX;
+      startOffset = s.offset;
+      dragging = false;
+      const win = windowFor(s.zoom, now, items, s.offset);
+      boxX0 = fraction(win.from, allWin);
+      boxW = fraction(win.to, allWin) - boxX0;
+      e.preventDefault();
+    },
+    { signal: ctx.signal },
+  );
 
-  strip.addEventListener("pointermove", (e) => {
-    if (e.pointerId !== pointerId) return;
-    const dx = e.clientX - startX;
-    if (!dragging && Math.abs(dx) < TAP_PX) return;
-    dragging = true;
-    strip!.setAttribute("data-dragging", "");
-    const delta = dx / strip!.clientWidth;
-    const s = store.get();
-    const next = offsetForDrag(startOffset, delta, s.zoom, now, items);
-    // Re-lay first (the layout listener also moves the box to the snapped
-    // position), then let the box follow the pointer until release.
-    if (next !== s.offset) store.set({ offset: next });
-    box?.style.setProperty("--x", String(Math.min(1 - boxW, Math.max(0, boxX0 + delta))));
-  });
+  strip.addEventListener(
+    "pointermove",
+    (e) => {
+      if (e.pointerId !== pointerId) return;
+      const dx = e.clientX - startX;
+      if (!dragging && Math.abs(dx) < TAP_PX) return;
+      dragging = true;
+      strip!.setAttribute("data-dragging", "");
+      const delta = dx / strip!.clientWidth;
+      const s = store.get();
+      const next = offsetForDrag(startOffset, delta, s.zoom, now, items);
+      // Re-lay first (the layout listener also moves the box to the snapped
+      // position), then let the box follow the pointer until release.
+      if (next !== s.offset) store.set({ offset: next });
+      box?.style.setProperty("--x", String(Math.min(1 - boxW, Math.max(0, boxX0 + delta))));
+    },
+    { signal: ctx.signal },
+  );
 
   function release(e: PointerEvent, cancelled: boolean): void {
     if (e.pointerId !== pointerId) return;
@@ -133,6 +145,6 @@ export function initPan(ctx: Ctx): void {
     dragging = false;
     settleBox();
   }
-  strip.addEventListener("pointerup", (e) => release(e, false));
-  strip.addEventListener("pointercancel", (e) => release(e, true));
+  strip.addEventListener("pointerup", (e) => release(e, false), { signal: ctx.signal });
+  strip.addEventListener("pointercancel", (e) => release(e, true), { signal: ctx.signal });
 }

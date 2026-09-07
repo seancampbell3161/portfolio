@@ -9,10 +9,11 @@ export function initMotion(ctx: Ctx, opts: { skip: boolean }): void {
   if (!playhead || reduceMotion || opts.skip) return;
   const target = playhead.style.getPropertyValue("--x");
   playhead.style.setProperty("--x", "0");
-  requestAnimationFrame(() =>
-    requestAnimationFrame(() => {
+  let frame = requestAnimationFrame(() => {
+    frame = requestAnimationFrame(() => {
       playhead.style.transition = "left 600ms ease-out";
       playhead.style.setProperty("--x", target);
-    }),
-  );
+    });
+  });
+  ctx.signal.addEventListener("abort", () => cancelAnimationFrame(frame));
 }

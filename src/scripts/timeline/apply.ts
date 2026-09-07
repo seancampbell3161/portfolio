@@ -129,22 +129,31 @@ export function initApply(ctx: Ctx): void {
   });
 
   document.querySelectorAll<HTMLButtonElement>("[data-zoom-control] button").forEach((b) =>
-    b.addEventListener("click", () => {
-      const z = b.dataset.zoom as Zoom;
-      if (!ZOOMS.includes(z)) return;
-      const s = store.get();
-      // The offset survives year <-> three-years, resets at "all", and the
-      // pressed year button while panned means "back to this year".
-      let offset = z === "all" ? 0 : Math.min(s.offset, maxOffset(z, now, ctx.items));
-      if (z === "year" && s.zoom === "year" && s.offset > 0) offset = 0;
-      store.set({ zoom: z, offset });
-      saveZoom(z);
-    }),
+    b.addEventListener(
+      "click",
+      () => {
+        const z = b.dataset.zoom as Zoom;
+        if (!ZOOMS.includes(z)) return;
+        const s = store.get();
+        // The offset survives year <-> three-years, resets at "all", and the
+        // pressed year button while panned means "back to this year".
+        let offset = z === "all" ? 0 : Math.min(s.offset, maxOffset(z, now, ctx.items));
+        if (z === "year" && s.zoom === "year" && s.offset > 0) offset = 0;
+        store.set({ zoom: z, offset });
+        saveZoom(z);
+      },
+      { signal: ctx.signal },
+    ),
   );
 
   let resizeTimer = 0;
-  addEventListener("resize", () => {
-    window.clearTimeout(resizeTimer);
-    resizeTimer = window.setTimeout(() => applyLayout(ctx, store.get()), 150);
-  });
+  addEventListener(
+    "resize",
+    () => {
+      window.clearTimeout(resizeTimer);
+      resizeTimer = window.setTimeout(() => applyLayout(ctx, store.get()), 150);
+    },
+    { signal: ctx.signal },
+  );
+  ctx.signal.addEventListener("abort", () => window.clearTimeout(resizeTimer));
 }

@@ -65,6 +65,9 @@ export interface Ctx {
   /** Fresh each call: label widths depend on the current clip-area width. */
   measure: () => WidthEstimator;
   store: Store;
+  /** Aborted before the next swap. Every module's listeners take it, so a
+   *  navigation leaves nothing bound to a page that is gone. */
+  signal: AbortSignal;
 }
 
 // ---- zoom persistence (spec §5.5: the zoom is remembered, the offset is not) ----

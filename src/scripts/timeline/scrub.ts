@@ -133,29 +133,41 @@ export function initScrub(ctx: Ctx): void {
 
   // ---- pointer on the ticks area (spec §4.2) ----
   let pointerId: number | null = null;
-  ticks.addEventListener("pointermove", (e) => {
-    const date = dateFromPointer(e);
-    if (e.pointerId === pointerId) {
-      // The hover follows the pin, so an unpin leaves the cursor under the
-      // pointer rather than back where the press started.
+  ticks.addEventListener(
+    "pointermove",
+    (e) => {
+      const date = dateFromPointer(e);
+      if (e.pointerId === pointerId) {
+        // The hover follows the pin, so an unpin leaves the cursor under the
+        // pointer rather than back where the press started.
+        hover = date;
+        pin(ctx, date);
+        return;
+      }
       hover = date;
-      pin(ctx, date);
-      return;
-    }
-    hover = date;
-    render();
-  });
-  ticks.addEventListener("pointerleave", () => {
-    hover = null;
-    render();
-  });
-  ticks.addEventListener("pointerdown", (e) => {
-    if (e.button !== 0 || pointerId !== null) return;
-    pointerId = e.pointerId;
-    ticks!.setPointerCapture(e.pointerId);
-    pin(ctx, dateFromPointer(e));
-    e.preventDefault();
-  });
+      render();
+    },
+    { signal: ctx.signal },
+  );
+  ticks.addEventListener(
+    "pointerleave",
+    () => {
+      hover = null;
+      render();
+    },
+    { signal: ctx.signal },
+  );
+  ticks.addEventListener(
+    "pointerdown",
+    (e) => {
+      if (e.button !== 0 || pointerId !== null) return;
+      pointerId = e.pointerId;
+      ticks!.setPointerCapture(e.pointerId);
+      pin(ctx, dateFromPointer(e));
+      e.preventDefault();
+    },
+    { signal: ctx.signal },
+  );
   function release(e: PointerEvent, cancelled: boolean): void {
     if (e.pointerId !== pointerId) return;
     pointerId = null;
@@ -164,21 +176,29 @@ export function initScrub(ctx: Ctx): void {
     // read the panel, so it does not scroll.
     if (!cancelled) panel!.scrollIntoView({ block: "nearest" });
   }
-  ticks.addEventListener("pointerup", (e) => release(e, false));
-  ticks.addEventListener("pointercancel", (e) => release(e, true));
+  ticks.addEventListener("pointerup", (e) => release(e, false), { signal: ctx.signal });
+  ticks.addEventListener("pointercancel", (e) => release(e, true), { signal: ctx.signal });
 
   // ---- close: the panel's Close link, and Escape while pinned ----
-  document.addEventListener("click", (e) => {
-    if (!(e.target as Element).closest("#on-date [data-inspector-close]")) return;
-    e.preventDefault();
-    unpin(ctx);
-    ticks!.focus();
-  });
-  document.addEventListener("keydown", (e) => {
-    if (e.key !== "Escape" || !store.get().pinned) return;
-    unpin(ctx);
-    ticks!.focus();
-  });
+  document.addEventListener(
+    "click",
+    (e) => {
+      if (!(e.target as Element).closest("#on-date [data-inspector-close]")) return;
+      e.preventDefault();
+      unpin(ctx);
+      ticks!.focus();
+    },
+    { signal: ctx.signal },
+  );
+  document.addEventListener(
+    "keydown",
+    (e) => {
+      if (e.key !== "Escape" || !store.get().pinned) return;
+      unpin(ctx);
+      ticks!.focus();
+    },
+    { signal: ctx.signal },
+  );
 
   // ---- keys: arrows step, Home/End go to the window's edges, Enter enters the panel ----
   function showDate(date: Date): void {
@@ -191,33 +211,37 @@ export function initScrub(ctx: Ctx): void {
     }
     pin(ctx, date);
   }
-  ticks.addEventListener("keydown", (e) => {
-    if (e.altKey || e.ctrlKey || e.metaKey) return;
-    const s = store.get();
-    const base = s.pinned ?? now;
-    const unit = e.shiftKey ? "year" : "month";
-    switch (e.key) {
-      case "ArrowLeft":
-      case "ArrowDown":
-        showDate(stepDate(base, unit, -1, allWin));
-        break;
-      case "ArrowRight":
-      case "ArrowUp":
-        showDate(stepDate(base, unit, 1, allWin));
-        break;
-      case "Home":
-        showDate(dateAt(0, currentWindow()));
-        break;
-      case "End":
-        showDate(dateAt(1, currentWindow()));
-        break;
-      case "Enter":
-        if (!s.pinned) return;
-        panel!.focus();
-        break;
-      default:
-        return;
-    }
-    e.preventDefault();
-  });
+  ticks.addEventListener(
+    "keydown",
+    (e) => {
+      if (e.altKey || e.ctrlKey || e.metaKey) return;
+      const s = store.get();
+      const base = s.pinned ?? now;
+      const unit = e.shiftKey ? "year" : "month";
+      switch (e.key) {
+        case "ArrowLeft":
+        case "ArrowDown":
+          showDate(stepDate(base, unit, -1, allWin));
+          break;
+        case "ArrowRight":
+        case "ArrowUp":
+          showDate(stepDate(base, unit, 1, allWin));
+          break;
+        case "Home":
+          showDate(dateAt(0, currentWindow()));
+          break;
+        case "End":
+          showDate(dateAt(1, currentWindow()));
+          break;
+        case "Enter":
+          if (!s.pinned) return;
+          panel!.focus();
+          break;
+        default:
+          return;
+      }
+      e.preventDefault();
+    },
+    { signal: ctx.signal },
+  );
 }
