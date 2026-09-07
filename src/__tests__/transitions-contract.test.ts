@@ -103,4 +103,68 @@ describe.skipIf(!built)("view transitions contract (dist/)", () => {
   it("essay: names its heading as a destination", () => {
     expect(read(PAGES.essay!)).toContain('data-morph-dest="ptitle"');
   });
+
+  // I-2: src/lib/lifecycle.ts's `cold` flag is flipped by a listener registered
+  // the first time ANY script on the page calls onPage() (createLifecycle is
+  // called once, at module load, by src/scripts/lifecycle.ts). If a page ever
+  // shipped with no script that imports that module -- directly or through
+  // another chunk -- `cold` would never learn a swap happened when the visitor
+  // left it, and a later navigation back to it would wrongly report `first:
+  // true`, replaying an intro that should only ever run on a cold load. Today
+  // this holds only because TransportBar.astro sits on every page and its
+  // script imports lifecycle -- a coincidence of composition, not a contract.
+  // This asserts the coincidence directly, from the built output, so a future
+  // page that drops TransportBar (or any script reaching lifecycle) fails loud
+  // instead of silently resurrecting the bug fixed in 3015049.
+  it("every page's script graph reaches the lifecycle module", () => {
+    const astroDir = "dist/_astro";
+    const chunkNames = readdirSync(astroDir).filter((f) => f.endsWith(".js"));
+    const contents = new Map(chunkNames.map((f) => [f, read(join(astroDir, f))]));
+
+    // Found by fingerprint, not by its hashed filename: the one chunk that
+    // both flips `cold` on astro:before-swap and stamps <html class="js"> on
+    // astro:after-swap (src/lib/lifecycle.ts + src/scripts/lifecycle.ts).
+    const lifecycleChunk = chunkNames.find((f) => {
+      const c = contents.get(f)!;
+      return (
+        c.includes("astro:before-swap") &&
+        c.includes("astro:page-load") &&
+        c.includes("astro:after-swap") &&
+        c.includes('classList.add("js")')
+      );
+    });
+    expect(lifecycleChunk, "couldn't find the lifecycle chunk by its fingerprint -- did lifecycle.ts's shape change?").toBeTruthy();
+
+    // Chunks import each other by relative path, e.g. `from"./lifecycle.HASH.js"`.
+    const importsOf = (file: string): string[] =>
+      [...(contents.get(file) ?? "").matchAll(/from\s*["'](\.[^"']+?\.js)["']/g)].map((m) => m[1].replace(/^\.\//, ""));
+
+    const reaches = (entry: string): boolean => {
+      const seen = new Set<string>();
+      const stack = [entry];
+      while (stack.length) {
+        const f = stack.pop()!;
+        if (f === lifecycleChunk) return true;
+        if (seen.has(f)) continue;
+        seen.add(f);
+        stack.push(...importsOf(f));
+      }
+      return false;
+    };
+
+    for (const [kind, path] of Object.entries(PAGES)) {
+      if (!path) continue;
+      const html = read(path);
+      const moduleSrcs = [...html.matchAll(/<script\b[^>]*>/g)]
+        .map((m) => m[0])
+        .filter((tag) => /type="module"/.test(tag))
+        .map((tag) => /\ssrc="\/_astro\/([^"]+)"/.exec(tag)?.[1])
+        .filter((s): s is string => Boolean(s));
+      expect(
+        moduleSrcs.some((s) => reaches(s)),
+        `${kind} (${path}) ships no script whose import graph reaches the lifecycle chunk -- ` +
+          `cold-loading it and navigating away would leave "cold" stuck true`,
+      ).toBe(true);
+    }
+  });
 });

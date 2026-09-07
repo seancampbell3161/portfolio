@@ -8,9 +8,17 @@ const failures = [];
 const check = (name, ok) => { if (!ok) failures.push(name); console.log(`${ok ? "ok  " : "FAIL"} ${name}`); };
 
 // Every page is watched: a throw inside a store listener would leave the page
-// half-rendered, and most checks below would still pass.
+// half-rendered, and most checks below would still pass. Console errors are
+// watched too, not just uncaught exceptions: a duplicate view-transition-name
+// (C-1) never throws -- the browser logs it and silently skips the whole
+// transition -- so a suite that only listened for pageerror could ship that
+// bug with a fully green "no uncaught page errors" check.
 const errors = [];
-const watch = (p) => { p.on("pageerror", (e) => errors.push(String(e))); return p; };
+const watch = (p) => {
+  p.on("pageerror", (e) => errors.push(String(e)));
+  p.on("console", (m) => { if (m.type() === "error") errors.push(m.text()); });
+  return p;
+};
 
 // "Sep 14, 2024" (the cursor chip's format) as an ISO day, to compare with the hash.
 const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
@@ -469,6 +477,17 @@ check(
   "a script arriving mid-session still upgrades its page (the overview strip becomes a slider)",
   (await vt1.locator(".tl-ov").getAttribute("role")) === "slider",
 );
+// I-3: this route -- a cold-loaded essay, then a plain click to Home -- carries
+// no #item-/#on- deep link, so initMotion's `skip: deepLinked || !first` can
+// only be satisfied here by `!first`, i.e. by the `cold` flag correctly
+// flipping false across this swap. Check 6 below also asserts on
+// [data-playhead], but only after a deep-linked back navigation, where
+// `deepLinked` alone already satisfies `skip` -- that assertion cannot fail if
+// `first`/`cold` regresses. This one can.
+check(
+  "a plain navigation from a reader page to Home is not a cold load (the playhead does not replay its draw-in)",
+  !((await vt1.locator("[data-playhead]").getAttribute("style")) ?? "").includes("transition"),
+);
 await vt1.close();
 
 // Check 2: the morph arms the element that was clicked. A building panel with
@@ -528,6 +547,16 @@ await vt3.route("**/api/progress", async (route) => {
   if (route.request().method() === "POST") vt3PostAt = Date.now();
   await route.fulfill({ status: 200, contentType: "application/json", body: "{}" });
 });
+// review.ts's own initReview() also runs on /roadmap and, once a token is
+// present, fetches /api/review -- unmocked, that 404s against this
+// functions-less preview server too, and a fetch() 404 is a genuine console
+// error (Chromium logs "Failed to load resource" for it), which the
+// strengthened watch() below now catches. Routing it is completing the mock
+// to match what a deployed Netlify Function would actually return, not
+// silencing a real failure.
+await vt3.route("**/api/review", async (route) => {
+  await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ schedules: {}, streak: 0, lastReviewDate: null }) });
+});
 await vt3.goto(`${BASE}/roadmap`, { waitUntil: "networkidle" });
 check("roadmap: a stored admin token turns editing on", (await vt3.locator(".roadmap-page.rm-editing").count()) === 1);
 // The checkboxes live in the roadmap's own :target-gated panels (spec §6),
@@ -565,6 +594,11 @@ let vt4Posts = 0;
 await vt4.route("**/api/progress", async (route) => {
   if (route.request().method() === "POST") vt4Posts++;
   await route.fulfill({ status: 200, contentType: "application/json", body: "{}" });
+});
+// See vt3 above: the #rm-edit click below hands review.ts a token too, and its
+// own loadReview() fetches /api/review.
+await vt4.route("**/api/review", async (route) => {
+  await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ schedules: {}, streak: 0, lastReviewDate: null }) });
 });
 await vt4.goto(`${BASE}/roadmap`, { waitUntil: "networkidle" });
 await vt4.locator(".tb-link", { hasText: "Writing" }).click();
@@ -646,11 +680,59 @@ await vt6.waitForURL((url) => url.pathname === "/");
 await vt6.waitForSelector(`#item-${vt6Id}[data-open]`, { timeout: 4000 }).catch(() => {});
 check("back restores the URL to the item hash", (await vt6.evaluate(() => location.hash)) === `#item-${vt6Id}`);
 check("back restores the open panel", (await vt6.locator(`#item-${vt6Id}[data-open]`).count()) === 1);
+// Named for what this route actually exercises: the #item-<id> deep link alone
+// satisfies initMotion's skip, so this cannot catch a regression in `first`/
+// `cold` on its own -- the check after check 1, above, covers that half.
 check(
-  "back does not replay the playhead draw-in",
+  "back through a deep link does not replay the playhead draw-in",
   !((await vt6.locator("[data-playhead]").getAttribute("style")) ?? "").includes("transition"),
 );
 await vt6.close();
+
+// Check 7 (I-1b): a navigation FROM a reader page's own sidebar. None of the
+// six checks above ever click a link while a reader page is the OUTGOING
+// document, which is exactly the shape C-1 needed: an essay's <h1> already
+// holds "ptitle" (view-transitions.css's [data-morph-dest]) at the same time
+// as a "Nearby essays" row wants it. Before the fix, the outgoing document
+// held that name twice and the browser skipped the whole transition -- and
+// silently: the destination still renders (the router's DOM swap doesn't
+// depend on the transition's own choreography), so "did navigation succeed"
+// cannot tell the two cases apart. Only the transition's own `ready` promise
+// can: it rejects when the browser skips for a duplicate name, and Astro's
+// router never looks at `ready` itself (it awaits `updateCallbackDone`), so
+// nothing else on the page would surface that rejection. `document.
+// startViewTransition` is wrapped here, before the click, to capture it.
+const vt7 = watch(await browser.newPage({ viewport: { width: 1280, height: 900 } }));
+await vt7.goto(`${BASE}${essayHref}`, { waitUntil: "networkidle" });
+await vt7.evaluate(() => {
+  window.__vtReady = null;
+  const orig = document.startViewTransition?.bind(document);
+  if (!orig) return; // no View Transitions API here; nothing for this check to prove
+  document.startViewTransition = (cb) => {
+    const vt = orig(cb);
+    vt.ready.then(
+      () => { window.__vtReady = "resolved"; },
+      (err) => { window.__vtReady = `rejected:${err?.name ?? err}`; },
+    );
+    return vt;
+  };
+});
+const vt7ErrorsBefore = errors.length;
+const nearby = vt7.locator('[aria-label="Nearby essays"] a').first();
+await nearby.waitFor();
+const vt7Href = await nearby.getAttribute("href");
+await nearby.click();
+await vt7.waitForURL((url) => url.pathname === new URL(vt7Href, BASE).pathname);
+await vt7.waitForFunction(() => window.__vtReady !== null, { timeout: 4000 }).catch(() => {});
+check(
+  "a sidebar link out of a reader page runs the real transition (its ready promise resolves, not rejects)",
+  (await vt7.evaluate(() => window.__vtReady)) === "resolved",
+);
+check(
+  "no duplicate view-transition-name error was logged for that navigation",
+  !errors.slice(vt7ErrorsBefore).some((e) => /duplicate view-transition-name/i.test(e)),
+);
+await vt7.close();
 
 // ---- nothing threw anywhere ----
 check(`no uncaught page errors${errors.length ? `: ${errors.join(" | ")}` : ""}`, errors.length === 0);
