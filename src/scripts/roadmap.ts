@@ -15,6 +15,10 @@ let saveTimer: number | undefined;
 // the one on screen, even though scheduleSave/save live outside initRoadmap's
 // closure and can't read its `signal` parameter directly.
 let runSignal: AbortSignal | null = null;
+// The flush a departing run fired from its abort handler (§6.5), if one is
+// still in flight. Module-scope, not per-run: the run that set it is gone by
+// the time it matters, and it is the NEXT run's load() that has to see it.
+let pendingFlush: Promise<void> | null = null;
 
 const boxes = () =>
   Array.from(document.querySelectorAll<HTMLInputElement>("input[data-id]"));
@@ -115,6 +119,14 @@ function setEditable(on: boolean) {
 }
 
 async function load(signal?: AbortSignal | null) {
+  // A returning visit can start its GET while the run it replaced is still
+  // flushing a POST from its abort handler (M-1): that write is what made the
+  // edit survive the navigation in the first place, but the GET has no reason
+  // to lose the race and repaint from the state the flush hasn't landed yet --
+  // and the very next edit would then re-save that stale snapshot right back
+  // over it. Waiting for the flush is enough: it never rejects (see save()'s
+  // own catch), so there is nothing to handle here beyond the wait.
+  if (pendingFlush) await pendingFlush;
   try {
     const res = await fetch(API);
     const data = (await res.json()) as {
@@ -278,7 +290,12 @@ export function initRoadmap({ signal }: PageCtx): void {
     if (!saveTimer) return;
     clearTimeout(saveTimer);
     saveTimer = undefined;
-    void save(signal);
+    // Recorded so the run that replaces this one can wait for it (M-1) before
+    // its own load() repaints from whatever the server had before this write
+    // landed.
+    pendingFlush = save(signal).finally(() => {
+      pendingFlush = null;
+    });
   });
 
   if (sessionStorage.getItem(TOKEN_KEY)) setEditable(true);
