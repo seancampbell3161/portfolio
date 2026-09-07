@@ -23,6 +23,11 @@ let queue: string[] = []; // due card ids, in session order
 let authed = false;
 let revealed = false;
 let saveTimer: number | undefined;
+// The signal of the run currently registered. scheduleSave() captures it at
+// schedule time so a fired timer's save() knows whether its own page is still
+// the one on screen, even though scheduleSave/save live outside initReview's
+// closure and can't read its `signal` parameter directly.
+let runSignal: AbortSignal | null = null;
 
 const byId = (id: string) => document.getElementById(id);
 const setText = (id: string, v: string) => {
@@ -111,38 +116,51 @@ function onRate(rating: Rating) {
 }
 
 // ---- data load ----
-async function loadProgress() {
+async function loadProgress(signal?: AbortSignal | null) {
   try {
     const res = await fetch(PROGRESS_API);
     const data = (await res.json()) as { completed?: string[] };
+    // The run that asked for this load may already be gone: don't let a tardy
+    // response repaint the module state (or the DOM, below) the next run owns.
+    if (signal?.aborted) return;
     completedIds = completedIdsFromProgress(data);
   } catch {
+    if (signal?.aborted) return;
     completedIds = new Set();
   }
   renderRotation();
 }
 
-async function loadReview() {
+async function loadReview(signal?: AbortSignal | null) {
   const token = sessionStorage.getItem(TOKEN_KEY);
   if (!token) {
+    if (signal?.aborted) return;
     authed = false;
     renderRunner();
     return;
   }
+  let nextState: ReviewState;
   try {
     const res = await fetch(REVIEW_API, { headers: { authorization: `Bearer ${token}` } });
     if (res.status === 401) {
+      if (signal?.aborted) return;
       authed = false;
       renderRunner();
       return;
     }
     if (!res.ok) throw new Error(`review load failed: ${res.status}`);
-    state = (await res.json()) as ReviewState;
+    nextState = (await res.json()) as ReviewState;
   } catch {
+    if (signal?.aborted) return;
     authed = false;
     renderRunner();
     return;
   }
+  // Both awaits above (the fetch and the json parse) have to resolve before
+  // this run's own signal is checked one last time, or a swap mid-parse could
+  // still slip through and assign into a run that no longer owns this state.
+  if (signal?.aborted) return;
+  state = nextState;
   authed = true;
   queue = dueCards(reviewCards, completedIds, state).map((d) => d.card.id);
   renderRunner();
@@ -159,7 +177,7 @@ function showMessage(text: string) {
   el.hidden = !text;
 }
 
-async function save() {
+async function save(signal?: AbortSignal | null) {
   const token = sessionStorage.getItem(TOKEN_KEY);
   if (!token) {
     authed = false;
@@ -173,8 +191,17 @@ async function save() {
       headers: { "content-type": "application/json", authorization: `Bearer ${token}` },
       body: JSON.stringify(state),
     });
+    // Wrong for every run that reads it back, so drop a rejected token
+    // regardless of who owns what happens next.
+    if (res.status === 401) sessionStorage.removeItem(TOKEN_KEY);
+    // The run that scheduled this save may already be gone -- its abort
+    // handler flushes on the way out (below), passing THIS VERY CALL an
+    // already-aborted signal. That is intentional, not a bug: the fetch above
+    // still had to fire, so the write reaches the server either way. Only what
+    // happens next is suppressed here, because it would repaint the DOM and
+    // module state that the next run now owns.
+    if (signal?.aborted) return;
     if (res.status === 401) {
-      sessionStorage.removeItem(TOKEN_KEY);
       authed = false;
       setSaveState("");
       showMessage("That token didn't work.");
@@ -185,21 +212,31 @@ async function save() {
     showMessage("");
     setSaveState("Saved");
   } catch {
+    if (signal?.aborted) return;
     setSaveState("");
     showMessage("Couldn't save — reloading your saved reviews.");
-    await loadReview();
+    await loadReview(signal);
   }
 }
 
 function scheduleSave() {
   if (saveTimer) clearTimeout(saveTimer);
   setSaveState("Saving…");
-  saveTimer = window.setTimeout(save, SAVE_DEBOUNCE_MS);
+  const signal = runSignal;
+  saveTimer = window.setTimeout(() => {
+    // The abort handler's "is a save pending?" test is this variable's
+    // truthiness -- drop the handle the moment the timer actually fires, or a
+    // navigation long after the last edit would see a save as still pending
+    // and fire a redundant one.
+    saveTimer = undefined;
+    void save(signal);
+  }, SAVE_DEBOUNCE_MS);
 }
 
 // ---- wiring ----
 export function initReview({ signal }: PageCtx): void {
   if (!byId("rv-runner")) return;
+  runSignal = signal;
 
   completedIds = new Set<string>();
   state = emptyReviewState();
@@ -222,7 +259,7 @@ export function initReview({ signal }: PageCtx): void {
     "click",
     () => {
       window.setTimeout(() => {
-        if (!authed && sessionStorage.getItem(TOKEN_KEY)) void loadReview();
+        if (!authed && sessionStorage.getItem(TOKEN_KEY)) void loadReview(signal);
       }, 0);
     },
     { signal },
@@ -251,12 +288,12 @@ export function initReview({ signal }: PageCtx): void {
     if (!saveTimer) return;
     clearTimeout(saveTimer);
     saveTimer = undefined;
-    void save();
+    void save(signal);
   });
 
   void (async () => {
-    await loadProgress(); // completedIds first…
-    await loadReview(); // …then the queue depends on it
+    await loadProgress(signal); // completedIds first…
+    await loadReview(signal); // …then the queue depends on it
   })();
 }
 

@@ -10,6 +10,11 @@ const completed = new Set<string>();
 const logEntries: Record<string, LogEntry> = {};
 let editing = false;
 let saveTimer: number | undefined;
+// The signal of the run currently registered. scheduleSave() captures it at
+// schedule time so a fired timer's save() knows whether its own page is still
+// the one on screen, even though scheduleSave/save live outside initRoadmap's
+// closure and can't read its `signal` parameter directly.
+let runSignal: AbortSignal | null = null;
 
 const boxes = () =>
   Array.from(document.querySelectorAll<HTMLInputElement>("input[data-id]"));
@@ -109,24 +114,28 @@ function setEditable(on: boolean) {
   if (btn) btn.textContent = on ? "Done" : "Edit";
 }
 
-async function load() {
+async function load(signal?: AbortSignal | null) {
   try {
     const res = await fetch(API);
     const data = (await res.json()) as {
       completed?: string[];
       logEntries?: Record<string, LogEntry>;
     };
+    // The run that asked for this load may already be gone: don't let a tardy
+    // response repaint the module state (or the DOM, below) the next run owns.
+    if (signal?.aborted) return;
     completed.clear();
     for (const id of data.completed ?? []) completed.add(id);
     for (const key of Object.keys(logEntries)) delete logEntries[key];
     for (const [id, e] of Object.entries(data.logEntries ?? {})) logEntries[id] = e;
   } catch {
+    if (signal?.aborted) return;
     // leave as-is; render shows zeros on first failure
   }
   render();
 }
 
-async function save() {
+async function save(signal?: AbortSignal | null) {
   const token = sessionStorage.getItem(TOKEN_KEY);
   if (!token) {
     setEditable(false);
@@ -139,28 +148,46 @@ async function save() {
       headers: { "content-type": "application/json", authorization: `Bearer ${token}` },
       body: JSON.stringify({ completed: [...completed], logEntries: serializableLogEntries() }),
     });
+    // Wrong for every run that reads it back, so drop a rejected token
+    // regardless of who owns what happens next.
+    if (res.status === 401) sessionStorage.removeItem(TOKEN_KEY);
+    // The run that scheduled this save may already be gone -- its abort
+    // handler flushes on the way out (below), passing THIS VERY CALL an
+    // already-aborted signal. That is intentional, not a bug: the fetch above
+    // still had to fire, so the write reaches the server either way. Only what
+    // happens next is suppressed here, because it would repaint the DOM and
+    // module state that the next run now owns.
+    if (signal?.aborted) return;
     if (res.status === 401) {
-      sessionStorage.removeItem(TOKEN_KEY);
       setEditable(false);
       setSaveState("");
       showMessage("That token didn't work.");
-      await load();
+      await load(signal);
       return;
     }
     if (!res.ok) throw new Error(`save failed: ${res.status}`);
     showMessage("");
     setSaveState("Saved");
   } catch {
+    if (signal?.aborted) return;
     setSaveState("");
     showMessage("Couldn't save — your last change was undone.");
-    await load();
+    await load(signal);
   }
 }
 
 function scheduleSave() {
   if (saveTimer) clearTimeout(saveTimer);
   setSaveState("Saving…");
-  saveTimer = window.setTimeout(save, SAVE_DEBOUNCE_MS);
+  const signal = runSignal;
+  saveTimer = window.setTimeout(() => {
+    // The abort handler's "is a save pending?" test is this variable's
+    // truthiness -- drop the handle the moment the timer actually fires, or a
+    // navigation long after the last edit would see a save as still pending
+    // and fire a redundant one.
+    saveTimer = undefined;
+    void save(signal);
+  }, SAVE_DEBOUNCE_MS);
 }
 
 function onLogFieldChange(event: Event) {
@@ -225,6 +252,7 @@ function onEditClick() {
 
 export function initRoadmap({ signal }: PageCtx): void {
   if (!document.querySelector(".roadmap-page")) return;
+  runSignal = signal;
 
   // Module state is per-page: a navigation must not carry one page's edits into
   // the next run.
@@ -250,11 +278,11 @@ export function initRoadmap({ signal }: PageCtx): void {
     if (!saveTimer) return;
     clearTimeout(saveTimer);
     saveTimer = undefined;
-    void save();
+    void save(signal);
   });
 
   if (sessionStorage.getItem(TOKEN_KEY)) setEditable(true);
-  void load();
+  void load(signal);
 }
 
 onPage(initRoadmap);
