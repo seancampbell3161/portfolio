@@ -5,9 +5,10 @@
 // CheckItem/DecisionLog components, rehoused here from the retired
 // Milestone/BookCard/FoundationsSection bodies. data-milestone-pct/data-book-pct
 // keep src/scripts/roadmap.ts's per-clip percent updates working.
-import { build, reading, foundations } from "../../data/roadmap";
+import { build, reading, foundations, phases } from "../../data/roadmap";
 import CheckItem from "./CheckItem.astro";
 import DecisionLog from "./DecisionLog.astro";
+import PairingList from "./PairingList.astro";
 import { longDate, isoDay } from "../../lib/dates";
 import { roadmapClips, type ClipStatus } from "../../lib/roadmap/arrange";
 
@@ -38,6 +39,12 @@ const statusOf = (id: string) => STATUS_WORDS[statusById.get(id) ?? "planned"];
           <CheckItem id={g.id} label={g.label} meta={`${g.stages} stages${g.hours ? ` · ~${g.hours}h` : ""}`} />
         ))}
       </div>
+      {phases.filter((p) => p.milestone === m.id).map((p) => (
+        <>
+          <PairingList label={`Reading · ${p.label}`} items={p.reading} />
+          <PairingList label={`Foundations · ${p.label}`} items={p.foundations} />
+        </>
+      ))}
       {(m.logs ?? []).map((log) => <DecisionLog log={log} />)}
       <p class="rm-insp-close"><a href="#" data-inspector-close>Close</a></p>
     </section>

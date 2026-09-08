@@ -1,0 +1,36 @@
+---
+// One phase's reading or foundations list (spec §8). Follows the shape of
+// src/components/WhileList.astro — kicker, then a list of linked rows — rather
+// than inventing a second idiom for the same job. Renders nothing when empty.
+import { reading, foundations, type Pairing } from "../../data/roadmap";
+
+interface Props {
+  label: string;
+  items: Pairing[];
+}
+const { label, items } = Astro.props;
+
+// Refs are internal ids; readers see titles. Built once per render.
+const titles = new Map<string, string>();
+for (const b of reading) {
+  for (const c of b.chapters) titles.set(c.id, `${b.title} — ${c.no}. ${c.title}`);
+}
+for (const g of foundations) {
+  for (const i of g.items) titles.set(i.id, i.label);
+}
+const titleOf = (ref: string) => titles.get(ref) ?? ref;
+---
+
+{items.length > 0 && (
+  <section class="rm-pairs" data-pairing-list>
+    <p class="rm-pairs-k">{label}</p>
+    <ul>
+      {items.map((p) => (
+        <li class:list={[{ optional: p.optional }]}>
+          <span class="rm-pairs-t">{titleOf(p.ref)}</span>
+          <small>{p.note}</small>
+        </li>
+      ))}
+    </ul>
+  </section>
+)}

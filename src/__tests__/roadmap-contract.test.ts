@@ -114,7 +114,7 @@ describe.skipIf(!built)("roadmap client contract (dist/roadmap/index.html)", () 
   });
 
   it("keeps the hooks the band's script writes into", () => {
-    for (const hook of ["data-week-label", "data-week-phase", "data-week-reading", "data-week-foundations"]) {
+    for (const hook of ["data-week-label", "data-week-panel"]) {
       expect(html, `missing ${hook}`).toContain(hook);
     }
   });
@@ -123,5 +123,12 @@ describe.skipIf(!built)("roadmap client contract (dist/roadmap/index.html)", () 
     expect(html).toContain("data-roadmap-arc");
     const segments = html.match(/data-arc-phase="/g) ?? [];
     expect(segments).toHaveLength(7); // ramp + M1–M5 + capstone
+  });
+
+  it("names, in the Redis panel, the chapters read alongside it", () => {
+    const panel = html.slice(html.indexOf('id="clip-redis"'), html.indexOf('id="clip-sqlite"'));
+    expect(panel).toContain("data-pairing-list");
+    expect(panel).toContain("alongside RDB/AOF");     // the schedule's own reason
+    expect(panel).toMatch(/Storage and Retrieval/i);  // a resolved chapter title, not an id
   });
 });

@@ -5,6 +5,7 @@
 // deploy can never show one phase's heading above another phase's reading list.
 import { phases } from "../../data/roadmap";
 import { currentPhase, weekLabel } from "../../lib/roadmap/schedule";
+import PairingList from "./PairingList.astro";
 
 const now = new Date();
 const active = currentPhase(now);
@@ -17,12 +18,8 @@ const label = weekLabel(now);
     <div class="rm-week-panel" data-week-panel={p.id} hidden={p.id !== active?.id}>
       <p class="rm-week-phase" data-week-phase>{p.name}</p>
       <div class="rm-week-lists">
-        <ul data-week-reading aria-label={`Reading during ${p.label}`}>
-          {p.reading.map((x) => <li>{x.ref} — {x.note}</li>)}
-        </ul>
-        <ul data-week-foundations aria-label={`Foundations during ${p.label}`}>
-          {p.foundations.map((x) => <li>{x.ref} — {x.note}</li>)}
-        </ul>
+        <PairingList label="Reading" items={p.reading} />
+        <PairingList label="Foundations" items={p.foundations} />
       </div>
     </div>
   ))}
