@@ -1,0 +1,28 @@
+---
+// The seven-phase ribbon (spec §8). Static: no script, no :target, no state.
+// Each segment grows in proportion to its week count, so the ribbon reads as a
+// real timeline rather than seven equal boxes.
+import { phases } from "../../data/roadmap";
+import { weekStart, weekEnd } from "../../lib/roadmap/weeks";
+import { shortDate, isoDay } from "../../lib/dates";
+
+const weeks = (p: { fromWeek: number; toWeek: number }) => p.toWeek - p.fromWeek + 1;
+const label = (p: { fromWeek: number; toWeek: number }) =>
+  p.fromWeek === p.toWeek ? `W${p.fromWeek}` : `W${p.fromWeek}–${p.toWeek}`;
+---
+
+<section class="rm-arc" data-roadmap-arc aria-label="The arc — seven phases across 23 weeks">
+  <ol>
+    {phases.map((p) => (
+      <li data-arc-phase={p.id} style={`flex-grow: ${weeks(p)}`}>
+        <span class="rm-arc-wk">{label(p)}</span>
+        <span class="rm-arc-nm">{p.label}</span>
+        <span class="rm-arc-dt">
+          <time datetime={isoDay(weekStart(p.fromWeek))}>{shortDate(weekStart(p.fromWeek))}</time>
+          {" – "}
+          <time datetime={isoDay(weekEnd(p.toWeek))}>{shortDate(weekEnd(p.toWeek))}</time>
+        </span>
+      </li>
+    ))}
+  </ol>
+</section>
