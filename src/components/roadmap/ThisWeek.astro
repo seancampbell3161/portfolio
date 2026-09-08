@@ -1,34 +1,32 @@
 ---
-// The "this week" band (spec §7). Server-rendered from the build clock, then
-// recomputed on load by src/scripts/roadmap-schedule.ts — this is the one
-// enhancement that rewrites rather than narrows, because its inputs are the
-// static phase table the client bundle already holds.
-import { thisWeek } from "../../lib/roadmap/schedule";
-import { LAST_WEEK, weekStart } from "../../lib/roadmap/weeks";
-import { longDate } from "../../lib/dates";
+// The "this week" band (spec §7). Every phase's panel is server-rendered and
+// all but the current one is `hidden`; src/scripts/roadmap-schedule.ts reveals
+// the right one on load. Same shape as RoadmapInspector, and it means a stale
+// deploy can never show one phase's heading above another phase's reading list.
+import { phases } from "../../data/roadmap";
+import { currentPhase, weekLabel } from "../../lib/roadmap/schedule";
 
 const now = new Date();
-const w = thisWeek(now);
-const before = now.getTime() < weekStart(0).getTime();
-
-const label = w === null
-  ? (before ? `The plan starts ${longDate(weekStart(0))}` : "The plan is finished")
-  : (w.week === 0 ? "Ramp week" : `Week ${w.week} of ${LAST_WEEK}`);
+const active = currentPhase(now);
+const label = weekLabel(now);
 ---
 
 <section class="rm-week" data-this-week>
   <p class="rm-week-label" data-week-label>{label}</p>
-  <p class="rm-week-phase" data-week-phase>{w?.phase.name ?? ""}</p>
-  <div class="rm-week-lists">
-    <ul data-week-reading aria-label="Reading this phase">
-      {(w?.reading ?? []).map((p) => <li>{p.ref} — {p.note}</li>)}
-    </ul>
-    <ul data-week-foundations aria-label="Foundations this phase">
-      {(w?.foundations ?? []).map((p) => <li>{p.ref} — {p.note}</li>)}
-    </ul>
-  </div>
+  {phases.map((p) => (
+    <div class="rm-week-panel" data-week-panel={p.id} hidden={p.id !== active?.id}>
+      <p class="rm-week-phase" data-week-phase>{p.name}</p>
+      <div class="rm-week-lists">
+        <ul data-week-reading aria-label={`Reading during ${p.label}`}>
+          {p.reading.map((x) => <li>{x.ref} — {x.note}</li>)}
+        </ul>
+        <ul data-week-foundations aria-label={`Foundations during ${p.label}`}>
+          {p.foundations.map((x) => <li>{x.ref} — {x.note}</li>)}
+        </ul>
+      </div>
+    </div>
+  ))}
 </section>
-
 
 <script>
   import "../../scripts/roadmap-schedule";

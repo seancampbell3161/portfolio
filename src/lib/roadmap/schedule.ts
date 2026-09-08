@@ -4,6 +4,7 @@
 // it, the same shape as src/lib/timeline/now.ts.
 import { build, phases, type BuildMilestone, type Pairing, type Phase } from "../../data/roadmap.js";
 import { weekStart, weekEnd, shiftDays, LAST_WEEK } from "./weeks.js";
+import { longDate } from "../dates.js";
 
 export interface ThisWeek {
   week: number;              // 0 is the ramp; 1–22 are the build weeks
@@ -38,6 +39,20 @@ export function currentPhase(now: Date): Phase | null {
   const n = weekOf(now);
   if (n === null) return null;
   return phases.find((p) => n >= p.fromWeek && n <= p.toWeek) ?? null;
+}
+
+/**
+ * The band's heading for `now`. Pure so the component and the client script
+ * cannot drift: they call this, rather than each spelling out the five states.
+ */
+export function weekLabel(now: Date): string {
+  const w = weekOf(now);
+  if (w === null) {
+    return now.getTime() < weekStart(0).getTime()
+      ? `The plan starts ${longDate(weekStart(0))}`
+      : "The plan is finished";
+  }
+  return w === 0 ? "Ramp week" : `Week ${w} of ${LAST_WEEK}`;
 }
 
 export function thisWeek(now: Date): ThisWeek | null {

@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { weekOf, currentPhase, thisWeek } from "../schedule.js";
+import { weekOf, currentPhase, thisWeek, weekLabel } from "../schedule.js";
 import { weekStart, weekEnd } from "../weeks.js";
 
 const at = (iso: string) => new Date(`${iso}T12:00:00Z`);
@@ -79,5 +79,24 @@ describe("thisWeek", () => {
   });
   it("is null once the plan is finished", () => {
     expect(thisWeek(at("2027-02-08"))).toBeNull();
+  });
+});
+
+describe("weekLabel", () => {
+  it("says when the plan starts, before the ramp begins", () => {
+    expect(weekLabel(at("2026-08-20"))).toBe("The plan starts 31 August 2026");
+  });
+  it("says Ramp week during week 0", () => {
+    expect(weekLabel(at("2026-09-02"))).toBe("Ramp week");
+  });
+  it("says the week number inside a phase", () => {
+    expect(weekLabel(at("2026-09-09"))).toBe("Week 1 of 22");
+  });
+  it("on a Sunday between phases, names the week about to start, not the one that ended", () => {
+    // The Sunday between W1 and W2; weekOf resolves it forward to week 2.
+    expect(weekLabel(at("2026-09-13"))).toBe("Week 2 of 22");
+  });
+  it("says the plan is finished, past the capstone", () => {
+    expect(weekLabel(at("2027-02-08"))).toBe("The plan is finished");
   });
 });
