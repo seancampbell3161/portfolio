@@ -137,8 +137,11 @@ const utc = (y: number, m: number, d: number, h = 0, min = 0, s = 0, ms = 0) =>
   new Date(Date.UTC(y, m, d, h, min, s, ms));
 
 export function roadmapWindow(zoom: RoadmapZoom, _now: Date, clips: readonly RoadmapClip[]): Window {
-  const spanFrom = utc(2026, 0, 1);
-  const spanTo = utc(2027, 11, 31, 23, 59, 59, 999);
+  // Sized to the plan (Aug 2026 – Apr 2027) plus a quarter of air either side,
+  // not to the 2026–2027 calendar, which left two-thirds of the ruler empty.
+  // Both bounds are quarter boundaries, which is what quarterTicks expects.
+  const spanFrom = utc(2026, 6, 1);
+  const spanTo = utc(2027, 5, 30, 23, 59, 59, 999);
   if (zoom === "span" || clips.length === 0) return { from: spanFrom, to: spanTo };
   let from = spanFrom;
   let to = spanTo;

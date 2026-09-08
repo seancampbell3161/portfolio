@@ -78,10 +78,20 @@ describe("threadSpans", () => {
 });
 
 describe("roadmapWindow", () => {
-  it("span zoom is the fixed 2026-to-2027 calendar", () => {
+  it("span zoom is a window sized to the plan, not the calendar", () => {
     const w = roadmapWindow("span", now, []);
-    expect(w.from).toEqual(new Date("2026-01-01T00:00:00Z"));
-    expect(w.to).toEqual(new Date("2027-12-31T23:59:59.999Z"));
+    expect(w.from).toEqual(new Date("2026-07-01T00:00:00Z"));
+    expect(w.to).toEqual(new Date("2027-06-30T23:59:59.999Z"));
+  });
+
+  it("holds every clip inside the span window", () => {
+    // The window exists to frame the work; a clip outside it would be clipped.
+    const clips = roadmapClips(new Set<string>(), now);
+    const w = roadmapWindow("span", now, []);
+    for (const c of clips) {
+      expect(c.start.getTime(), `${c.id} starts before the window`).toBeGreaterThanOrEqual(w.from.getTime());
+      expect(c.end.getTime(), `${c.id} ends after the window`).toBeLessThanOrEqual(w.to.getTime());
+    }
   });
   it("all zoom expands past the fixed calendar in both directions", () => {
     const clip = (id: string, start: string, end: string): RoadmapClip => ({
@@ -98,18 +108,19 @@ describe("roadmapWindow", () => {
   it("all zoom runs from the earliest clip start to the later of latest end and end of 2027", () => {
     const clips = roadmapClips(new Set<string>(), now);
     const w = roadmapWindow("all", now, clips);
-    expect(w.from).toEqual(new Date("2026-01-01")); // earliest = ddia / fd.courses
-    expect(w.to.getTime()).toBeGreaterThanOrEqual(new Date("2027-12-31").getTime());
+    expect(w.from).toEqual(new Date("2026-07-01")); // span window start (all clips start later)
+    expect(w.to).toEqual(new Date("2027-06-30T23:59:59.999Z")); // span window end (all clips end earlier)
   });
 });
 
 describe("quarterTicks", () => {
   it("emits a quarter tick across the span with the year label on each Q1", () => {
     const ticks = quarterTicks(roadmapWindow("span", now, []));
-    expect(ticks).toHaveLength(8);
-    expect(ticks[0]).toMatchObject({ label: "2026", x: 0 });
-    expect(ticks[1].label).toBe("Q2");
-    expect(ticks[4].label).toBe("2027");
+    expect(ticks).toHaveLength(4);
+    expect(ticks[0]).toMatchObject({ label: "Q3", x: 0 });
+    expect(ticks[1].label).toBe("Q4");
+    expect(ticks[2].label).toBe("2027");
+    expect(ticks[3].label).toBe("Q2");
   });
   it("drops the tick that falls before a window starting mid-quarter", () => {
     const ticks = quarterTicks({
