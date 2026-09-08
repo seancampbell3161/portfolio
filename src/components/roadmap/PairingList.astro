@@ -24,7 +24,7 @@ const titleOf = (ref: string) => titles.get(ref) ?? ref;
 {items.length > 0 && (
   <section class="rm-pairs" data-pairing-list>
     <p class="rm-pairs-k">{label}</p>
-    <ul>
+    <ul aria-label={label}>
       {items.map((p) => (
         <li class:list={[{ optional: p.optional }]}>
           <span class="rm-pairs-t">{titleOf(p.ref)}</span>

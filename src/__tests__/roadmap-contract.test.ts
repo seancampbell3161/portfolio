@@ -8,7 +8,7 @@
 // first and then runs the suite; plain `npm test` still works on its own.
 import { describe, it, expect } from "vitest";
 import { existsSync, readFileSync } from "node:fs";
-import { allIds, logIds, build, reading } from "../data/roadmap";
+import { allIds, logIds, build, reading, phases } from "../data/roadmap";
 
 const PAGE = "dist/roadmap/index.html";
 const built = existsSync(PAGE);
@@ -116,6 +116,23 @@ describe.skipIf(!built)("roadmap client contract (dist/roadmap/index.html)", () 
   it("keeps the hooks the band's script writes into", () => {
     for (const hook of ["data-week-label", "data-week-panel"]) {
       expect(html, `missing ${hook}`).toContain(hook);
+    }
+  });
+
+  it("server-renders every phase panel and reveals exactly one", () => {
+    // The band's per-phase panels are what stop a stale deploy showing one
+    // phase's heading above another phase's reading list. Without this, that
+    // guarantee is only ever checked by hand.
+    const tags = [...html.matchAll(/<div[^>]*\sdata-week-panel="([a-z0-9]+)"[^>]*>/g)];
+    expect(tags).toHaveLength(phases.length);
+
+    const visible = tags.filter((m) => !/\shidden[\s>]/.test(m[0])).map((m) => m[1]);
+    expect(visible.length, "more than one phase panel is visible").toBeLessThanOrEqual(1);
+
+    // Whenever the label names a week, a phase is running, so one panel must show.
+    const label = html.match(/data-week-label[^>]*>([^<]+)</)?.[1] ?? "";
+    if (/Week \d+ of \d+|Ramp week/.test(label)) {
+      expect(visible, `label reads "${label}" but no panel is visible`).toHaveLength(1);
     }
   });
 
