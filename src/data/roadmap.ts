@@ -3,6 +3,8 @@
 // progress is stored by id, so renaming a label is safe but changing an id orphans
 // its stored progress.
 
+import { weekStart, weekEnd, weeksToSpan, type WeekRange } from "../lib/roadmap/weeks.js";
+
 export type Track = "build" | "reading" | "foundations";
 
 export interface DecisionLog {
@@ -64,7 +66,6 @@ export interface FoundationItem {
 }
 
 // A foundations clip: a small number of these, each holding existing items.
-// Dates are placeholders (mockup-derived) until Sean supplies real months.
 export interface FoundationGroup {
   id: string;      // new; clip + inspector anchor only, never stored as progress
   label: string;
@@ -73,14 +74,178 @@ export interface FoundationGroup {
   items: FoundationItem[];
 }
 
+// --- The schedule ---
+// The plan as seven dated phases. This is the single source of every date on
+// the roadmap: milestone, book and foundation-group spans are all derived from
+// it below, so re-dating the plan is one edit to WEEK_ONE.
+
+export interface Pairing {
+  ref: string;         // an id that already exists in this file
+  note: string;        // why this lands here, in the schedule's own words
+  optional?: boolean;  // rendered, but never extends a span
+}
+
+export interface Phase {
+  id: string;
+  label: string;       // "M1 · Storage"
+  name: string;        // "Redis — how bytes become a database"
+  fromWeek: number;
+  toWeek: number;
+  milestone?: string;  // build id this phase drives; the ramp has none
+  reading: Pairing[];
+  foundations: Pairing[];
+}
+
+const ddiaCh = (n: number, note: string): Pairing => ({ ref: `ddia.ch${n}`, note });
+const dbintCh = (n: number, note: string): Pairing => ({ ref: `dbint.ch${n}`, note });
+
+export const phases: Phase[] = [
+  {
+    id: "ramp", label: "Phase 0 · ramp", name: "Foundations ramp — get fluent before the first socket",
+    fromWeek: 0, toWeek: 0,
+    reading: [
+      { ref: "aposd.s1", note: "Complexity & its symptoms — the judgment lens" },
+      ddiaCh(1, "Reliable, scalable, maintainable — the rubric for every later call"),
+    ],
+    foundations: [
+      { ref: "fd.pyci", note: "40 lessons — the refresher" },
+      { ref: "fd.dsab", note: "35 lessons — start it" },
+      { ref: "fd.nc.arrays", note: "Arrays & Hashing begins — Redis hash store" },
+    ],
+  },
+  {
+    id: "m1", label: "M1 · Storage", name: "Redis — how bytes become a database",
+    fromWeek: 1, toWeek: 7, milestone: "redis",
+    reading: [
+      ddiaCh(3, "Storage & retrieval — log-structured hash indexes"),
+      { ref: "ostep.p1", note: "disks — alongside RDB/AOF" },
+      { ref: "ostep.p2", note: "files & directories — alongside RDB/AOF" },
+      { ref: "ostep.p3", note: "crash consistency — alongside RDB/AOF" },
+      { ref: "ostep.p4", note: "log-structured file systems — alongside RDB/AOF" },
+      { ref: "ostep.c1", note: "threads & locks — alongside replication" },
+      { ref: "ostep.c2", note: "condition variables — alongside replication" },
+      { ref: "ostep.c3", note: "deadlock — alongside replication" },
+      ddiaCh(5, "Replication"),
+      { ref: "aposd.s2", note: "light: modules should be deep" },
+    ],
+    foundations: [
+      { ref: "fd.dsab", note: "finish it" },
+      { ref: "fd.coreskills", note: "20 — implement the data structures" },
+      { ref: "fd.nc.arrays", note: "Redis hash store" },
+      { ref: "fd.nc.twopointers", note: "5" },
+      { ref: "fd.nc.sliding", note: "6" },
+      { ref: "fd.nc.stack", note: "7" },
+      { ref: "fd.nc.linkedlist", note: "11" },
+    ],
+  },
+  {
+    id: "m2", label: "M2 · Engines", name: "SQLite — B-trees vs LSM",
+    fromWeek: 8, toWeek: 9, milestone: "sqlite",
+    reading: [
+      ddiaCh(2, "Data models"),
+      ddiaCh(3, "Storage & retrieval, deep — B-trees vs LSM-trees"),
+      dbintCh(1, "Introduction — the exact match for this build"),
+      dbintCh(2, "B-tree basics"),
+      dbintCh(3, "File formats"),
+      dbintCh(4, "Implementing B-trees"),
+    ],
+    foundations: [
+      { ref: "fd.nc.binsearch", note: "SQLite B-tree" },
+      { ref: "fd.nc.trees", note: "SQLite B-tree" },
+      { ref: "fd.nc.tries", note: "3" },
+    ],
+  },
+  {
+    id: "m3", label: "M3 · Encoding", name: "HTTP server — encoding & the wire",
+    fromWeek: 10, toWeek: 12, milestone: "http",
+    reading: [
+      ddiaCh(4, "Encoding & evolution — JSON, Protobuf, Avro, schema migrations"),
+      dbintCh(5, "trailing: transaction processing & recovery"),
+      dbintCh(6, "trailing: B-tree variants"),
+      dbintCh(7, "trailing: log-structured storage"),
+      { ref: "aposd.s3", note: "light: information hiding & general-purpose design" },
+    ],
+    foundations: [
+      { ref: "fd.nc.heap", note: "7" },
+      { ref: "fd.nc.backtracking", note: "9" },
+    ],
+  },
+  {
+    id: "m4", label: "M4 · The packet", name: "DNS server — the binary packet",
+    fromWeek: 13, toWeek: 14, milestone: "dns",
+    reading: [
+      ddiaCh(6, "Partitioning — sets up M5"),
+      { ref: "aposd.s4", note: "light: comments & naming" },
+    ],
+    foundations: [
+      { ref: "fd.nc.greedy", note: "8" },
+      { ref: "fd.nc.intervals", note: "6" },
+    ],
+  },
+  {
+    id: "m5", label: "M5 · Consensus", name: "Kafka — consistency & consensus",
+    fromWeek: 15, toWeek: 19, milestone: "kafka",
+    reading: [
+      ddiaCh(7, "Transactions"),
+      ddiaCh(8, "The trouble with distributed systems"),
+      ddiaCh(9, "Consistency & consensus"),
+      dbintCh(8, "the distributed half begins"),
+      dbintCh(9, "Failure detection"),
+      dbintCh(10, "Leader election"),
+      dbintCh(11, "Replication & consistency"),
+      dbintCh(12, "Anti-entropy & dissemination"),
+      dbintCh(13, "Distributed transactions"),
+      dbintCh(14, "Consensus"),
+      { ref: "aposd.s5", note: "light: consistency & obvious code — finishes the book" },
+    ],
+    foundations: [
+      { ref: "fd.nc.graphs", note: "replication & partitioning" },
+      { ref: "fd.nc.advgraphs", note: "6" },
+      { ref: "fd.nc.dp1", note: "12" },
+      { ref: "fd.nc.dp2", note: "11" },
+    ],
+  },
+  {
+    id: "capstone", label: "Capstone", name: "Systems in the wild — the writeup",
+    fromWeek: 20, toWeek: 22, milestone: "kafka",
+    reading: [
+      ddiaCh(10, "Batch processing"),
+      ddiaCh(11, "Stream processing"),
+      ddiaCh(12, "The future of data systems — finishes DDIA"),
+    ],
+    foundations: [
+      { ref: "fd.nc.mathgeo", note: "8" },
+      { ref: "fd.nc.bits", note: "7" },
+      { ref: "fd.advanced", note: "35 — optional, deferred", optional: true },
+    ],
+  },
+];
+
+// --- Derived spans ---
+// A milestone spans the phases that name it; a book or group spans the phases
+// that reference any of its children. An optional pairing renders but never
+// extends a span.
+const rangeOf = (p: Phase): WeekRange => ({ fromWeek: p.fromWeek, toWeek: p.toWeek });
+
+const milestoneSpan = (id: string) =>
+  weeksToSpan(phases.filter((p) => p.milestone === id).map(rangeOf));
+
+const refSpan = (owns: (ref: string) => boolean) =>
+  weeksToSpan(
+    phases
+      .filter((p) => [...p.reading, ...p.foundations].some((x) => !x.optional && owns(x.ref)))
+      .map(rangeOf),
+  );
+
+const byPrefix = (prefix: string) => (ref: string) => ref.startsWith(prefix);
+
 export const build: BuildMilestone[] = [
   {
     id: "redis",
     no: "M1",
     course: "Redis",
     goal: "Build a Redis server from raw sockets to replication — defend choosing an in-memory store over disk, and name exactly when that choice breaks.",
-    start: new Date("2026-09-07"), // W1–7 (schedule)
-    end: new Date("2026-10-24"), // W1–7 (schedule)
+    ...milestoneSpan("redis"),
     groups: [
       { id: "redis.core", label: "Core server — TCP sockets, RESP, PING/ECHO, SET/GET, expiry", stages: 7, hours: 11 },
       { id: "redis.rdb", label: "RDB persistence — read the snapshot file", stages: 6, hours: 9 },
@@ -98,8 +263,7 @@ export const build: BuildMilestone[] = [
     no: "M2",
     course: "SQLite",
     goal: "Read a real SQLite database by hand — page headers, the B-tree, an indexed query — and predict which storage engine wins a query pattern before benchmarking.",
-    start: new Date("2026-10-26"), // W8–9 (schedule)
-    end: new Date("2026-11-07"), // W8–9 (schedule)
+    ...milestoneSpan("sqlite"),
     groups: [
       { id: "sqlite.base", label: "Read the file format, walk the B-tree, run an indexed query", stages: 9, hours: 14 },
     ],
@@ -112,8 +276,7 @@ export const build: BuildMilestone[] = [
     no: "M3",
     course: "HTTP server",
     goal: "Build an HTTP/1.1 server — requests, responses, headers, compression, keep-alive — and reason about encoding and evolution on the wire.",
-    start: new Date("2026-11-09"), // W10–12 (schedule)
-    end: new Date("2026-11-28"), // W10–12 (schedule)
+    ...milestoneSpan("http"),
     groups: [
       { id: "http.base", label: "Base server — bind, parse requests, respond, headers, body", stages: 8, hours: 12 },
       { id: "http.compression", label: "HTTP compression — gzip, multiple schemes", stages: 3, hours: 5 },
@@ -128,8 +291,7 @@ export const build: BuildMilestone[] = [
     no: "M4",
     course: "DNS server",
     goal: "Build a DNS server — construct and parse the binary packet format, handle name compression, forward queries — and appreciate compact wire encoding.",
-    start: new Date("2026-11-30"), // W13–14 (schedule)
-    end: new Date("2026-12-12"), // W13–14 (schedule)
+    ...milestoneSpan("dns"),
     groups: [
       { id: "dns.base", label: "UDP server — write/parse header, question, answer; name compression; forwarding", stages: 8, hours: 12 },
     ],
@@ -142,8 +304,7 @@ export const build: BuildMilestone[] = [
     no: "M5",
     course: "Kafka",
     goal: "Build a Kafka broker — the partitioned log, offsets, fetch and produce — and name the consistency model a system needs versus the one it secretly relies on.",
-    start: new Date("2026-12-14"), // W15–22 incl. capstone tail
-    end: new Date("2027-02-06"), // W15–22 incl. capstone tail
+    ...milestoneSpan("kafka"),
     groups: [
       { id: "kafka.base", label: "Base — bind, correlation IDs, API versions", stages: 5, hours: 8 },
       { id: "kafka.concurrent", label: "Concurrent clients", stages: 2, hours: 3 },
@@ -164,8 +325,7 @@ export const reading: Book[] = [
     title: "Designing Data-Intensive Applications",
     author: "Martin Kleppmann",
     url: "https://dataintensive.net",
-    start: new Date("2026-08-31"), // W0 Ch.1 → capstone Ch.10–12
-    end: new Date("2027-02-06"), // W0 Ch.1 → capstone Ch.10–12
+    ...refSpan(byPrefix("ddia.")),
     chapters: [
       { id: "ddia.ch1", no: "1", title: "Reliable, Scalable, Maintainable Applications" },
       { id: "ddia.ch2", no: "2", title: "Data Models and Query Languages" },
@@ -185,8 +345,8 @@ export const reading: Book[] = [
     id: "dbint",
     title: "Database Internals",
     author: "Alex Petrov",
-    start: new Date("2026-10-26"), // W8–9 Ch.1–4; end trails the plan — see note
-    end: new Date("2027-04-30"), // placeholder dates (mockup); Sean to confirm
+    ...refSpan(byPrefix("dbint.")),
+    end: new Date("2027-04-30T00:00:00Z"),
     chapters: [
       { id: "dbint.ch1", no: "1", title: "Introduction and Overview" },
       { id: "dbint.ch2", no: "2", title: "B-Tree Basics" },
@@ -211,8 +371,8 @@ export const reading: Book[] = [
     url: "https://pages.cs.wisc.edu/~remzi/OSTEP/",
     free: true,
     scopeNote: "Concurrency + Persistence parts only",
-    start: new Date("2026-09-07"), // W1–7 P1–P4 & C1–C3; end trails the plan — see note
-    end: new Date("2027-10-31"), // placeholder dates (mockup); Sean to confirm
+    ...refSpan(byPrefix("ostep.")),
+    end: new Date("2027-04-30T00:00:00Z"),
     chapters: [
       { id: "ostep.c1", no: "C1", title: "Concurrency — threads & locks" },
       { id: "ostep.c2", no: "C2", title: "Concurrency — condition variables & semaphores" },
@@ -227,8 +387,7 @@ export const reading: Book[] = [
     id: "aposd",
     title: "A Philosophy of Software Design",
     author: "John Ousterhout",
-    start: new Date("2026-08-31"), // W0 ch1–3 → W15–19 ch17–21
-    end: new Date("2027-01-16"), // W0 ch1–3 → W15–19 ch17–21
+    ...refSpan(byPrefix("aposd.")),
     chapters: [
       { id: "aposd.s1", no: "1–3", title: "Complexity & its symptoms" },
       { id: "aposd.s2", no: "4–6", title: "Modules should be deep" },
@@ -245,8 +404,7 @@ export const foundations: FoundationGroup[] = [
   {
     id: "fd.courses",
     label: "Courses",
-    start: new Date("2026-08-31"), // W0 ramp → finished in W1–7
-    end: new Date("2026-10-24"), // W0 ramp → finished in W1–7
+    ...refSpan((r) => r.startsWith("fd.") && !r.startsWith("fd.nc.")),
     items: [
       { id: "fd.pyci", label: "Python for Coding Interviews", kind: "course", total: 40 },
       { id: "fd.dsab", label: "Algorithms & Data Structures for Beginners", kind: "course", total: 35 },
@@ -257,8 +415,7 @@ export const foundations: FoundationGroup[] = [
   {
     id: "fd.neetcode",
     label: "NeetCode 150, pattern by pattern",
-    start: new Date("2026-08-31"), // W0 Arrays & Hashing → capstone
-    end: new Date("2027-02-06"), // W0 Arrays & Hashing → capstone
+    ...refSpan(byPrefix("fd.nc.")),
     items: [
       { id: "fd.nc.arrays", label: "Arrays & Hashing", kind: "pattern", total: 9, pairsWith: "Redis hash store" },
       { id: "fd.nc.twopointers", label: "Two Pointers", kind: "pattern", total: 5 },

@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { clipStatus, roadmapClips, threadSpans, roadmapWindow, quarterTicks, type RoadmapClip } from "../arrange.js";
-import { build } from "../../../data/roadmap.js";
+import { build, reading as books, foundations as fnd, phases, allIds } from "../../../data/roadmap.js";
 
 const now = new Date("2026-09-02T00:00:00Z");
 
@@ -119,5 +119,66 @@ describe("quarterTicks", () => {
     expect(ticks.every((t) => t.x >= 0)).toBe(true);
     expect(ticks[0].label).toBe("Q2");
     expect(ticks[0].x).toBeGreaterThan(0);
+  });
+});
+
+describe("spans derive from the phase table", () => {
+  // The eleven known-good spans. Literal dates belong here and only here: this
+  // is a fixture asserting the derivation, not a logic test restating data.
+  const EXPECTED: Record<string, [string, string]> = {
+    redis: ["2026-09-07", "2026-10-24"],
+    sqlite: ["2026-10-26", "2026-11-07"],
+    http: ["2026-11-09", "2026-11-28"],
+    dns: ["2026-11-30", "2026-12-12"],
+    kafka: ["2026-12-14", "2027-02-06"],
+    ddia: ["2026-08-31", "2027-02-06"],
+    aposd: ["2026-08-31", "2027-01-16"],
+    dbint: ["2026-10-26", "2027-04-30"],
+    ostep: ["2026-09-07", "2027-04-30"],
+    "fd.courses": ["2026-08-31", "2026-10-24"],
+    "fd.neetcode": ["2026-08-31", "2027-02-06"],
+  };
+
+  const byId = new Map<string, { start: Date; end: Date }>(
+    [...build, ...books, ...fnd].map((x) => [x.id, { start: x.start, end: x.end }]),
+  );
+
+  it("reproduces every known-good span", () => {
+    for (const [id, [start, end]] of Object.entries(EXPECTED)) {
+      const got = byId.get(id);
+      expect(got, `no clip ${id}`).toBeDefined();
+      expect(got!.start.toISOString().slice(0, 10), `${id} start`).toBe(start);
+      expect(got!.end.toISOString().slice(0, 10), `${id} end`).toBe(end);
+    }
+  });
+
+  it("excludes an optional pairing from span derivation", () => {
+    // fd.advanced is listed in the capstone as "optional, deferred". Counting it
+    // would stretch fd.courses from W0–7 to W0–22 — from "finished during Redis"
+    // to "runs all year".
+    const capstone = phases.find((p) => p.id === "capstone")!;
+    expect(capstone.foundations.find((x) => x.ref === "fd.advanced")?.optional).toBe(true);
+    expect(byId.get("fd.courses")!.end).toEqual(new Date("2026-10-24T00:00:00Z"));
+  });
+
+  it("spans Kafka across both phases that name it", () => {
+    const owning = phases.filter((p) => p.milestone === "kafka").map((p) => p.id);
+    expect(owning).toEqual(["m5", "capstone"]);
+  });
+
+  it("references only ids that already exist, so no progress is orphaned", () => {
+    for (const p of phases) {
+      for (const pair of [...p.reading, ...p.foundations]) {
+        expect(allIds.has(pair.ref), `unknown ref ${pair.ref} in phase ${p.id}`).toBe(true);
+      }
+    }
+  });
+
+  it("gives every phase a contiguous, ordered week range", () => {
+    expect(phases.map((p) => p.id)).toEqual(["ramp", "m1", "m2", "m3", "m4", "m5", "capstone"]);
+    phases.forEach((p, i) => {
+      expect(p.toWeek, `phase ${p.id}`).toBeGreaterThanOrEqual(p.fromWeek);
+      if (i > 0) expect(p.fromWeek, `phase ${p.id} follows`).toBe(phases[i - 1].toWeek + 1);
+    });
   });
 });
