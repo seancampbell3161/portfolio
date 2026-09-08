@@ -1,12 +1,13 @@
 ---
 import Icon from "./Icon.astro";
-import { testimonial } from "../data/testimonial";
 
 const email = "sean@seanthedeveloper.com";
 ---
 
 <section id="contact" class="contact">
-  <img src="/images/profile.jpg" alt="Sean Campbell" class="contact-photo" width="96" height="114" loading="lazy" />
+  <div class="contact-photo">
+    <img src="/images/profile.jpg" alt="Sean Campbell" width="96" height="114" loading="lazy" />
+  </div>
   <div>
     <h2>Get in touch</h2>
     <p>
@@ -18,10 +19,6 @@ const email = "sean@seanthedeveloper.com";
       <a href="https://github.com/seancampbell3161" target="_blank" rel="noopener noreferrer"><Icon name="github" size={16} />GitHub</a>
       <a href="https://linkedin.com/in/seancampbelldev" target="_blank" rel="noopener noreferrer"><Icon name="linkedin" size={16} />LinkedIn</a>
     </p>
-    <figure class="quote">
-      <blockquote>{testimonial.quote}</blockquote>
-      <figcaption>{testimonial.author}, {testimonial.role}</figcaption>
-    </figure>
   </div>
 </section>
 
@@ -33,15 +30,24 @@ const email = "sean@seanthedeveloper.com";
     display: grid;
     grid-template-columns: 96px 1fr;
     gap: 28px;
-    align-items: start;
+    /* The photo column stretches, so the picture ends level with the links. */
+    align-items: stretch;
     scroll-margin-top: 76px;
   }
+  /* An empty block contributes no height of its own to the row, so the text
+     column alone sizes it; the picture then fills whatever that comes to. */
   .contact-photo {
-    width: 96px;
-    height: 114px;
+    position: relative;
+    border-radius: var(--radius-md);
+    overflow: hidden;
+  }
+  .contact-photo img {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
     object-fit: cover;
     object-position: 50% 20%;
-    border-radius: var(--radius-md);
   }
   .contact h2 {
     margin: 0 0 10px;
@@ -70,27 +76,6 @@ const email = "sean@seanthedeveloper.com";
     border-bottom: 1px solid var(--color-border-hover);
   }
 
-  /* The quote came from a mentor, so it carries the learning lane's rule. */
-  .quote {
-    margin: 26px 0 0;
-    padding: 2px 0 2px 18px;
-    border-left: 3px solid var(--lane-learning);
-    max-width: 60ch;
-  }
-  .quote blockquote {
-    margin: 0;
-    font-size: 15.5px;
-    line-height: 1.55;
-    font-style: italic;
-    color: var(--color-text-primary);
-  }
-  .quote figcaption {
-    margin-top: 8px;
-    font-size: 13px;
-    color: var(--color-text-muted);
-    text-align: left;
-  }
-
   @media (max-width: 899.98px) {
     .contact {
       margin-top: var(--space-3xl);
@@ -98,16 +83,11 @@ const email = "sean@seanthedeveloper.com";
       grid-template-columns: 72px 1fr;
       gap: 16px;
     }
+    /* The narrow column wraps the copy over many lines, so a stretched photo
+       would be a sliver: keep it a fixed portrait at the top instead. */
     .contact-photo {
-      width: 72px;
+      align-self: start;
       height: 86px;
-    }
-    .contact h2 {
-      font-size: 26px;
-    }
-    .quote {
-      margin-top: 20px;
-      padding-left: 14px;
     }
   }
 </style>
