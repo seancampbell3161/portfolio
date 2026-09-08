@@ -79,8 +79,8 @@ export const build: BuildMilestone[] = [
     no: "M1",
     course: "Redis",
     goal: "Build a Redis server from raw sockets to replication — defend choosing an in-memory store over disk, and name exactly when that choice breaks.",
-    start: new Date("2026-06-01"), // placeholder dates (mockup); Sean to confirm
-    end: new Date("2026-09-30"), // placeholder dates (mockup); Sean to confirm
+    start: new Date("2026-09-07"), // W1–7 (schedule)
+    end: new Date("2026-10-24"), // W1–7 (schedule)
     groups: [
       { id: "redis.core", label: "Core server — TCP sockets, RESP, PING/ECHO, SET/GET, expiry", stages: 7, hours: 11 },
       { id: "redis.rdb", label: "RDB persistence — read the snapshot file", stages: 6, hours: 9 },
@@ -98,8 +98,8 @@ export const build: BuildMilestone[] = [
     no: "M2",
     course: "SQLite",
     goal: "Read a real SQLite database by hand — page headers, the B-tree, an indexed query — and predict which storage engine wins a query pattern before benchmarking.",
-    start: new Date("2026-10-01"), // placeholder dates (mockup); Sean to confirm
-    end: new Date("2026-12-15"), // placeholder dates (mockup); Sean to confirm
+    start: new Date("2026-10-26"), // W8–9 (schedule)
+    end: new Date("2026-11-07"), // W8–9 (schedule)
     groups: [
       { id: "sqlite.base", label: "Read the file format, walk the B-tree, run an indexed query", stages: 9, hours: 14 },
     ],
@@ -112,8 +112,8 @@ export const build: BuildMilestone[] = [
     no: "M3",
     course: "HTTP server",
     goal: "Build an HTTP/1.1 server — requests, responses, headers, compression, keep-alive — and reason about encoding and evolution on the wire.",
-    start: new Date("2027-01-01"), // placeholder dates (mockup); Sean to confirm
-    end: new Date("2027-02-28"), // placeholder dates (mockup); Sean to confirm
+    start: new Date("2026-11-09"), // W10–12 (schedule)
+    end: new Date("2026-11-28"), // W10–12 (schedule)
     groups: [
       { id: "http.base", label: "Base server — bind, parse requests, respond, headers, body", stages: 8, hours: 12 },
       { id: "http.compression", label: "HTTP compression — gzip, multiple schemes", stages: 3, hours: 5 },
@@ -128,8 +128,8 @@ export const build: BuildMilestone[] = [
     no: "M4",
     course: "DNS server",
     goal: "Build a DNS server — construct and parse the binary packet format, handle name compression, forward queries — and appreciate compact wire encoding.",
-    start: new Date("2027-03-01"), // placeholder dates (mockup); Sean to confirm
-    end: new Date("2027-04-15"), // placeholder dates (mockup); Sean to confirm
+    start: new Date("2026-11-30"), // W13–14 (schedule)
+    end: new Date("2026-12-12"), // W13–14 (schedule)
     groups: [
       { id: "dns.base", label: "UDP server — write/parse header, question, answer; name compression; forwarding", stages: 8, hours: 12 },
     ],
@@ -142,8 +142,8 @@ export const build: BuildMilestone[] = [
     no: "M5",
     course: "Kafka",
     goal: "Build a Kafka broker — the partitioned log, offsets, fetch and produce — and name the consistency model a system needs versus the one it secretly relies on.",
-    start: new Date("2027-05-01"), // placeholder dates (mockup); Sean to confirm
-    end: new Date("2027-08-31"), // placeholder dates (mockup); Sean to confirm
+    start: new Date("2026-12-14"), // W15–22 incl. capstone tail
+    end: new Date("2027-02-06"), // W15–22 incl. capstone tail
     groups: [
       { id: "kafka.base", label: "Base — bind, correlation IDs, API versions", stages: 5, hours: 8 },
       { id: "kafka.concurrent", label: "Concurrent clients", stages: 2, hours: 3 },
@@ -164,8 +164,8 @@ export const reading: Book[] = [
     title: "Designing Data-Intensive Applications",
     author: "Martin Kleppmann",
     url: "https://dataintensive.net",
-    start: new Date("2026-01-01"), // placeholder dates (mockup); Sean to confirm
-    end: new Date("2026-11-30"), // placeholder dates (mockup); Sean to confirm
+    start: new Date("2026-08-31"), // W0 Ch.1 → capstone Ch.10–12
+    end: new Date("2027-02-06"), // W0 Ch.1 → capstone Ch.10–12
     chapters: [
       { id: "ddia.ch1", no: "1", title: "Reliable, Scalable, Maintainable Applications" },
       { id: "ddia.ch2", no: "2", title: "Data Models and Query Languages" },
@@ -185,7 +185,7 @@ export const reading: Book[] = [
     id: "dbint",
     title: "Database Internals",
     author: "Alex Petrov",
-    start: new Date("2026-11-01"), // placeholder dates (mockup); Sean to confirm
+    start: new Date("2026-10-26"), // W8–9 Ch.1–4; end trails the plan — see note
     end: new Date("2027-04-30"), // placeholder dates (mockup); Sean to confirm
     chapters: [
       { id: "dbint.ch1", no: "1", title: "Introduction and Overview" },
@@ -211,7 +211,7 @@ export const reading: Book[] = [
     url: "https://pages.cs.wisc.edu/~remzi/OSTEP/",
     free: true,
     scopeNote: "Concurrency + Persistence parts only",
-    start: new Date("2027-05-01"), // placeholder dates (mockup); Sean to confirm
+    start: new Date("2026-09-07"), // W1–7 P1–P4 & C1–C3; end trails the plan — see note
     end: new Date("2027-10-31"), // placeholder dates (mockup); Sean to confirm
     chapters: [
       { id: "ostep.c1", no: "C1", title: "Concurrency — threads & locks" },
@@ -227,8 +227,8 @@ export const reading: Book[] = [
     id: "aposd",
     title: "A Philosophy of Software Design",
     author: "John Ousterhout",
-    start: new Date("2026-02-01"), // placeholder dates (mockup); Sean to confirm
-    end: new Date("2026-05-31"), // placeholder dates (mockup); Sean to confirm
+    start: new Date("2026-08-31"), // W0 ch1–3 → W15–19 ch17–21
+    end: new Date("2027-01-16"), // W0 ch1–3 → W15–19 ch17–21
     chapters: [
       { id: "aposd.s1", no: "1–3", title: "Complexity & its symptoms" },
       { id: "aposd.s2", no: "4–6", title: "Modules should be deep" },
@@ -245,8 +245,8 @@ export const foundations: FoundationGroup[] = [
   {
     id: "fd.courses",
     label: "Courses",
-    start: new Date("2026-01-01"), // placeholder dates (mockup); Sean to confirm
-    end: new Date("2026-04-30"), // placeholder dates (mockup); Sean to confirm
+    start: new Date("2026-08-31"), // W0 ramp → finished in W1–7
+    end: new Date("2026-10-24"), // W0 ramp → finished in W1–7
     items: [
       { id: "fd.pyci", label: "Python for Coding Interviews", kind: "course", total: 40 },
       { id: "fd.dsab", label: "Algorithms & Data Structures for Beginners", kind: "course", total: 35 },
@@ -257,8 +257,8 @@ export const foundations: FoundationGroup[] = [
   {
     id: "fd.neetcode",
     label: "NeetCode 150, pattern by pattern",
-    start: new Date("2026-04-01"), // placeholder dates (mockup); Sean to confirm
-    end: new Date("2027-06-30"), // placeholder dates (mockup); Sean to confirm
+    start: new Date("2026-08-31"), // W0 Arrays & Hashing → capstone
+    end: new Date("2027-02-06"), // W0 Arrays & Hashing → capstone
     items: [
       { id: "fd.nc.arrays", label: "Arrays & Hashing", kind: "pattern", total: 9, pairsWith: "Redis hash store" },
       { id: "fd.nc.twopointers", label: "Two Pointers", kind: "pattern", total: 5 },

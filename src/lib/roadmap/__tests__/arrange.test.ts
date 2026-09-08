@@ -1,5 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { clipStatus, roadmapClips, threadSpans, roadmapWindow, quarterTicks, type RoadmapClip } from "../arrange.js";
+import { build } from "../../../data/roadmap.js";
 
 const now = new Date("2026-09-02T00:00:00Z");
 
@@ -29,10 +30,12 @@ describe("roadmapClips", () => {
     expect(clips.filter((c) => c.track === "foundations")).toHaveLength(2);
   });
   it("derives status from completion and now", () => {
-    const redis = clips.find((c) => c.id === "redis")!;
-    expect(redis.status).toBe("in-progress"); // starts 2026-06, before now, nothing done
-    const kafka = clips.find((c) => c.id === "kafka")!;
-    expect(kafka.status).toBe("planned"); // starts 2027-05
+    // Chosen by their relation to `now`, not by id: re-dating the plan shifts
+    // which milestone is under way, and that must not fail this rule.
+    const started = clips.find((c) => c.start.getTime() <= now.getTime())!;
+    expect(started.status).toBe("in-progress"); // started, nothing done
+    const ahead = clips.find((c) => c.start.getTime() > now.getTime())!;
+    expect(ahead.status).toBe("planned"); // not started, nothing done
   });
   it("marks a fully-completed milestone done", () => {
     const done = new Set(["redis.core", "redis.rdb", "redis.aof", "redis.replication", "redis.log.resp", "redis.log.durability", "redis.log.replication"]);
@@ -63,9 +66,9 @@ describe("threadSpans", () => {
     expect(spans.every((s) => s.kind === "span")).toBe(true);
   });
   it("spans each track from its earliest start to its latest end", () => {
-    const build = spans.find((s) => s.id === "roadmap-build")!;
-    expect(build.start).toEqual(new Date("2026-06-01"));
-    expect(build.end).toEqual(new Date("2027-08-31"));
+    const span = spans.find((s) => s.id === "roadmap-build")!;
+    expect(span.start).toEqual(new Date(Math.min(...build.map((m) => m.start.getTime()))));
+    expect(span.end).toEqual(new Date(Math.max(...build.map((m) => m.end.getTime()))));
   });
   it("links into the roadmap thread anchor via the inspector body", () => {
     const reading = spans.find((s) => s.id === "roadmap-reading")!;
