@@ -104,4 +104,18 @@ describe.skipIf(!built)("roadmap client contract (dist/roadmap/index.html)", () 
       expect(html, `missing thread count ${thread}`).toContain(`data-rv-thread-count="${thread}"`);
     }
   });
+
+  it("renders the this-week band with real text before any script runs", () => {
+    expect(html).toContain("data-this-week");
+    // One of the five band states from spec §7. Asserted by text, not by
+    // attribute adjacency: Astro injects scoped data-astro-cid-* attributes
+    // whose position in the tag is not guaranteed.
+    expect(html).toMatch(/Week \d+ of 22|Ramp week|The plan (starts|is finished)/);
+  });
+
+  it("keeps the hooks the band's script writes into", () => {
+    for (const hook of ["data-week-label", "data-week-phase", "data-week-reading", "data-week-foundations"]) {
+      expect(html, `missing ${hook}`).toContain(hook);
+    }
+  });
 });

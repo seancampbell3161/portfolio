@@ -2,6 +2,7 @@
 import Layout from "../layouts/Layout.astro";
 import TransportBar from "../components/TransportBar.astro";
 import Footer from "../components/Footer.astro";
+import ThisWeek from "../components/roadmap/ThisWeek.astro";
 import RoadmapMeters from "../components/roadmap/RoadmapMeters.astro";
 import RoadmapArrangement from "../components/roadmap/RoadmapArrangement.astro";
 import RoadmapInspector from "../components/roadmap/RoadmapInspector.astro";
@@ -26,6 +27,7 @@ import { ogImagePath } from "../lib/og.mjs";
         the open for anyone to see.
       </p>
 
+      <ThisWeek />
       <RoadmapMeters />
       <RoadmapArrangement />
       <RoadmapInspector />
@@ -946,5 +948,32 @@ import { ogImagePath } from "../lib/og.mjs";
   /* Stack the three meters on phones so the labels and stats stay readable. */
   @media (max-width: 620px) {
     .rm-meters { grid-template-columns: 1fr; }
+  }
+
+  /* ---- this-week band (spec §7) ---- */
+  .rm-week {
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    padding: var(--space-lg);
+    margin-bottom: var(--space-xl);
+  }
+  .rm-week-label {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--lane-learning);
+    margin: 0;
+  }
+  .rm-week-phase {
+    font-family: var(--font-display);
+    font-size: 20px;
+    font-weight: 600;
+    line-height: 1.3;
+    margin: 6px 0 0;
+  }
+  .rm-week-lists { display: grid; gap: var(--space-lg); margin-top: var(--space-md); }
+  @media (min-width: 900px) {
+    .rm-week-lists { grid-template-columns: 1fr 1fr; }
   }
 </style>
