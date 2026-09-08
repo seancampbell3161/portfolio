@@ -1107,13 +1107,12 @@ git commit -m "fix(roadmap): size the default window to the plan, not the calend
 
 ---
 
-### Task 8: The practice prose, and retiring the mockup
+### Task 8: The practice prose, and pinning the mockup
 
 **Files:**
-- Create: `src/components/roadmap/RoadmapPractice.astro`
-- Modify: `src/pages/roadmap.astro`, `CLAUDE.md`
-- Delete: `roadmap/roadmap-schedule.html`
-- Modify: `roadmap/study-guide.html:576`
+- Create: `src/components/roadmap/RoadmapPractice.astro`, `src/__tests__/schedule-mockup-contract.test.ts`
+- Modify: `src/pages/roadmap.astro`, `CLAUDE.md`, `roadmap/study-guide.html:576`
+- Keep: `roadmap/roadmap-schedule.html` — guarded by a test, not deleted
 
 **Interfaces:**
 - Consumes: nothing. Static prose.
@@ -1193,26 +1192,81 @@ import RoadmapPractice from "../components/roadmap/RoadmapPractice.astro";
 Run: `npm run check`
 Expected: PASS.
 
-- [ ] **Step 4: Retire the mockup**
+- [ ] **Step 4: Guard the mockup against drift**
 
-All four of its parts now render on `/roadmap`, so keeping it re-creates the two-copies condition that caused the original drift. Git history keeps it, and `roadmap/roadmap-spec.md` remains the written record.
+The owner keeps `roadmap/roadmap-schedule.html` as a design artifact, alongside
+`roadmap-preview.html`. Keeping it re-creates the two-copies condition from
+spec §1 — so pin it with a test instead of trusting it.
 
-```bash
-git rm roadmap/roadmap-schedule.html
+The mockup's own format supplies the assertion. It prints a start date bare and
+an end date with `, YYYY` only when that end is not in 2026:
+
+```
+Weeks 1–7 · Sep 7 – Oct 24
+Weeks 15–19 · Dec 14 – Jan 16, 2027
 ```
 
-Then fix the link that points at it. `roadmap/study-guide.html:576` reads:
+Format the *derived* dates that way and assert the file contains the result.
+That direction cannot be fooled: a date the mockup does not carry fails, and a
+date it carries that the plan no longer implies fails too.
+
+Create `src/__tests__/schedule-mockup-contract.test.ts`:
+
+```ts
+// roadmap/roadmap-schedule.html is a hand-maintained design artifact that
+// prints the same plan src/data/roadmap.ts derives. They drifted badly once —
+// by months, with OSTEP dated to start after the chapters it explains, and
+// nothing caught it. This test is what catches it now.
+//
+// It reads a repo source file, not dist/, so it needs no build.
+import { describe, it, expect } from "vitest";
+import { readFileSync } from "node:fs";
+import { phases } from "../data/roadmap";
+import { weekStart, weekEnd } from "../lib/roadmap/weeks";
+import { monthDayYear } from "../lib/dates";
+
+const html = readFileSync("roadmap/roadmap-schedule.html", "utf8");
+
+/** "Sep 7" — the mockup's bare form, used for a start date. */
+const bare = (d: Date) => monthDayYear(d).replace(/, \d{4}$/, "");
+/** The mockup shows the year on an end date only when it leaves 2026. */
+const endForm = (d: Date) => (d.getUTCFullYear() === 2026 ? bare(d) : monthDayYear(d));
+
+describe("the schedule mockup still agrees with the derived plan", () => {
+  // The ramp's card reads "Week 0 · complete" and carries no dates.
+  const dated = phases.filter((p) => p.id !== "ramp");
+
+  it.each(dated.map((p) => [p.id, p] as const))("phase %s prints its derived dates", (_id, p) => {
+    const expected = `Weeks ${p.fromWeek}–${p.toWeek} · ${bare(weekStart(p.fromWeek))} – ${endForm(weekEnd(p.toWeek))}`;
+    expect(html, `mockup is missing: ${expected}`).toContain(expected);
+  });
+
+  it("prints the full span in the masthead chip and the footer", () => {
+    const from = monthDayYear(weekStart(1));
+    const to = monthDayYear(weekEnd(22));
+    expect(html, "masthead chip").toContain(`${from} → ${to}`);
+    expect(html, "footer").toContain(`${from} – ${to}`);
+  });
+
+  it("states the plan's real length", () => {
+    // Week 0 plus weeks 1–22.
+    expect(html).toContain("23-week");
+    expect(html).not.toContain("24-week");
+  });
+});
+```
+
+- [ ] **Step 4b: Fix the stale link text in the field guide**
+
+`roadmap/study-guide.html:576` still calls it a 24-week schedule — a third stale
+copy of the plan's length. Keep the link, correct the count:
 
 ```html
-<span>A field guide · companion to the <a href="roadmap-schedule.html">24-week schedule</a></span>
+<span>A field guide · companion to the <a href="roadmap-schedule.html">23-week schedule</a></span>
 ```
 
-Note it says **24-week** — a third stale copy of the plan's length, drifted from
-the mockup's own 23. Repoint it at the live page and correct the count:
-
-```html
-<span>A field guide · companion to the <a href="https://seanthedeveloper.com/roadmap">23-week schedule</a></span>
-```
+Run: `npx vitest run src/__tests__/schedule-mockup-contract.test.ts`
+Expected: PASS, 8 tests (6 phases + chip/footer + length).
 
 - [ ] **Step 5: Update `CLAUDE.md`**
 
@@ -1228,8 +1282,8 @@ Expected: PASS — build clean, all tests green.
 - [ ] **Step 7: Commit**
 
 ```bash
-git add src/components/roadmap/RoadmapPractice.astro src/pages/roadmap.astro CLAUDE.md roadmap/
-git commit -m "feat(roadmap): the practice prose, and retire the schedule mockup"
+git add src/components/roadmap/RoadmapPractice.astro src/__tests__/schedule-mockup-contract.test.ts src/pages/roadmap.astro CLAUDE.md roadmap/study-guide.html
+git commit -m "feat(roadmap): the practice prose, and pin the mockup against drift"
 ```
 
 ---
@@ -1248,7 +1302,7 @@ git commit -m "feat(roadmap): the practice prose, and retire the schedule mockup
 | §9 The window fix | 7 |
 | §10 Testing | every task (TDD) |
 | §11 Files | matches the File Structure table |
-| §12 Retire the mockup | 8 |
+| §12 Keep the mockup, guarded by a test | 8 |
 
 **One deviation from the spec, deliberate:** §11 lists week arithmetic inside
 `src/data/roadmap.ts`. This plan puts it in a new leaf module

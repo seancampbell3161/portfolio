@@ -269,7 +269,13 @@ Changed:
 
 `roadmap/roadmap-schedule.html` becomes a second copy of the plan the moment
 `/roadmap` carries all four of its parts — precisely the condition that produced
-the drift in §1. Retire it; git history keeps it, and `roadmap-spec.md` remains
-the written record. Open question deferred to the merge: `roadmap-preview.html`
-is kept as a v1 artifact, so if mockups are kept by convention, the alternative
-is a test asserting the mockup's printed dates match the derived spans.
+the drift in §1. The owner keeps it, alongside `roadmap-preview.html`, as a
+design artifact; so it is pinned by a test rather than trusted.
+
+The mockup prints a start date bare and an end date with `, YYYY` only when that
+end leaves 2026. `src/__tests__/schedule-mockup-contract.test.ts` formats the
+*derived* dates that way and asserts the file contains the result — a direction
+that cannot be fooled, since a date the mockup lacks fails and a date it carries
+that the plan no longer implies fails too. It reads a repo source file, not
+`dist/`, so it needs no build. It also pins the plan's stated length at 23 weeks,
+which `roadmap/study-guide.html` had already drifted from.
