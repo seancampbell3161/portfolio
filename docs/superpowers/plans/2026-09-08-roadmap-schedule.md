@@ -1085,6 +1085,297 @@ and, in the `build.map(...)` block, immediately after the `<div class="rm-insp-c
 
 Kafka has two phases (`m5` and `capstone`), so its panel correctly shows two pairs of lists.
 
+- [ ] **Step 5: Swap the band's interim markup for the component**
+
+Task 4's fix round restructured `ThisWeek.astro`: it now maps over `phases` and
+server-renders one `hidden` panel each, rather than rendering a single `w?.reading`
+list. So the swap happens *inside* the map, where `p` is the phase.
+
+In `src/components/roadmap/ThisWeek.astro`, add
+`import PairingList from "./PairingList.astro";` and replace the `.rm-week-lists`
+div inside the `phases.map(...)` block:
+
+```astro
+      <div class="rm-week-lists">
+        <PairingList label="Reading" items={p.reading} />
+        <PairingList label="Foundations" items={p.foundations} />
+      </div>
+```
+
+This drops the `data-week-reading` and `data-week-foundations` hooks, which is
+correct: the script has not touched them since Task 4's fix — it reveals whole
+panels by `data-week-panel` and rewrites only `data-week-label`. Leave
+`src/scripts/roadmap-schedule.ts` alone.
+
+Update the hook assertion added in Task 4 to name the hooks the script actually
+uses now:
+
+```ts
+  it("keeps the hooks the band's script writes into", () => {
+    for (const hook of ["data-week-label", "data-week-panel"]) {
+      expect(html, `missing ${hook}`).toContain(hook);
+    }
+  });
+```
+
+Keep Task 4's other contract assertions untouched — in particular the one
+checking that exactly one panel is visible, which is what stops the band going
+stale.
+
+- [ ] **Step 6: Run the full check and make sure it passes**
+
+Run: `npm run check`
+Expected: PASS — build clean, every test green including the two new contract assertions.
+
+- [ ] **Step 7: Commit**
+
+```bash
+git add src/components/roadmap/ThisWeek.astro src/scripts/roadmap-schedule.ts src/pages/roadmap.astro src/__tests__/roadmap-contract.test.ts
+git commit -m "feat(roadmap): a this-week band that recomputes on load"
+```
+
+---
+
+### Task 5: The phase-arc ribbon
+
+**Files:**
+- Create: `src/components/roadmap/RoadmapArc.astro`
+- Modify: `src/pages/roadmap.astro`, `src/__tests__/roadmap-contract.test.ts`
+
+**Interfaces:**
+- Consumes: `phases` from Task 2; `weekStart`, `weekEnd` from Task 1.
+- Produces: the hook `[data-roadmap-arc]`. No script.
+
+- [ ] **Step 1: Write the failing contract test**
+
+Append inside the same `describe.skipIf(!built)` block:
+
+```ts
+  it("renders the phase arc with one segment per phase", () => {
+    expect(html).toContain("data-roadmap-arc");
+    const segments = html.match(/data-arc-phase="/g) ?? [];
+    expect(segments).toHaveLength(7); // ramp + M1–M5 + capstone
+  });
+```
+
+- [ ] **Step 2: Run it to make sure it fails**
+
+Run: `npm run check`
+Expected: FAIL — `expected [] to have a length of 7 but got 0`.
+
+- [ ] **Step 3: Write the component**
+
+Create `src/components/roadmap/RoadmapArc.astro`:
+
+```astro
+---
+// The seven-phase ribbon (spec §8). Static: no script, no :target, no state.
+// Each segment grows in proportion to its week count, so the ribbon reads as a
+// real timeline rather than seven equal boxes.
+import { phases } from "../../data/roadmap";
+import { weekStart, weekEnd } from "../../lib/roadmap/weeks";
+import { shortDate, isoDay } from "../../lib/dates";
+
+const weeks = (p: { fromWeek: number; toWeek: number }) => p.toWeek - p.fromWeek + 1;
+const label = (p: { fromWeek: number; toWeek: number }) =>
+  p.fromWeek === p.toWeek ? `W${p.fromWeek}` : `W${p.fromWeek}–${p.toWeek}`;
+---
+
+<section class="rm-arc" data-roadmap-arc aria-label="The arc — seven phases across 23 weeks">
+  <ol>
+    {phases.map((p) => (
+      <li data-arc-phase={p.id} style={`flex-grow: ${weeks(p)}`}>
+        <span class="rm-arc-wk">{label(p)}</span>
+        <span class="rm-arc-nm">{p.label}</span>
+        <span class="rm-arc-dt">
+          <time datetime={isoDay(weekStart(p.fromWeek))}>{shortDate(weekStart(p.fromWeek))}</time>
+          {" – "}
+          <time datetime={isoDay(weekEnd(p.toWeek))}>{shortDate(weekEnd(p.toWeek))}</time>
+        </span>
+      </li>
+    ))}
+  </ol>
+</section>
+
+```
+
+- [ ] **Step 4: Add its styles to the page's global block**
+
+`RoadmapArc.astro` carries no `<style>`. Append inside the existing
+`<style is:global>` in `src/pages/roadmap.astro`:
+
+```css
+  .rm-arc ol {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 2px;
+    list-style: none;
+    padding: 0;
+    margin: 0 0 var(--space-xl);
+  }
+  .rm-arc li {
+    flex-basis: 0;
+    min-width: 8rem;
+    padding: var(--space-sm) var(--space-md);
+    background: var(--color-bg-elevated);
+    border-radius: var(--radius-md);
+    display: grid;
+    gap: 2px;
+  }
+  .rm-arc-wk {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: 0.12em;
+    color: var(--lane-learning);
+  }
+  .rm-arc-nm { font-size: 14px; font-weight: 600; line-height: 1.3; }
+  .rm-arc-dt { font-family: var(--font-mono); font-size: 11px; color: var(--color-text-muted); }
+```
+
+- [ ] **Step 5: Mount it on the page**
+
+In `src/pages/roadmap.astro`, import it and render it directly below `<ThisWeek />`:
+
+```astro
+import RoadmapArc from "../components/roadmap/RoadmapArc.astro";
+```
+
+```astro
+      <ThisWeek />
+      <RoadmapArc />
+      <RoadmapMeters />
+```
+
+- [ ] **Step 5: Run the full check and make sure it passes**
+
+Run: `npm run check`
+Expected: PASS, including the new seven-segment assertion.
+
+- [ ] **Step 6: Commit**
+
+```bash
+git add src/components/roadmap/RoadmapArc.astro src/pages/roadmap.astro src/__tests__/roadmap-contract.test.ts
+git commit -m "feat(roadmap): the seven-phase arc ribbon"
+```
+
+---
+
+### Task 6: Pairings in the inspector
+
+**Files:**
+- Create: `src/components/roadmap/PairingList.astro`
+- Modify: `src/components/roadmap/RoadmapInspector.astro`, `src/components/roadmap/ThisWeek.astro`, `src/__tests__/roadmap-contract.test.ts`
+
+**Interfaces:**
+- Consumes: `phases`, `Pairing`, `reading`, `foundations` from Task 2.
+- Produces: `PairingList.astro` with props `{ label: string; items: Pairing[] }`, rendering `[data-pairing-list]`.
+
+- [ ] **Step 1: Write the failing contract test**
+
+Append inside the same `describe.skipIf(!built)` block:
+
+```ts
+  it("names, in the Redis panel, the chapters read alongside it", () => {
+    const panel = html.slice(html.indexOf('id="clip-redis"'), html.indexOf('id="clip-sqlite"'));
+    expect(panel).toContain("data-pairing-list");
+    expect(panel).toContain("alongside RDB/AOF");     // the schedule's own reason
+    expect(panel).toMatch(/Storage and Retrieval/i);  // a resolved chapter title, not an id
+  });
+```
+
+- [ ] **Step 2: Run it to make sure it fails**
+
+Run: `npm run check`
+Expected: FAIL — `data-pairing-list` is not in the Redis panel.
+
+- [ ] **Step 3: Write the component**
+
+Create `src/components/roadmap/PairingList.astro`. It resolves a ref to a
+reader-facing title, because ids are internal:
+
+```astro
+---
+// One phase's reading or foundations list (spec §8). Follows the shape of
+// src/components/WhileList.astro — kicker, then a list of linked rows — rather
+// than inventing a second idiom for the same job. Renders nothing when empty.
+import { reading, foundations, type Pairing } from "../../data/roadmap";
+
+interface Props {
+  label: string;
+  items: Pairing[];
+}
+const { label, items } = Astro.props;
+
+// Refs are internal ids; readers see titles. Built once per render.
+const titles = new Map<string, string>();
+for (const b of reading) {
+  for (const c of b.chapters) titles.set(c.id, `${b.title} — ${c.no}. ${c.title}`);
+}
+for (const g of foundations) {
+  for (const i of g.items) titles.set(i.id, i.label);
+}
+const titleOf = (ref: string) => titles.get(ref) ?? ref;
+---
+
+{items.length > 0 && (
+  <section class="rm-pairs" data-pairing-list>
+    <p class="rm-pairs-k">{label}</p>
+    <ul>
+      {items.map((p) => (
+        <li class:list={[{ optional: p.optional }]}>
+          <span class="rm-pairs-t">{titleOf(p.ref)}</span>
+          <small>{p.note}</small>
+        </li>
+      ))}
+    </ul>
+  </section>
+)}
+
+```
+
+- [ ] **Step 3b: Add its styles to the page's global block**
+
+`PairingList.astro` carries no `<style>`. Append inside the existing
+`<style is:global>` in `src/pages/roadmap.astro`:
+
+```css
+  .rm-pairs { margin-top: var(--space-md); }
+  .rm-pairs-k {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--color-text-muted);
+    margin: 0 0 6px;
+  }
+  .rm-pairs ul { list-style: none; padding: 0; margin: 0; display: grid; gap: 6px; }
+  .rm-pairs li { display: grid; font-size: 14px; }
+  .rm-pairs li.optional { color: var(--color-text-muted); }
+  .rm-pairs small { color: var(--color-text-muted); font-size: 12px; }
+```
+
+- [ ] **Step 4: Render it in the build panels**
+
+In `src/components/roadmap/RoadmapInspector.astro`, add to the imports:
+
+```astro
+import PairingList from "./PairingList.astro";
+import { phases } from "../../data/roadmap";
+```
+
+and, in the `build.map(...)` block, immediately after the `<div class="rm-insp-checks">` element:
+
+```astro
+      {phases.filter((p) => p.milestone === m.id).map((p) => (
+        <>
+          <PairingList label={`Reading · ${p.label}`} items={p.reading} />
+          <PairingList label={`Foundations · ${p.label}`} items={p.foundations} />
+        </>
+      ))}
+```
+
+Kafka has two phases (`m5` and `capstone`), so its panel correctly shows two pairs of lists.
+
 - [ ] **Step 5: Swap the band's placeholder markup for the component**
 
 In `src/components/roadmap/ThisWeek.astro`, add `import PairingList from "./PairingList.astro";` and replace the `.rm-week-lists` div:
