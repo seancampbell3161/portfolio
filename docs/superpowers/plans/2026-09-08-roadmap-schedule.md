@@ -18,6 +18,19 @@
 - **ESM import specifiers carry `.js`** even for `.ts` files — match the existing `import { … } from "../arrange.js"` style.
 - **Every enhancement registers through `onPage(init)`** from `src/scripts/lifecycle.ts` and passes `signal` to every listener. Nothing initialises at module import.
 - **Plan runs Mon–Sat.** Week *n* starts Monday (`weekStart`) and ends Saturday (`weekEnd`). Sunday belongs to no week.
+- **Roadmap components carry NO `<style>` block.** All six existing components in
+  `src/components/roadmap/` have zero; every `rm-*` rule lives in one
+  `<style is:global>` block in `src/pages/roadmap.astro` (lines 50–950). New
+  components follow that: markup only, rules appended to the page's global block.
+- **Use the project's real design tokens.** They are `--color-border`,
+  `--color-border-hover`, `--color-bg`, `--color-bg-elevated`, `--color-bg-hover`,
+  `--color-text-primary`, `--color-text-secondary`, `--color-text-muted`,
+  `--color-text-faint`, `--font-mono`, `--font-sans`, `--font-display`,
+  `--lane-learning`, `--track-build`, `--track-reading`, `--track-foundations`,
+  `--radius-sm|md|lg|xl|full`, `--space-xs|sm|md|lg|xl|2xl|3xl|4xl|5xl`.
+  `--border`, `--panel`, `--text-2` and similar belong to the standalone mockup's
+  own `:root` and DO NOT EXIST in this project — using one renders transparent,
+  silently.
 - **Verify before claiming done.** Run the stated command and read the output. `npm test` for units; `npm run check` (build + full suite) before any commit that touches built markup.
 
 ## File Structure
@@ -728,13 +741,6 @@ const label = w === null
   </div>
 </section>
 
-<style>
-  .rm-week { border: 1px solid var(--border); border-radius: 12px; padding: 1rem 1.25rem; }
-  .rm-week-label { font-family: var(--font-mono); color: var(--lane-learning); }
-  .rm-week-phase { font-weight: 600; }
-  .rm-week-lists { display: grid; gap: 1rem; }
-  @media (min-width: 900px) { .rm-week-lists { grid-template-columns: 1fr 1fr; } }
-</style>
 
 <script>
   import "../../scripts/roadmap-schedule";
@@ -779,7 +785,40 @@ onPage(() => {
 });
 ```
 
-- [ ] **Step 5: Mount it on the page**
+- [ ] **Step 5: Add its styles to the page's global block**
+
+`ThisWeek.astro` carries no `<style>`. Append these rules inside the existing
+`<style is:global>` in `src/pages/roadmap.astro`, before its closing `</style>`:
+
+```css
+  .rm-week {
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    padding: var(--space-lg);
+    margin-bottom: var(--space-xl);
+  }
+  .rm-week-label {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--lane-learning);
+    margin: 0;
+  }
+  .rm-week-phase {
+    font-family: var(--font-display);
+    font-size: 20px;
+    font-weight: 600;
+    line-height: 1.3;
+    margin: 6px 0 0;
+  }
+  .rm-week-lists { display: grid; gap: var(--space-lg); margin-top: var(--space-md); }
+  @media (min-width: 900px) {
+    .rm-week-lists { grid-template-columns: 1fr 1fr; }
+  }
+```
+
+- [ ] **Step 6: Mount it on the page**
 
 In `src/pages/roadmap.astro`, add the import beside the other roadmap components and render it directly above `<RoadmapMeters />`:
 
@@ -867,20 +906,42 @@ const label = (p: { fromWeek: number; toWeek: number }) =>
   </ol>
 </section>
 
-<style>
-  .rm-arc ol { display: flex; gap: 2px; list-style: none; padding: 0; margin: 0; flex-wrap: wrap; }
-  .rm-arc li {
-    flex-basis: 0; min-width: 8rem; padding: 0.5rem 0.75rem;
-    background: var(--panel, rgba(255, 255, 255, 0.03));
-    border-radius: 8px; display: grid; gap: 0.15rem;
-  }
-  .rm-arc-wk { font-family: var(--font-mono); font-size: 0.75rem; color: var(--lane-learning); }
-  .rm-arc-nm { font-weight: 600; font-size: 0.875rem; }
-  .rm-arc-dt { font-family: var(--font-mono); font-size: 0.7rem; opacity: 0.7; }
-</style>
 ```
 
-- [ ] **Step 4: Mount it on the page**
+- [ ] **Step 4: Add its styles to the page's global block**
+
+`RoadmapArc.astro` carries no `<style>`. Append inside the existing
+`<style is:global>` in `src/pages/roadmap.astro`:
+
+```css
+  .rm-arc ol {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 2px;
+    list-style: none;
+    padding: 0;
+    margin: 0 0 var(--space-xl);
+  }
+  .rm-arc li {
+    flex-basis: 0;
+    min-width: 8rem;
+    padding: var(--space-sm) var(--space-md);
+    background: var(--color-bg-elevated);
+    border-radius: var(--radius-md);
+    display: grid;
+    gap: 2px;
+  }
+  .rm-arc-wk {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: 0.12em;
+    color: var(--lane-learning);
+  }
+  .rm-arc-nm { font-size: 14px; font-weight: 600; line-height: 1.3; }
+  .rm-arc-dt { font-family: var(--font-mono); font-size: 11px; color: var(--color-text-muted); }
+```
+
+- [ ] **Step 5: Mount it on the page**
 
 In `src/pages/roadmap.astro`, import it and render it directly below `<ThisWeek />`:
 
@@ -979,13 +1040,27 @@ const titleOf = (ref: string) => titles.get(ref) ?? ref;
   </section>
 )}
 
-<style>
-  .rm-pairs-k { font-family: var(--font-mono); font-size: 0.75rem; opacity: 0.7; }
-  .rm-pairs ul { list-style: none; padding: 0; margin: 0; display: grid; gap: 0.35rem; }
-  .rm-pairs li { display: grid; }
-  .rm-pairs li.optional { opacity: 0.6; }
-  .rm-pairs small { opacity: 0.7; }
-</style>
+```
+
+- [ ] **Step 3b: Add its styles to the page's global block**
+
+`PairingList.astro` carries no `<style>`. Append inside the existing
+`<style is:global>` in `src/pages/roadmap.astro`:
+
+```css
+  .rm-pairs { margin-top: var(--space-md); }
+  .rm-pairs-k {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--color-text-muted);
+    margin: 0 0 6px;
+  }
+  .rm-pairs ul { list-style: none; padding: 0; margin: 0; display: grid; gap: 6px; }
+  .rm-pairs li { display: grid; font-size: 14px; }
+  .rm-pairs li.optional { color: var(--color-text-muted); }
+  .rm-pairs small { color: var(--color-text-muted); font-size: 12px; }
 ```
 
 - [ ] **Step 4: Render it in the build panels**
@@ -1165,13 +1240,36 @@ const notes = [
   </ul>
 </section>
 
-<style>
-  .rm-practice-days { display: grid; gap: 1.5rem; }
-  @media (min-width: 900px) { .rm-practice-days { grid-template-columns: 1fr 1fr; } }
-  .rm-practice dt { font-family: var(--font-mono); font-size: 0.75rem; color: var(--lane-learning); }
-  .rm-practice dd { margin: 0 0 0.75rem; }
-  .rm-practice ul { display: grid; gap: 0.5rem; padding-left: 1.1rem; }
-</style>
+```
+
+- [ ] **Step 1b: Add its styles to the page's global block**
+
+`RoadmapPractice.astro` carries no `<style>`. Append inside the existing
+`<style is:global>` in `src/pages/roadmap.astro`:
+
+```css
+  .rm-practice { margin-top: var(--space-3xl); }
+  .rm-practice h2 {
+    font-family: var(--font-display);
+    font-size: 20px;
+    font-weight: 600;
+    margin: var(--space-xl) 0 var(--space-md);
+  }
+  .rm-practice h3 {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--lane-learning);
+    margin: 0 0 var(--space-sm);
+  }
+  .rm-practice-days { display: grid; gap: var(--space-xl); }
+  @media (min-width: 900px) {
+    .rm-practice-days { grid-template-columns: 1fr 1fr; }
+  }
+  .rm-practice dt { font-family: var(--font-mono); font-size: 11px; color: var(--color-text-muted); }
+  .rm-practice dd { margin: 0 0 var(--space-md); font-size: 14px; }
+  .rm-practice ul { display: grid; gap: var(--space-sm); padding-left: 18px; font-size: 14px; }
 ```
 
 - [ ] **Step 2: Mount it on the page**
