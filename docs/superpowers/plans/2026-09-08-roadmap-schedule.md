@@ -1118,9 +1118,10 @@ uses now:
   });
 ```
 
-Keep Task 4's other contract assertions untouched — in particular the one
-checking that exactly one panel is visible, which is what stops the band going
-stale.
+Keep Task 4's other contract assertions untouched. Note that Task 4 did NOT add
+an assertion that exactly one panel is visible — that invariant, which is the
+whole reason for the per-phase panels, went uncovered and is added by this
+task's fix round instead.
 
 - [ ] **Step 6: Run the full check and make sure it passes**
 
