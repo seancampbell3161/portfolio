@@ -178,10 +178,17 @@ git commit -m "feat(roadmap): week arithmetic anchored on one WEEK_ONE constant"
 
 - [ ] **Step 1: Write the failing test**
 
-Append to `src/lib/roadmap/__tests__/arrange.test.ts`:
+In `src/lib/roadmap/__tests__/arrange.test.ts`, extend the **existing**
+`import { build } from "../../../data/roadmap.js";` line rather than adding a
+second import from the same module:
 
 ```ts
-import { phases, build as builds, reading as books, foundations as fnd, allIds } from "../../../data/roadmap.js";
+import { build, reading as books, foundations as fnd, phases, allIds } from "../../../data/roadmap.js";
+```
+
+Then append the new block (note it uses `build`, the name already bound):
+
+```ts
 
 describe("spans derive from the phase table", () => {
   // The eleven known-good spans. Literal dates belong here and only here: this
@@ -201,7 +208,7 @@ describe("spans derive from the phase table", () => {
   };
 
   const byId = new Map<string, { start: Date; end: Date }>(
-    [...builds, ...books, ...fnd].map((x) => [x.id, { start: x.start, end: x.end }]),
+    [...build, ...books, ...fnd].map((x) => [x.id, { start: x.start, end: x.end }]),
   );
 
   it("reproduces every known-good span", () => {
@@ -256,8 +263,10 @@ Add the import at the top of the file, directly under the existing header commen
 
 ```ts
 import { weekStart, weekEnd, weeksToSpan, type WeekRange } from "../lib/roadmap/weeks.js";
-export { WEEK_ONE, LAST_WEEK, weekStart, weekEnd } from "../lib/roadmap/weeks.js";
 ```
+
+Do **not** re-export the week helpers from here. Every consumer imports them
+from `weeks.js` directly, so a re-export would be dead on arrival.
 
 Add the types and the table **above** `export const build`, because `build`,
 `reading` and `foundations` read from it at module-init time:
@@ -665,7 +674,10 @@ Append to `src/__tests__/roadmap-contract.test.ts`, inside the existing `describ
 ```ts
   it("renders the this-week band with real text before any script runs", () => {
     expect(html).toContain("data-this-week");
-    expect(html).toMatch(/data-week-label[^>]*>[^<]+</); // not an empty shell
+    // One of the five band states from spec §7. Asserted by text, not by
+    // attribute adjacency: Astro injects scoped data-astro-cid-* attributes
+    // whose position in the tag is not guaranteed.
+    expect(html).toMatch(/Week \d+ of 22|Ramp week|The plan (starts|is finished)/);
   });
 
   it("keeps the hooks the band's script writes into", () => {
