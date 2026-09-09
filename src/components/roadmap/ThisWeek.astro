@@ -4,7 +4,7 @@
 // the right one on load. Same shape as RoadmapInspector, and it means a stale
 // deploy can never show one phase's heading above another phase's reading list.
 import { phases } from "../../data/roadmap";
-import { currentPhase, weekLabel } from "../../lib/roadmap/schedule";
+import { currentPhase, weekLabel, phaseSpanText } from "../../lib/roadmap/schedule";
 import PairingList from "./PairingList.astro";
 
 const now = new Date();
@@ -17,6 +17,14 @@ const label = weekLabel(now);
   {phases.map((p) => (
     <div class="rm-week-panel" data-week-panel={p.id} hidden={p.id !== active?.id}>
       <h2 class="rm-week-phase" data-week-phase>{p.name}</h2>
+      {/* The heading above counts one week; these lists cover the whole phase.
+          Saying so is what stops seven weeks of reading looking like one week's.
+          It is per-phase, so it rides along with the panel the script reveals
+          and needs no client code of its own. */}
+      <p class="rm-week-scope">
+        <span class="rm-week-chip">{p.label}</span>
+        <span class="rm-week-span">{phaseSpanText(p)}</span>
+      </p>
       <div class="rm-week-lists">
         <PairingList label="Reading" items={p.reading} />
         <PairingList label="Foundations" items={p.foundations} />

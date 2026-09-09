@@ -9,6 +9,7 @@
 import { describe, it, expect } from "vitest";
 import { existsSync, readFileSync } from "node:fs";
 import { allIds, logIds, build, reading, phases } from "../data/roadmap";
+import { phaseSpanText } from "../lib/roadmap/schedule";
 
 const PAGE = "dist/roadmap/index.html";
 const built = existsSync(PAGE);
@@ -119,6 +120,16 @@ describe.skipIf(!built)("roadmap client contract (dist/roadmap/index.html)", () 
     }
   });
 
+  /** The markup of the one phase panel the build left visible, if any. */
+  const visiblePanel = (): string | null => {
+    const tags = [...html.matchAll(/<div[^>]*\sdata-week-panel="([a-z0-9]+)"[^>]*>/g)];
+    const open = tags.find((m) => !/\shidden[\s>]/.test(m[0]));
+    if (!open) return null;
+    const start = open.index!;
+    const next = tags.find((m) => m.index! > start);
+    return html.slice(start, next ? next.index! : html.indexOf("</section>", start));
+  };
+
   it("server-renders every phase panel and reveals exactly one", () => {
     // The band's per-phase panels are what stop a stale deploy showing one
     // phase's heading above another phase's reading list. Without this, that
@@ -149,5 +160,32 @@ describe.skipIf(!built)("roadmap client contract (dist/roadmap/index.html)", () 
     expect(panel).toContain("data-pairing-list");
     expect(panel).toContain("alongside RDB/AOF");     // the schedule's own reason
     expect(panel).toMatch(/Storage and Retrieval/i);  // a resolved chapter title, not an id
+  });
+
+  it("says which weeks the visible panel's lists actually cover", () => {
+    // The heading counts one week; the lists below it cover a whole phase. The
+    // band has to say so, or seven weeks of reading looks like one week's.
+    const panel = visiblePanel();
+    if (!panel) return; // outside the plan there is no panel to scope
+    const id = panel.match(/data-week-panel="([^"]+)"/)![1];
+    const phase = phases.find((p) => p.id === id)!;
+    expect(panel).toContain(phaseSpanText(phase));
+    expect(panel).toContain(phase.label);
+  });
+
+  it("prints each book's title once, however many of its chapters a phase carries", () => {
+    // M1 reads seven OSTEP chapters. Flat, that repeated the book's title seven
+    // times — the thing that made the band unreadable.
+    const panel = html.slice(html.indexOf('data-week-panel="m1"'), html.indexOf('data-week-panel="m2"'));
+    const book = "Operating Systems: Three Easy Pieces";
+    expect(panel.split(book)).toHaveLength(2); // one occurrence
+    expect(panel).toContain("P1. Persistence");   // still every chapter
+    expect(panel).toContain("C3. Concurrency");
+  });
+
+  it("derives a foundation item's workload rather than repeating it in a note", () => {
+    const panel = html.slice(html.indexOf('data-week-panel="m1"'), html.indexOf('data-week-panel="m2"'));
+    expect(panel).toContain("7 problems");  // fd.nc.stack's own `total`
+    expect(panel).not.toMatch(/<small[^>]*>\s*7\s*<\/small>/); // never the bare number
   });
 });

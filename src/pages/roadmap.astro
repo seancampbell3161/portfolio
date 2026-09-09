@@ -977,9 +977,29 @@ import { ogImagePath } from "../lib/og.mjs";
     line-height: 1.3;
     margin: 6px 0 0;
   }
-  .rm-week-lists { display: grid; gap: var(--space-lg); margin-top: var(--space-md); }
+  /* The scope line: which phase this is, and the weeks its lists actually
+     cover. Without it the week number above reads as the lists' scope. */
+  .rm-week-scope {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-sm);
+    margin: var(--space-sm) 0 0;
+    font-family: var(--font-mono);
+    font-size: 12px;
+  }
+  .rm-week-chip {
+    padding: 2px 8px;
+    border-radius: var(--radius-sm);
+    background: var(--color-bg-elevated);
+    color: var(--color-text-secondary);
+    letter-spacing: 0.04em;
+  }
+  .rm-week-span { color: var(--color-text-muted); }
+
+  .rm-week-lists { display: grid; gap: var(--space-xl); margin-top: var(--space-lg); }
   @media (min-width: 900px) {
-    .rm-week-lists { grid-template-columns: 1fr 1fr; }
+    .rm-week-lists { grid-template-columns: 1fr 1fr; gap: var(--space-3xl); }
   }
   .rm-week-panel[hidden] { display: none; }
 
@@ -1020,10 +1040,32 @@ import { ogImagePath } from "../lib/og.mjs";
     color: var(--color-text-muted);
     margin: 0 0 6px;
   }
-  .rm-pairs ul { list-style: none; padding: 0; margin: 0; display: grid; gap: 6px; }
-  .rm-pairs li { display: grid; font-size: 14px; }
+  /* One group per book / foundations group. The title is printed once and the
+     rows hang off a rule under it, so the eye finds four things to scan rather
+     than seventeen. */
+  .rm-pairs-g + .rm-pairs-g { margin-top: var(--space-md); }
+  .rm-pairs-gt {
+    margin: 0 0 4px;
+    font-size: 13px;
+    font-weight: 600;
+    line-height: 1.35;
+    color: var(--color-text-secondary);
+  }
+  .rm-pairs ul {
+    list-style: none;
+    margin: 0;
+    padding: 0 0 0 var(--space-md);
+    border-left: 1px solid var(--color-border);
+    display: grid;
+    gap: 5px;
+  }
+  .rm-pairs li { display: grid; font-size: 14px; line-height: 1.35; }
   .rm-pairs li.optional { color: var(--color-text-muted); }
   .rm-pairs small { color: var(--color-text-muted); font-size: 12px; }
+  .rm-pairs-c { font-family: var(--font-mono); }
+  /* Spacing lives here because Astro trims whitespace inside an expression,
+     so a literal " · " renders flush against both sides. */
+  .rm-pairs-sep { margin: 0 0.45em; opacity: 0.6; }
 
   /* ---- practice: the 2-hour day + how to read this schedule (spec §8) ---- */
   .rm-practice { margin-top: var(--space-3xl); }

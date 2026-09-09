@@ -8,21 +8,18 @@ import { describe, it, expect } from "vitest";
 import { readFileSync } from "node:fs";
 import { phases } from "../data/roadmap";
 import { weekStart, weekEnd } from "../lib/roadmap/weeks";
+import { phaseSpanText } from "../lib/roadmap/schedule";
 import { monthDayYear } from "../lib/dates";
 
 const html = readFileSync("roadmap/roadmap-schedule.html", "utf8");
-
-/** "Sep 7" — the mockup's bare form, used for a start date. */
-const bare = (d: Date) => monthDayYear(d).replace(/, \d{4}$/, "");
-/** The mockup shows the year on an end date only when it leaves 2026. */
-const endForm = (d: Date) => (d.getUTCFullYear() === 2026 ? bare(d) : monthDayYear(d));
 
 describe("the schedule mockup still agrees with the derived plan", () => {
   // The ramp's card reads "Week 0 · complete" and carries no dates.
   const dated = phases.filter((p) => p.id !== "ramp");
 
   it.each(dated.map((p) => [p.id, p] as const))("phase %s prints its derived dates", (_id, p) => {
-    const expected = `Weeks ${p.fromWeek}–${p.toWeek} · ${bare(weekStart(p.fromWeek))} – ${endForm(weekEnd(p.toWeek))}`;
+    // phaseSpanText is the one definition of this form — the band prints it too.
+    const expected = phaseSpanText(p);
     expect(html, `mockup is missing: ${expected}`).toContain(expected);
   });
 

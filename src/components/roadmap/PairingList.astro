@@ -1,36 +1,45 @@
 ---
-// One phase's reading or foundations list (spec §8). Follows the shape of
-// src/components/WhileList.astro — kicker, then a list of linked rows — rather
-// than inventing a second idiom for the same job. Renders nothing when empty.
-import { reading, foundations, type Pairing } from "../../data/roadmap";
+// One phase's reading or foundations list (spec §8). Rows are grouped by their
+// book or foundations group, so a book that carries seven chapters prints its
+// title once instead of seven times — the flat version of this list was the
+// single biggest reason the this-week band read as a wall of text.
+//
+// Every string here comes from src/lib/roadmap/pairings.ts, which is unit
+// tested; this file only lays them out.
+import { groupPairings } from "../../lib/roadmap/pairings";
+import type { Pairing } from "../../data/roadmap";
 
 interface Props {
   label: string;
   items: Pairing[];
 }
 const { label, items } = Astro.props;
-
-// Refs are internal ids; readers see titles. Built once per render.
-const titles = new Map<string, string>();
-for (const b of reading) {
-  for (const c of b.chapters) titles.set(c.id, `${b.title} — ${c.no}. ${c.title}`);
-}
-for (const g of foundations) {
-  for (const i of g.items) titles.set(i.id, i.label);
-}
-const titleOf = (ref: string) => titles.get(ref) ?? ref;
+const groups = groupPairings(items);
 ---
 
-{items.length > 0 && (
+{groups.length > 0 && (
   <section class="rm-pairs" data-pairing-list>
     <p class="rm-pairs-k">{label}</p>
-    <ul aria-label={label}>
-      {items.map((p) => (
-        <li class:list={[{ optional: p.optional }]}>
-          <span class="rm-pairs-t">{titleOf(p.ref)}</span>
-          <small>{p.note}</small>
-        </li>
-      ))}
-    </ul>
+    {groups.map((g) => (
+      <div class="rm-pairs-g">
+        <p class="rm-pairs-gt">{g.title}</p>
+        {/* No aria-label: the visible group title sits immediately above the
+            list, so labelling it again only duplicates the text. */}
+        <ul>
+          {g.rows.map((r) => (
+            <li class:list={[{ optional: r.optional }]}>
+              <span class="rm-pairs-t">{r.label}</span>
+              {(r.count || r.note) && (
+                <small>
+                  {r.count && <span class="rm-pairs-c">{r.count}</span>}
+                  {r.count && r.note && <span class="rm-pairs-sep">·</span>}
+                  {r.note}
+                </small>
+              )}
+            </li>
+          ))}
+        </ul>
+      </div>
+    ))}
   </section>
 )}

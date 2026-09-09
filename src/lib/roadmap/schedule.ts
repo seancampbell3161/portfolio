@@ -3,8 +3,8 @@
 // so Vitest loads it and both the page and src/scripts/roadmap-schedule.ts call
 // it, the same shape as src/lib/timeline/now.ts.
 import { phases, type Phase } from "../../data/roadmap.js";
-import { weekStart, weekEnd, shiftDays } from "./weeks.js";
-import { longDate } from "../dates.js";
+import { weekStart, weekEnd, shiftDays, WEEK_ONE } from "./weeks.js";
+import { longDate, monthDayYear } from "../dates.js";
 
 /** The last numbered week, from the phase table — never a second copy of it. */
 export const LAST_WEEK = phases[phases.length - 1].toWeek;
@@ -48,4 +48,23 @@ export function weekLabel(now: Date): string {
       : "The plan is finished";
   }
   return w === 0 ? "Ramp week" : `Week ${w} of ${LAST_WEEK}`;
+}
+
+/**
+ * A phase's scope, in the form roadmap/roadmap-schedule.html has always
+ * printed: "Weeks 1–7 · Sep 7 – Oct 24". The band needs this because its
+ * heading counts a single week while its lists cover the whole phase — without
+ * it, seven weeks of reading looks like one week's.
+ *
+ * The year appears on an end date only once the span leaves the plan's opening
+ * year, which keeps the common case short and the ambiguous one honest.
+ */
+export function phaseSpanText(p: Phase): string {
+  // Weeks 0–0 is not a span; the ramp is one week and says so.
+  if (p.fromWeek === p.toWeek) return `Week ${p.fromWeek} · the week before Week 1`;
+  const start = weekStart(p.fromWeek);
+  const end = weekEnd(p.toWeek);
+  const bare = (d: Date) => monthDayYear(d).replace(/, \d{4}$/, "");
+  const endText = end.getUTCFullYear() === WEEK_ONE.getUTCFullYear() ? bare(end) : monthDayYear(end);
+  return `Weeks ${p.fromWeek}–${p.toWeek} · ${bare(start)} – ${endText}`;
 }

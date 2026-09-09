@@ -1,5 +1,6 @@
 import { describe, it, expect } from "vitest";
-import { weekOf, currentPhase, weekLabel } from "../schedule.js";
+import { weekOf, currentPhase, weekLabel, phaseSpanText } from "../schedule.js";
+import { phases } from "../../../data/roadmap.js";
 import { weekStart, weekEnd } from "../weeks.js";
 
 const at = (iso: string) => new Date(`${iso}T12:00:00Z`);
@@ -64,5 +65,31 @@ describe("weekLabel", () => {
   });
   it("says the plan is finished, past the capstone", () => {
     expect(weekLabel(at("2027-02-08"))).toBe("The plan is finished");
+  });
+});
+
+describe("phaseSpanText", () => {
+  const byId = (id: string) => phases.find((p) => p.id === id)!;
+
+  it("prints a dated phase as weeks plus its derived span", () => {
+    expect(phaseSpanText(byId("m1"))).toBe("Weeks 1–7 · Sep 7 – Oct 24");
+  });
+
+  it("names the ramp rather than printing 'Weeks 0–0'", () => {
+    expect(phaseSpanText(byId("ramp"))).toBe("Week 0 · the week before Week 1");
+  });
+
+  it("carries the year on an end date that leaves 2026", () => {
+    // The mockup shows a year only when the span crosses out of the start year;
+    // a phase ending in 2027 must say so or it reads as this autumn.
+    const span = phaseSpanText(byId("capstone"));
+    expect(span).toContain("2027");
+  });
+
+  it("agrees with the span the phase's own weeks derive", () => {
+    for (const p of phases) {
+      if (p.id === "ramp") continue;
+      expect(phaseSpanText(p)).toContain(`Weeks ${p.fromWeek}–${p.toWeek}`);
+    }
   });
 });
