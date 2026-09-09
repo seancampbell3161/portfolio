@@ -164,25 +164,30 @@ loads it and both the page and a client script call it, mirroring
 `src/lib/timeline/now.ts`:
 
 ```ts
-export interface ThisWeek {
-  week: number;              // 0 for the ramp, 1–22 thereafter
-  phase: Phase;
-  milestone?: BuildMilestone;
-  reading: Pairing[];        // the phase's, optional ones included — they still read
-  foundations: Pairing[];
-}
-
+export const LAST_WEEK: number;                        // derived from the phase table
 export function weekOf(now: Date): number | null;      // null outside the plan
 export function currentPhase(now: Date): Phase | null;
-export function thisWeek(now: Date): ThisWeek | null;  // everything the band prints
+export function weekLabel(now: Date): string;          // the five states below
 ```
+
+An earlier draft of this section specified a `thisWeek(now)` returning the week,
+its phase, its milestone and its pairings — "everything the band prints". That
+was wrong, and the final review caught it as dead code. The band renders **every**
+phase's panel and reveals one (below), so what it needs is the whole `phases`
+table plus `currentPhase` to pick the live one and `weekLabel` for the heading.
+A per-call snapshot of the current phase answers a question the band never asks.
+
+`LAST_WEEK` lives here rather than in `weeks.ts` because it is a fact about the
+phase table, not about week arithmetic: `phases[phases.length - 1].toWeek`.
+Hardcoding it would be a second hand-maintained copy of the plan's length, in a
+design whose entire point is that there is one.
 
 Weeks are numbered 0–22: week 0 is the ramp, and the band counts the build weeks
 as "Week n of 22". Five states, and what the band says in each:
 
 | State | Band |
 |---|---|
-| Before week 0 | The plan starts *date*, in *n* weeks. |
+| Before week 0 | The plan starts *date*. |
 | Week 0, the ramp | Ramp week — no build milestone, so no "Week n of 22". |
 | Inside a phase | Week *n* of 22 · *phase name* · what to read and drill. |
 | A Sunday between phases | The week about to start, not the one that ended. |
@@ -277,5 +282,12 @@ end leaves 2026. `src/__tests__/schedule-mockup-contract.test.ts` formats the
 *derived* dates that way and asserts the file contains the result — a direction
 that cannot be fooled, since a date the mockup lacks fails and a date it carries
 that the plan no longer implies fails too. It reads a repo source file, not
-`dist/`, so it needs no build. It also pins the plan's stated length at 23 weeks,
+`dist/`, so it needs no build. It also pins the plan's stated length at 23 weeks, which `roadmap/study-guide.html`
+had already drifted from.
+
+One limit, worth stating plainly: the guard pins **dates and length, not
+substance**. It does not check the mockup's pairing lists — the very thing §1
+identifies as what that file uniquely carried. So the mockup can still drift in
+the dimension it was kept for. That is an accepted limit of a design artifact,
+not an oversight to fix later without saying so.
 which `roadmap/study-guide.html` had already drifted from.
