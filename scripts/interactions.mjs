@@ -525,8 +525,17 @@ check("the case study rendered", (await vt2.evaluate(() => location.pathname)).s
 await vt2.waitForFunction(() => document.querySelector("[data-reader-body]"));
 const vt2Tall = await vt2.evaluate(() => document.querySelector("[data-reader-body]").getBoundingClientRect().height > window.innerHeight);
 check("the case study picked for the morph has a body taller than the viewport", vt2Tall);
-const vt2Prog = await vt2.$eval("[data-reader-progress]", (el) => ({ hidden: el.hidden }));
-check("the case study's reading line initialised", !vt2Prog.hidden);
+// Polled, not sampled once: reader.ts un-hides the line on its first
+// animation-frame measurement, which can land after the [data-reader-body]
+// element that the wait above settles on. Reading .hidden immediately raced
+// that frame and failed about one run in three -- a flake that says nothing
+// about reader.ts, and would eventually be pinned on whatever change happened
+// to be in the tree. The assertion is unchanged (the line must become visible);
+// only the timing is now waited for rather than assumed.
+const vt2Shown = await vt2
+  .waitForFunction(() => document.querySelector("[data-reader-progress]")?.hidden === false, null, { timeout: 2000 })
+  .then(() => true, () => false);
+check("the case study's reading line initialised", vt2Shown);
 await vt2.close();
 
 // Check 3: a pending save survives a navigation -- and specifically because
