@@ -10,6 +10,7 @@ import { describe, it, expect } from "vitest";
 import { existsSync, readFileSync } from "node:fs";
 import { allIds, logIds, build, reading, phases } from "../data/roadmap";
 import { phaseSpanText } from "../lib/roadmap/schedule";
+import { roadmapClips } from "../lib/roadmap/arrange";
 
 const PAGE = "dist/roadmap/index.html";
 const built = existsSync(PAGE);
@@ -23,7 +24,7 @@ describe.skipIf(!built)("roadmap client contract (dist/roadmap/index.html)", () 
     "rm-edit", "rm-message", "rm-save-state",
     "rm-build-stages", "rm-build-courses", "rm-build-bar",
     "rm-read-ch", "rm-read-books", "rm-read-bar",
-    "rm-fnd-done", "rm-fnd-bar", "rm-logs-done",
+    "rm-fnd-done", "rm-fnd-bar", "rm-logs-done", "rm-clip-live",
   ];
   // review.ts: the runner, the card faces, the counters and the message line.
   const REVIEW_IDS = [
@@ -85,6 +86,30 @@ describe.skipIf(!built)("roadmap client contract (dist/roadmap/index.html)", () 
   it("keeps a percentage hook for every milestone and every book", () => {
     for (const m of build) expect(html, `missing milestone ${m.id}`).toContain(`data-milestone-pct="${m.id}"`);
     for (const b of reading) expect(html, `missing book ${b.id}`).toContain(`data-book-pct="${b.id}"`);
+  });
+
+  it("keeps the live-progress hooks on every clip, on all three surfaces", () => {
+    // Every clip is rendered three times over: the desktop arrangement clip,
+    // the mobile graph row, and the inspector panel's kicker. All three are
+    // server-rendered from an EMPTY completed set, so all three are wrong until
+    // src/scripts/roadmap.ts rewrites them from the saved progress. A hook that
+    // survives on one surface and not the others leaves the page half-stale --
+    // which is the bug this contract exists to prevent coming back.
+    const countOf = (needle: string) => html.split(needle).length - 1;
+    for (const c of roadmapClips(new Set<string>(), new Date())) {
+      expect(
+        countOf(`data-clip-id="${c.id}"`),
+        `clip ${c.id}: the status class is rewritten on the desktop clip and the graph row`,
+      ).toBeGreaterThanOrEqual(2);
+      expect(
+        countOf(`data-clip-sub="${c.id}"`),
+        `clip ${c.id}: the count is rewritten on the desktop clip and the graph row`,
+      ).toBeGreaterThanOrEqual(2);
+      expect(
+        countOf(`data-clip-status="${c.id}"`),
+        `clip ${c.id}: the spoken status is rewritten on both clips and the panel kicker`,
+      ).toBeGreaterThanOrEqual(3);
+    }
   });
 
   it("keeps every decision log with its four fields and its status line", () => {

@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
-import { clipStatus, roadmapClips, threadSpans, roadmapWindow, quarterTicks, type RoadmapClip } from "../arrange.js";
-import { build, reading as books, foundations as fnd, phases, allIds } from "../../../data/roadmap.js";
+import { clipStatus, roadmapClips, threadSpans, roadmapWindow, quarterTicks, progressAnnouncement, STATUS_WORDS, type RoadmapClip } from "../arrange.js";
+import { build, reading as books, foundations as fnd, phases, allIds, logIds } from "../../../data/roadmap.js";
 
 const now = new Date("2026-09-02T00:00:00Z");
 
@@ -54,6 +54,41 @@ describe("roadmapClips", () => {
     const redis = clips.find((c) => c.id === "redis")!;
     expect(redis.href).toBe("#clip-redis");
     expect(redis.kind).toBe("span");
+  });
+});
+
+describe("progressAnnouncement", () => {
+  const zero = roadmapClips(new Set<string>(), now);
+
+  it("says nothing when the edit moved no clip", () => {
+    // A decision log is an input[data-id] like any other, but it belongs to no
+    // clip: ticking one must leave the live region silent rather than repeat
+    // a sentence whose numbers did not move.
+    const after = roadmapClips(new Set([logIds[0]]), now);
+    expect(progressAnnouncement(zero, after)).toBe("");
+  });
+
+  it("names the clip and carries its new count when a chapter is ticked", () => {
+    const after = roadmapClips(new Set(["aposd.s1"]), now);
+    const moved = after.find((c) => c.id === "aposd")!;
+    const said = progressAnnouncement(zero, after);
+    expect(said).toContain(moved.title);
+    expect(said).toContain(moved.sublabel!);
+  });
+
+  it("speaks the new status when the last child completes", () => {
+    const all = new Set(books.find((b) => b.id === "aposd")!.chapters.map((c) => c.id));
+    const after = roadmapClips(all, now);
+    expect(after.find((c) => c.id === "aposd")!.status).toBe("done");
+    expect(progressAnnouncement(zero, after)).toContain(STATUS_WORDS.done);
+  });
+
+  it("speaks only the clip that moved, not the ten that did not", () => {
+    const after = roadmapClips(new Set(["aposd.s1"]), now);
+    const said = progressAnnouncement(zero, after);
+    for (const c of zero.filter((c) => c.id !== "aposd")) {
+      expect(said, `${c.id} should be silent`).not.toContain(c.title);
+    }
   });
 });
 

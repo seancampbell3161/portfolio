@@ -11,6 +11,17 @@ export type { Track };
 
 export type ClipStatus = "done" | "in-progress" | "planned";
 
+/** Spec §7: how a status is SPOKEN. Clip status is otherwise purely visual —
+ *  the fill pattern and the aria-hidden legend — so every clip, graph row and
+ *  inspector kicker carries one of these words for a screen reader, and
+ *  src/scripts/roadmap.ts rewrites them from the live progress. One definition,
+ *  because three copies of it drifting is three different spoken pages. */
+export const STATUS_WORDS: Record<ClipStatus, string> = {
+  done: "done",
+  "in-progress": "in progress",
+  planned: "planned",
+};
+
 export interface RoadmapClip {
   id: string;
   track: Track;
@@ -88,6 +99,45 @@ export function roadmapClips(completed: ReadonlySet<string>, now: Date): Roadmap
   }
 
   return clips;
+}
+
+/**
+ * The polite announcement after an edit: what a screen reader hears when a
+ * checkbox changes a clip's numbers or its status.
+ *
+ * The arrangement is served from an empty completed set and rewritten on the
+ * client, so ticking a checkbox silently repaints counts and status fills that
+ * a sighted reader sees and a screen-reader user does not. This is the sentence
+ * that closes that gap; it lives here, with the counts it quotes, so the wording
+ * is unit-tested rather than buried in a DOM script.
+ *
+ * Returns "" when nothing a clip shows has moved — a decision log is a checkbox
+ * too, and it belongs to no clip.
+ */
+export function progressAnnouncement(
+  before: readonly RoadmapClip[],
+  after: readonly RoadmapClip[],
+): string {
+  // No prior paint to compare against — the owner ticked a box before the first
+  // load() landed. Announcing all eleven clips at once would be noise, not news.
+  if (before.length === 0) return "";
+  const was = new Map(before.map((c) => [c.id, c]));
+  const sentences: string[] = [];
+  for (const c of after) {
+    const prev = was.get(c.id);
+    if (!prev || (prev.sublabel === c.sublabel && prev.status === c.status)) continue;
+    // The status word is spoken only when it actually flipped. Every clip
+    // already carries its own status for anyone who navigates to it, so
+    // repeating ", in progress" after each of five ticks would bury the sixth,
+    // where the book turns "done" — the one transition that is news.
+    const turned = prev.status === c.status ? undefined : STATUS_WORDS[c.status];
+    // A colon before the count, because a title can carry commas of its own
+    // ("NeetCode 150, pattern by pattern") and would otherwise run into it.
+    sentences.push(`${c.title}: ${[c.sublabel, turned].filter(Boolean).join(", ")}.`);
+  }
+  // One clip moves per tick today; joined as separate sentences so an edit that
+  // ever moves two is read as two facts rather than one run-on.
+  return sentences.join(" ");
 }
 
 const TRACK_DESC: Record<Track, string> = {

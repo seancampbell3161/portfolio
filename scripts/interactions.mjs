@@ -813,6 +813,78 @@ check(
 );
 check("roadmap: the revealed panel's heading matches that phase's name", rmVisibleName === rmExpectedName);
 
+// ---- roadmap: saved progress reaches the arrangement, not just the meters ----
+// Every clip is server-rendered from an EMPTY completed set, so the built page
+// ships "0 of N" with the wrong status fill on all three surfaces a clip is
+// drawn on -- the desktop clip, the mobile graph row, and the inspector panel's
+// kicker. src/scripts/roadmap.ts has to repaint all three from /api/progress.
+// It once repainted only the meters and the panel's own N/M, which left the
+// clip itself frozen at zero next to a panel already showing 1/5. `is-done` is
+// the sharp end of this check: the build can never emit it (nothing is complete
+// in an empty set), so seeing it proves the client rewrite actually ran.
+const rmProg = watch(await browser.newPage({ viewport: { width: 1280, height: 900 } }));
+await rmProg.addInitScript(() => sessionStorage.setItem("roadmap-admin-token", "e2e-dummy-token"));
+await rmProg.route("**/api/review", async (route) =>
+  route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ schedules: {}, streak: 0, lastReviewDate: null }) }),
+);
+// Reassigned between loads; the handler reads it at request time, so one route
+// serves both the empty page below and the nearly-complete one after the reload.
+let rmSaved = [];
+await rmProg.route("**/api/progress", async (route) =>
+  route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ completed: rmSaved }) }),
+);
+await rmProg.goto(`${BASE}/roadmap`, { waitUntil: "networkidle" });
+// A reading clip, because its panel holds nothing but chapter checkboxes: a
+// build panel also carries decision-log inputs, which are input[data-id] like
+// any other but belong to no clip. Read from the DOM rather than hardcoded, so
+// re-dating or re-scoping the plan cannot strand this check on a dead id.
+const rmBook = await rmProg.evaluate(
+  () => document.querySelector('.rm-clips[data-track="reading"] .rm-clip[data-clip-id]')?.dataset.clipId ?? null,
+);
+const rmTitle = (await rmProg.locator(`.rm-clip[data-clip-id="${rmBook}"] .rm-clip-title`).textContent())?.trim();
+const rmBuiltSub = (await rmProg.locator(`.rm-clip[data-clip-id="${rmBook}"] [data-clip-sub]`).textContent())?.trim();
+const rmChapters = await rmProg.$$eval(`#clip-${rmBook} input[data-id]`, (els) => els.map((el) => el.dataset.id));
+check("roadmap: the built page really does ship a zeroed clip", /^0 of \d+ /.test(rmBuiltSub ?? ""));
+
+// Load again with every chapter but the last already saved.
+rmSaved = rmChapters.slice(0, -1);
+await rmProg.reload({ waitUntil: "networkidle" });
+const rmSubOf = (sel) => rmProg.locator(`${sel}[data-clip-id="${rmBook}"] [data-clip-sub]`).textContent();
+const rmNearSub = (await rmSubOf(".rm-clip"))?.trim();
+const rmNearGraph = (await rmSubOf(".rm-graph-row"))?.trim();
+check(
+  "roadmap: a clip's count is repainted from the saved progress, not left at the build's zero",
+  rmNearSub === `${rmChapters.length - 1} of ${rmChapters.length} chapters` && rmNearSub !== rmBuiltSub,
+);
+check("roadmap: the mobile graph row is repainted too, not just the desktop clip", rmNearGraph === rmNearSub);
+
+// Tick the last chapter: the clip must turn done on every surface, and say so.
+await rmProg.waitForSelector(".roadmap-page.rm-editing");
+await rmProg.locator(`.rm-clip[data-clip-id="${rmBook}"]`).click();
+await rmProg.waitForSelector(`#clip-${rmBook}:target`);
+// See check 3 above: jump instantly rather than waiting out the smooth scroll.
+await rmProg.evaluate((id) => document.getElementById(`clip-${id}`)?.scrollIntoView({ behavior: "instant", block: "center" }), rmBook);
+await rmProg.locator(`#clip-${rmBook} input[data-id="${rmChapters[rmChapters.length - 1]}"]`).click();
+const rmDoneSub = (await rmSubOf(".rm-clip"))?.trim();
+const rmDoneClips = await rmProg.locator(`.rm-clip[data-clip-id="${rmBook}"].is-done`).count();
+const rmDoneRows = await rmProg.locator(`.rm-graph-row[data-clip-id="${rmBook}"].is-done`).count();
+const rmKicker = (await rmProg.locator(`#clip-${rmBook} [data-clip-status]`).textContent())?.trim();
+const rmSpoken = (await rmProg.locator("#rm-clip-live").textContent())?.trim();
+check(
+  "roadmap: completing the last child turns the clip done on both the arrangement and the graph",
+  rmDoneSub === `${rmChapters.length} of ${rmChapters.length} chapters` && rmDoneClips === 1 && rmDoneRows === 1,
+);
+check("roadmap: the inspector kicker's spoken status follows the clip", rmKicker === "done");
+// The status fill is purely visual and the legend is aria-hidden, so without a
+// live region a screen-reader user hears "checked" and nothing about what it
+// did. The clip must be named -- an unattributed "5 of 5 chapters, done." is
+// not an announcement, it is a riddle.
+check(
+  `roadmap: the edit is announced, naming the clip and its new state (heard: ${JSON.stringify(rmSpoken)})`,
+  !!rmSpoken && rmSpoken.includes(rmTitle) && rmSpoken.includes("done"),
+);
+await rmProg.close();
+
 // ---- nothing threw anywhere ----
 check(`no uncaught page errors${errors.length ? `: ${errors.join(" | ")}` : ""}`, errors.length === 0);
 

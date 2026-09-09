@@ -5,20 +5,18 @@
 // shared timeline math (as the home Timeline.astro does); the arrangement script
 // (src/scripts/roadmap-arrangement.ts) re-lays them for the "All" zoom in the
 // browser, reading the clip list embedded as JSON in #rm-clip-data.
-import { roadmapClips, roadmapWindow, quarterTicks, type ClipStatus, type RoadmapClip, type Track } from "../../lib/roadmap/arrange";
+import { roadmapClips, roadmapWindow, quarterTicks, STATUS_WORDS, type RoadmapClip, type Track } from "../../lib/roadmap/arrange";
 import { positionIn, packRows, estimateLabelWidth, fraction } from "../../lib/timeline/layout";
 import { monthDayYear, monthYear } from "../../lib/dates";
 
-// Spoken status, for the visually-hidden suffix on every clip link: the legend
-// is aria-hidden and clip status is otherwise purely visual (spec §7).
-const STATUS_WORDS: Record<ClipStatus, string> = {
-  done: "done",
-  "in-progress": "in progress",
-  planned: "planned",
-};
-
 const now = new Date();
-const clips = roadmapClips(new Set<string>(), now); // zeroed; live progress fills numbers, not positions
+// Zeroed: the saved progress lives behind /api/progress and is not available at
+// build time, so every count and status below is a PLACEHOLDER that
+// src/scripts/roadmap.ts overwrites on load through the data-clip-* hooks. It is
+// not the still frame the rest of the site server-renders — it is wrong until
+// the script runs — so the numbers, the status classes and the spoken status
+// words all carry a hook. Positions are real and are never rewritten from here.
+const clips = roadmapClips(new Set<string>(), now);
 const win = roadmapWindow("span", now, clips);
 const ticks = quarterTicks(win);
 const estimate = estimateLabelWidth();
@@ -89,6 +87,15 @@ const clipData = clips.map((c) => ({
 </div>
 <p id="rm-message" class="rm-message" role="alert" aria-live="assertive" hidden></p>
 
+{/* Ticking a checkbox silently rewrites clip counts and status fills that a
+    sighted reader watches change and a screen-reader user cannot. This is the
+    spoken half of that repaint (the sentence itself is progressAnnouncement in
+    src/lib/roadmap/arrange.ts). It is server-rendered empty so the region is
+    already in the accessibility tree when the first edit writes into it, and it
+    sits outside .rm-arr, which is display:none below 900px — edit mode works at
+    every width, so its announcements must too. */}
+<p id="rm-clip-live" class="sr-only" role="status" aria-live="polite"></p>
+
 <div class="rm-arr">
   <div class="rm-arr-body">
     <div class="rm-ruler" aria-hidden="true">
@@ -119,8 +126,8 @@ const clipData = clips.map((c) => ({
                 style={`--x:${p.x * 100}%; --w:${p.w * 100}%; --y:${p.row}`}
               >
                 <span class="rm-clip-title">{p.item.title}</span>
-                {p.item.sublabel && <small class="rm-clip-sub">{p.item.sublabel}</small>}
-                <span class="sr-only">, {STATUS_WORDS[p.item.status]}</span>
+                {p.item.sublabel && <small class="rm-clip-sub" data-clip-sub={p.item.id}>{p.item.sublabel}</small>}
+                <span class="sr-only">, <span data-clip-status={p.item.id}>{STATUS_WORDS[p.item.status]}</span></span>
               </a>
             </li>
           ))}
@@ -138,11 +145,11 @@ const clipData = clips.map((c) => ({
     e.kind === "now" ? (
       <li class="rm-graph-now"><span>now · {monthDayYear(now)}</span></li>
     ) : (
-      <li class:list={["rm-graph-row", `t-${e.clip.track}`, `is-${e.clip.status}`]}>
+      <li class:list={["rm-graph-row", `t-${e.clip.track}`, `is-${e.clip.status}`]} data-clip-id={e.clip.id}>
         <a href={e.clip.href}>
           <b>{e.clip.title}</b>
-          <small>{e.clip.sublabel}</small>
-          <span class="sr-only">, {STATUS_WORDS[e.clip.status]}</span>
+          <small data-clip-sub={e.clip.id}>{e.clip.sublabel}</small>
+          <span class="sr-only">, <span data-clip-status={e.clip.id}>{STATUS_WORDS[e.clip.status]}</span></span>
         </a>
       </li>
     ),

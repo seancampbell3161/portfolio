@@ -1,5 +1,12 @@
 import { deriveStats } from "../data/roadmap";
 import type { LogEntry } from "../data/roadmap";
+import {
+  roadmapClips,
+  progressAnnouncement,
+  STATUS_WORDS,
+  type ClipStatus,
+  type RoadmapClip,
+} from "../lib/roadmap/arrange";
 import { onPage, type PageCtx } from "./lifecycle";
 
 const API = "/api/progress";
@@ -8,6 +15,10 @@ const SAVE_DEBOUNCE_MS = 500;
 
 const completed = new Set<string>();
 const logEntries: Record<string, LogEntry> = {};
+// What the clips currently SHOW. Kept so an edit can be compared against the
+// page it is changing rather than against the saved state, which is what makes
+// the announcement name only the clip that moved.
+let clipsShown: RoadmapClip[] = [];
 let editing = false;
 let saveTimer: number | undefined;
 // The signal of the run currently registered. scheduleSave() captures it at
@@ -66,6 +77,50 @@ function renderLogs() {
   }
 }
 
+const STATUS_CLASSES: ClipStatus[] = ["done", "in-progress", "planned"];
+
+/**
+ * Repaint the arrangement from the live progress.
+ *
+ * The page is built from an EMPTY completed set (RoadmapArrangement.astro), so
+ * until this runs every clip reads "0 of N" and wears the wrong status fill.
+ * Each clip is drawn three times over — the desktop clip, the mobile graph row,
+ * and the inspector panel's kicker — and all three are addressed by the same
+ * data-clip-* attributes, so one pass here keeps them from disagreeing.
+ *
+ * Positions are NOT touched: those were computed against a real window at build
+ * time and are re-laid only by src/scripts/roadmap-arrangement.ts on a zoom.
+ */
+function renderClips(): void {
+  const clips = roadmapClips(completed, new Date());
+  for (const c of clips) {
+    // Clip ids are lowercase words and dots, so they are safe unescaped inside
+    // a quoted attribute selector.
+    for (const el of document.querySelectorAll<HTMLElement>(`[data-clip-id="${c.id}"]`)) {
+      for (const s of STATUS_CLASSES) el.classList.toggle(`is-${s}`, s === c.status);
+    }
+    if (c.sublabel) {
+      for (const el of document.querySelectorAll<HTMLElement>(`[data-clip-sub="${c.id}"]`)) {
+        el.textContent = c.sublabel;
+      }
+    }
+    for (const el of document.querySelectorAll<HTMLElement>(`[data-clip-status="${c.id}"]`)) {
+      el.textContent = STATUS_WORDS[c.status];
+    }
+  }
+  clipsShown = clips;
+}
+
+/**
+ * Speak an edit. The status fill and the count are purely visual and the legend
+ * is aria-hidden, so without this a screen-reader user hears "checked" and
+ * nothing about what it did to the clip. Silence on "" is deliberate: a decision
+ * log is a checkbox too, and it moves no clip.
+ */
+function announce(text: string): void {
+  if (text) setText("rm-clip-live", text);
+}
+
 function render() {
   for (const box of boxes()) box.checked = completed.has(box.dataset.id!);
 
@@ -92,6 +147,7 @@ function render() {
     if (b) el.textContent = `${b.done}/${b.total}`;
   }
 
+  renderClips();
   renderLogs();
 }
 
@@ -246,7 +302,9 @@ function onToggle(event: Event) {
   const id = input.dataset.id!;
   if (input.checked) completed.add(id);
   else completed.delete(id);
+  const before = clipsShown;
   render();
+  announce(progressAnnouncement(before, clipsShown));
   scheduleSave();
 }
 
@@ -270,6 +328,7 @@ export function initRoadmap({ signal }: PageCtx): void {
   // the next run.
   completed.clear();
   for (const key of Object.keys(logEntries)) delete logEntries[key];
+  clipsShown = [];
   editing = false;
   if (saveTimer) {
     clearTimeout(saveTimer);
