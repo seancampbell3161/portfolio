@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { weekOf, currentPhase, thisWeek, weekLabel } from "../schedule.js";
+import { weekOf, currentPhase, weekLabel } from "../schedule.js";
 import { weekStart, weekEnd } from "../weeks.js";
 
 const at = (iso: string) => new Date(`${iso}T12:00:00Z`);
@@ -45,40 +45,6 @@ describe("currentPhase", () => {
   });
   it("is null outside the plan", () => {
     expect(currentPhase(at("2027-06-01"))).toBeNull();
-  });
-});
-
-describe("thisWeek", () => {
-  it("carries the phase, its milestone, and what to read and drill", () => {
-    const w = thisWeek(at("2026-09-09"))!;
-    expect(w.week).toBe(1);
-    expect(w.phase.id).toBe("m1");
-    expect(w.milestone?.id).toBe("redis");
-    expect(w.reading.map((p) => p.ref)).toContain("ddia.ch3");
-    expect(w.foundations.map((p) => p.ref)).toContain("fd.nc.twopointers");
-  });
-  it("has no milestone during the ramp", () => {
-    const w = thisWeek(at("2026-09-02"))!;
-    expect(w.week).toBe(0);
-    expect(w.milestone).toBeUndefined();
-  });
-  it("includes an optional pairing — it is still read, just not span-extending", () => {
-    const w = thisWeek(at("2027-01-20"))!; // capstone
-    expect(w.foundations.map((p) => p.ref)).toContain("fd.advanced");
-  });
-  it("resolves the capstone to Kafka, the milestone its own phase shares with m5", () => {
-    // Both m5 (W15–19) and capstone (W20–22) carry milestone: "kafka". The
-    // lookup is by build id, so reaching it from the later phase must give the
-    // same milestone — otherwise the capstone's Kafka tail has no clip.
-    const m5 = thisWeek(at("2027-01-05"))!;       // inside m5
-    const capstone = thisWeek(at("2027-01-20"))!; // inside the capstone
-    expect(m5.phase.id).toBe("m5");
-    expect(capstone.phase.id).toBe("capstone");
-    expect(capstone.milestone?.id).toBe("kafka");
-    expect(capstone.milestone).toBe(m5.milestone); // the same object, not a copy
-  });
-  it("is null once the plan is finished", () => {
-    expect(thisWeek(at("2027-02-08"))).toBeNull();
   });
 });
 

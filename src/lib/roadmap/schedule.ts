@@ -2,17 +2,12 @@
 // "What week is it" for the roadmap's this-week band. Pure — no Astro, no DOM —
 // so Vitest loads it and both the page and src/scripts/roadmap-schedule.ts call
 // it, the same shape as src/lib/timeline/now.ts.
-import { build, phases, type BuildMilestone, type Pairing, type Phase } from "../../data/roadmap.js";
-import { weekStart, weekEnd, shiftDays, LAST_WEEK } from "./weeks.js";
+import { phases, type Phase } from "../../data/roadmap.js";
+import { weekStart, weekEnd, shiftDays } from "./weeks.js";
 import { longDate } from "../dates.js";
 
-export interface ThisWeek {
-  week: number;              // 0 is the ramp; 1–22 are the build weeks
-  phase: Phase;
-  milestone?: BuildMilestone;
-  reading: Pairing[];
-  foundations: Pairing[];
-}
+/** The last numbered week, from the phase table — never a second copy of it. */
+export const LAST_WEEK = phases[phases.length - 1].toWeek;
 
 /**
  * The week `now` falls in, or null outside the plan. A Sunday belongs to no
@@ -53,17 +48,4 @@ export function weekLabel(now: Date): string {
       : "The plan is finished";
   }
   return w === 0 ? "Ramp week" : `Week ${w} of ${LAST_WEEK}`;
-}
-
-export function thisWeek(now: Date): ThisWeek | null {
-  const week = weekOf(now);
-  const phase = currentPhase(now);
-  if (week === null || phase === null) return null;
-  return {
-    week,
-    phase,
-    milestone: build.find((m) => m.id === phase.milestone),
-    reading: phase.reading,
-    foundations: phase.foundations,
-  };
 }

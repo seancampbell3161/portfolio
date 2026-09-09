@@ -734,6 +734,85 @@ check(
 );
 await vt7.close();
 
+// ---- roadmap: the this-week band recomputes on a stale visit ----
+// src/scripts/roadmap-schedule.ts is this branch's headline guarantee: a build
+// made in one week and visited weeks later must still recompute the label AND
+// reveal the matching phase panel, so the heading can never sit above another
+// phase's reading list. Unlike the home timeline (data-timeline/data-now),
+// nothing stamps the roadmap's build day on the page, so this reads the real
+// "now" state first (a normal load) rather than hardcoding a date that would
+// eventually roll past the plan's end. RoadmapArc.astro renders every phase's
+// absolute week range as plain dates, independent of the clock, which is what
+// lets this pick a target phase and its expected label without importing the
+// TS phase table into this plain Node script.
+// roadmap.ts and review.ts each unconditionally GET /api/progress on load,
+// same as vt3/vt4 above; this preview server has no Netlify Functions, so an
+// unmocked GET here 404s and the strengthened watch() below would flag it.
+const mockProgress = async (route) =>
+  route.fulfill({ status: 200, contentType: "application/json", body: "{}" });
+const rmBase = watch(await browser.newPage({ viewport: { width: 1280, height: 900 } }));
+await rmBase.route("**/api/progress", mockProgress);
+await rmBase.goto(`${BASE}/roadmap`, { waitUntil: "networkidle" });
+const rmBaseLabel = await rmBase.locator("[data-week-label]").textContent();
+// All seven panels are always server-rendered (only some `hidden`), so this
+// map holds every phase's heading text regardless of which one is showing.
+const rmPanels = await rmBase.$$eval("[data-week-panel]", (els) =>
+  els.map((el) => ({
+    id: el.getAttribute("data-week-panel"),
+    name: el.querySelector("[data-week-phase]")?.textContent ?? "",
+    hidden: el.hidden,
+  })),
+);
+const rmArc = await rmBase.$$eval("[data-arc-phase]", (els) =>
+  els.map((el) => ({
+    id: el.getAttribute("data-arc-phase"),
+    wk: el.querySelector(".rm-arc-wk")?.textContent ?? "",
+    start: el.querySelector("time")?.getAttribute("datetime") ?? "",
+  })),
+);
+await rmBase.close();
+
+// "W1" or "W15–19" (any dash) -> { from: 1, to: 1 } / { from: 15, to: 19 }.
+const rmParseWk = (wk) => {
+  const m = /^W(\d+)(?:\D+(\d+))?$/.exec(wk.trim());
+  const from = Number(m[1]);
+  return { from, to: m[2] !== undefined ? Number(m[2]) : from };
+};
+
+const rmBaseActiveId = rmPanels.find((p) => !p.hidden)?.id ?? null;
+// The last phase chronologically, unless the build day already sits inside it
+// -- then fall back to the first, which is still guaranteed different.
+const rmTargetArc = rmArc[rmArc.length - 1].id !== rmBaseActiveId ? rmArc[rmArc.length - 1] : rmArc[0];
+const rmLastWeek = Math.max(...rmArc.map((p) => rmParseWk(p.wk).to));
+const rmTargetFromWeek = rmParseWk(rmTargetArc.wk).from;
+const rmExpectedLabel = rmTargetFromWeek === 0 ? "Ramp week" : `Week ${rmTargetFromWeek} of ${rmLastWeek}`;
+const rmExpectedName = rmPanels.find((p) => p.id === rmTargetArc.id)?.name ?? null;
+
+// The target phase's own Monday, plus a couple of days so the fixed time sits
+// solidly inside it rather than exactly on the boundary.
+const rmFuture = watch(await browser.newPage({ viewport: { width: 1280, height: 900 } }));
+await rmFuture.route("**/api/progress", mockProgress);
+await rmFuture.clock.setFixedTime(new Date(Date.parse(rmTargetArc.start) + 2 * DAY));
+await rmFuture.goto(`${BASE}/roadmap`, { waitUntil: "networkidle" });
+const rmFutureLabel = await rmFuture.locator("[data-week-label]").textContent();
+const rmVisiblePanels = rmFuture.locator("[data-week-panel]:not([hidden])");
+const rmVisibleCount = await rmVisiblePanels.count();
+const rmVisibleId = rmVisibleCount === 1 ? await rmVisiblePanels.first().getAttribute("data-week-panel") : null;
+const rmVisibleName =
+  rmVisibleCount === 1 ? await rmVisiblePanels.first().locator("[data-week-phase]").textContent() : null;
+await rmFuture.close();
+
+check(
+  "roadmap: a stale visit recomputes the week label instead of keeping the build day's",
+  rmFutureLabel === rmExpectedLabel && rmFutureLabel !== rmBaseLabel,
+);
+check("roadmap: exactly one phase panel is revealed after the recompute", rmVisibleCount === 1);
+check(
+  "roadmap: the revealed panel is the phase whose weeks contain the fixed date",
+  rmVisibleId === rmTargetArc.id,
+);
+check("roadmap: the revealed panel's heading matches that phase's name", rmVisibleName === rmExpectedName);
+
 // ---- nothing threw anywhere ----
 check(`no uncaught page errors${errors.length ? `: ${errors.join(" | ")}` : ""}`, errors.length === 0);
 

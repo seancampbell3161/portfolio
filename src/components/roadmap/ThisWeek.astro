@@ -12,11 +12,11 @@ const active = currentPhase(now);
 const label = weekLabel(now);
 ---
 
-<section class="rm-week" data-this-week>
-  <p class="rm-week-label" data-week-label>{label}</p>
+<section class="rm-week" data-this-week aria-labelledby="rm-week-label">
+  <p class="rm-week-label" id="rm-week-label" data-week-label>{label}</p>
   {phases.map((p) => (
     <div class="rm-week-panel" data-week-panel={p.id} hidden={p.id !== active?.id}>
-      <p class="rm-week-phase" data-week-phase>{p.name}</p>
+      <h2 class="rm-week-phase" data-week-phase>{p.name}</h2>
       <div class="rm-week-lists">
         <PairingList label="Reading" items={p.reading} />
         <PairingList label="Foundations" items={p.foundations} />

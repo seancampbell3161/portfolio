@@ -177,6 +177,17 @@ describe("spans derive from the phase table", () => {
     expect(owning).toEqual(["m5", "capstone"]);
   });
 
+  it("gives both phases that name Kafka the very same milestone object", () => {
+    // m5 (W15–19) and capstone (W20–22) both carry milestone: "kafka". The
+    // lookup is by build id, so the capstone's Kafka tail lands inside the
+    // Kafka clip rather than dangling outside it.
+    const owning = phases.filter((p) => p.milestone === "kafka");
+    expect(owning.map((p) => p.id)).toEqual(["m5", "capstone"]);
+    const resolved = owning.map((p) => build.find((m) => m.id === p.milestone));
+    expect(resolved[0]).toBe(resolved[1]);
+    expect(resolved[0]?.id).toBe("kafka");
+  });
+
   it("references only ids that already exist, so no progress is orphaned", () => {
     for (const p of phases) {
       for (const pair of [...p.reading, ...p.foundations]) {

@@ -7,7 +7,7 @@
 // browser, reading the clip list embedded as JSON in #rm-clip-data.
 import { roadmapClips, roadmapWindow, quarterTicks, type ClipStatus, type RoadmapClip, type Track } from "../../lib/roadmap/arrange";
 import { positionIn, packRows, estimateLabelWidth, fraction } from "../../lib/timeline/layout";
-import { monthDayYear } from "../../lib/dates";
+import { monthDayYear, monthYear } from "../../lib/dates";
 
 // Spoken status, for the visually-hidden suffix on every clip link: the legend
 // is aria-hidden and clip status is otherwise purely visual (spec §7).
@@ -30,6 +30,12 @@ const nowX = fraction(now, win); // 0..1 within the window
 const allWin = roadmapWindow("all", now, clips);
 const showZoom =
   allWin.from.getTime() !== win.from.getTime() || allWin.to.getTime() !== win.to.getTime();
+// Derived from the window itself, not a literal -- a hardcoded "2026–2027" is
+// exactly what drifted out of sync when the default window was resized to
+// Jul 2026 – Jun 2027 (Task: size the default window to the plan). This
+// control is currently never rendered (showZoom is false, spec §9), so the
+// drift was latent, but the label must not go stale the day it returns.
+const spanLabel = `${monthYear(win.from)} – ${monthYear(win.to)}`;
 
 const TRACKS: { key: Track; label: string; note: string }[] = [
   { key: "build", label: "Build", note: "CodeCrafters, in order" },
@@ -74,7 +80,7 @@ const clipData = clips.map((c) => ({
 <div class="rm-toolbar">
   {showZoom && (
     <div class="rm-zoom" role="group" aria-label="Zoom">
-      <button type="button" data-rm-zoom="span" aria-pressed="true">2026–2027</button>
+      <button type="button" data-rm-zoom="span" aria-pressed="true">{spanLabel}</button>
       <button type="button" data-rm-zoom="all" aria-pressed="false">All</button>
     </div>
   )}

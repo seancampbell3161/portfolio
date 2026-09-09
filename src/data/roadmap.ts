@@ -3,7 +3,7 @@
 // progress is stored by id, so renaming a label is safe but changing an id orphans
 // its stored progress.
 
-import { weekStart, weekEnd, weeksToSpan, type WeekRange } from "../lib/roadmap/weeks.js";
+import { weeksToSpan, type WeekRange } from "../lib/roadmap/weeks.js";
 
 export type Track = "build" | "reading" | "foundations";
 
@@ -346,7 +346,7 @@ export const reading: Book[] = [
     title: "Database Internals",
     author: "Alex Petrov",
     ...refSpan(byPrefix("dbint.")),
-    end: new Date("2027-04-30T00:00:00Z"),
+    end: new Date("2027-04-30T00:00:00Z"), // trails one quarter past the capstone; not a week boundary
     chapters: [
       { id: "dbint.ch1", no: "1", title: "Introduction and Overview" },
       { id: "dbint.ch2", no: "2", title: "B-Tree Basics" },
@@ -372,7 +372,7 @@ export const reading: Book[] = [
     free: true,
     scopeNote: "Concurrency + Persistence parts only",
     ...refSpan(byPrefix("ostep.")),
-    end: new Date("2027-04-30T00:00:00Z"),
+    end: new Date("2027-04-30T00:00:00Z"), // trails one quarter past the capstone; not a week boundary
     chapters: [
       { id: "ostep.c1", no: "C1", title: "Concurrency — threads & locks" },
       { id: "ostep.c2", no: "C2", title: "Concurrency — condition variables & semaphores" },

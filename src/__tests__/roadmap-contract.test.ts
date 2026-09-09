@@ -140,6 +140,8 @@ describe.skipIf(!built)("roadmap client contract (dist/roadmap/index.html)", () 
     expect(html).toContain("data-roadmap-arc");
     const segments = html.match(/data-arc-phase="/g) ?? [];
     expect(segments).toHaveLength(7); // ramp + M1–M5 + capstone
+    expect(html).toContain("W0");      // the single-week ramp, not "W0–0"
+    expect(html).toContain("W20–22");  // a real range
   });
 
   it("names, in the Redis panel, the chapters read alongside it", () => {

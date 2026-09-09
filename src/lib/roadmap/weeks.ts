@@ -9,9 +9,6 @@
 /** Monday of Week 1. Move this and the entire plan moves with it. */
 export const WEEK_ONE = new Date("2026-09-07T00:00:00Z");
 
-/** The last numbered week. Week 0 is the ramp; 1–22 are the build weeks. */
-export const LAST_WEEK = 22;
-
 /** A new Date n days on, via setUTCDate so it carries across months and years. */
 export function shiftDays(d: Date, n: number): Date {
   const out = new Date(d.getTime());
