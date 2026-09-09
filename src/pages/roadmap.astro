@@ -8,6 +8,7 @@ import RoadmapMeters from "../components/roadmap/RoadmapMeters.astro";
 import RoadmapArrangement from "../components/roadmap/RoadmapArrangement.astro";
 import RoadmapInspector from "../components/roadmap/RoadmapInspector.astro";
 import RetentionSection from "../components/roadmap/RetentionSection.astro";
+import RoadmapPractice from "../components/roadmap/RoadmapPractice.astro";
 import { ogImagePath } from "../lib/og.mjs";
 ---
 
@@ -34,6 +35,7 @@ import { ogImagePath } from "../lib/og.mjs";
       <RoadmapArrangement />
       <RoadmapInspector />
       <RetentionSection />
+      <RoadmapPractice />
 
       <p class="rm-note">
         Progress is shared — what you see is the live, saved state. The owner can unlock edit
@@ -980,6 +982,7 @@ import { ogImagePath } from "../lib/og.mjs";
   }
   .rm-week-panel[hidden] { display: none; }
 
+  /* ---- phase arc (spec §8) ---- */
   .rm-arc ol {
     display: flex;
     flex-wrap: wrap;
@@ -1020,4 +1023,28 @@ import { ogImagePath } from "../lib/og.mjs";
   .rm-pairs li { display: grid; font-size: 14px; }
   .rm-pairs li.optional { color: var(--color-text-muted); }
   .rm-pairs small { color: var(--color-text-muted); font-size: 12px; }
+
+  /* ---- practice: the 2-hour day + how to read this schedule (spec §8) ---- */
+  .rm-practice { margin-top: var(--space-3xl); }
+  .rm-practice h2 {
+    font-family: var(--font-display);
+    font-size: 20px;
+    font-weight: 600;
+    margin: var(--space-xl) 0 var(--space-md);
+  }
+  .rm-practice h3 {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--lane-learning);
+    margin: 0 0 var(--space-sm);
+  }
+  .rm-practice-days { display: grid; gap: var(--space-xl); }
+  @media (min-width: 900px) {
+    .rm-practice-days { grid-template-columns: 1fr 1fr; }
+  }
+  .rm-practice dt { font-family: var(--font-mono); font-size: 11px; color: var(--color-text-muted); }
+  .rm-practice dd { margin: 0 0 var(--space-md); font-size: 14px; }
+  .rm-practice ul { display: grid; gap: var(--space-sm); padding-left: 18px; font-size: 14px; }
 </style>

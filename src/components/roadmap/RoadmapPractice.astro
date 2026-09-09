@@ -1,0 +1,41 @@
+---
+// The 2-hour day and the five principles (spec §8). Pure prose — no data, no
+// script, no state. This is the last of roadmap-schedule.html's four parts, and
+// carrying it here is what lets that mockup be retired.
+const weekday = [
+  ["0:00–0:25", "Foundations warm-up — one course lesson early on, then one NeetCode problem in the week's pattern."],
+  ["0:25–1:45", "Build — the current CodeCrafters stage. The anchor; most of the hour goes here."],
+  ["1:45–2:00", "Read — a few pages of the week's anchor chapter; jot one note toward the log."],
+];
+const saturday = [
+  ["0:00–1:00", "Close the week's build — finish or refactor the current stage; clear anything stuck."],
+  ["1:00–1:30", "Reading catch-up — the “light” book (APoSD, then OSTEP / Database Internals)."],
+  ["1:30–2:00", "Write the decision log — the real artifact. This is what turns three tracks into one skill."],
+];
+const notes = [
+  ["It's loose on dates, strict on order.", "Build hours are CodeCrafters' own estimates — if a stage takes longer, slip the dates and keep the sequence."],
+  ["Build is the spine; everything else hangs off it.", "On any given day, most of the 2 hours is the build."],
+  ["Saturday ships the artifact.", "The decision log is the deliverable. Miss a build stage and recover; don't skip the log."],
+  ["Database Internals & OSTEP can trail the build.", "DDIA and APoSD finish within the 23 weeks; the rest carries past it."],
+  ["Foundations is front-loaded.", "The courses cluster in the ramp and M1, so from SQLite onward more of each day goes to the build."],
+];
+---
+
+<section class="rm-practice" data-roadmap-practice>
+  <h2>The repeating 2-hour day</h2>
+  <div class="rm-practice-days">
+    <div>
+      <h3>Mon–Fri · build days</h3>
+      <dl>{weekday.map(([t, d]) => (<><dt>{t}</dt><dd>{d}</dd></>))}</dl>
+    </div>
+    <div>
+      <h3>Saturday · ship day</h3>
+      <dl>{saturday.map(([t, d]) => (<><dt>{t}</dt><dd>{d}</dd></>))}</dl>
+    </div>
+  </div>
+
+  <h2>How to read this schedule</h2>
+  <ul>
+    {notes.map(([b, rest]) => (<li><b>{b}</b> {rest}</li>))}
+  </ul>
+</section>
