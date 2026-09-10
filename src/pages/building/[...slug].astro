@@ -37,7 +37,7 @@ const projects: TrackEntry[] = items
 
 // The project id is its slug (src/lib/timeline/sources.ts).
 const segment = segmentRows(projects, entry.slug, now, { href: "/building", noun: "projects" });
-const alongside = during(items, { start: entry.data.start, end: entry.data.end }, now, "building");
+const alongside = during(items, { start: entry.data.start, end: entry.data.end }, now, entry.slug);
 ---
 
 <ProjectPage entry={entry} segment={segment} alongside={alongside}>

@@ -285,7 +285,9 @@ describe("during (spec §5.1)", () => {
     ...o,
   });
 
-  // The project under the page: Sep 2024 to Apr 2025.
+  // The project under the page: Sep 2024 to Apr 2025. Its id is excluded by
+  // name, so a sibling project built at the same time survives the filter.
+  const SELF = "this-project";
   const project = { start: d("2024-09-01"), end: d("2025-04-01") };
 
   const inside = item({ id: "essay-inside", lane: "writing", start: d("2024-12-01"), kind: "moment" });
@@ -298,45 +300,55 @@ describe("during (spec §5.1)", () => {
   const disjoint = item({ id: "disjoint", lane: "learning", start: d("2025-05-01"), end: d("2025-06-01"), kind: "span" });
   const sibling = item({ id: "other-project", lane: "building", start: d("2024-10-01"), end: d("2024-11-01"), kind: "span" });
   const talk = item({ id: "talk", lane: "community", start: d("2025-01-15"), kind: "moment" });
+  // The page's own project is in the timeline too, exactly as the real one is.
+  const self = item({ id: SELF, lane: "building", start: d("2024-09-01"), end: d("2025-04-01"), kind: "span" });
 
-  const all = [inside, onStart, onEnd, before, after, overlapping, ongoing, disjoint, sibling, talk];
+  const all = [inside, onStart, onEnd, before, after, overlapping, ongoing, disjoint, sibling, talk, self];
 
   it("includes moments inside the span, inclusive of both ends", () => {
-    const ids = during(all, project, now, "building").map((i) => i.id);
+    const ids = during(all, project, now, SELF).map((i) => i.id);
     expect(ids).toContain("essay-inside");
     expect(ids).toContain("essay-on-start");
     expect(ids).toContain("essay-on-end");
   });
   it("excludes moments outside the span", () => {
-    const ids = during(all, project, now, "building").map((i) => i.id);
+    const ids = during(all, project, now, SELF).map((i) => i.id);
     expect(ids).not.toContain("essay-before");
     expect(ids).not.toContain("essay-after");
   });
   it("includes spans that intersect and excludes those that do not", () => {
-    const ids = during(all, project, now, "building").map((i) => i.id);
+    const ids = during(all, project, now, SELF).map((i) => i.id);
     expect(ids).toContain("thread");
     expect(ids).toContain("ongoing");
     expect(ids).not.toContain("disjoint");
   });
-  it("excludes the lane it is asked to exclude", () => {
-    expect(during(all, project, now, "building").map((i) => i.id)).not.toContain("other-project");
-    expect(during(all, project, now, "writing").map((i) => i.id)).toContain("other-project");
+  it("excludes the item under the page, by id", () => {
+    expect(during(all, project, now, SELF).map((i) => i.id)).not.toContain(SELF);
+  });
+  // Lenient by design: the route calls segmentRows with the same slug one line
+  // earlier, and that throws on an id the timeline does not know, so a drifted
+  // slug fails the build before it ever reaches here.
+  it("treats an excludeId that matches no item as excluding nothing", () => {
+    expect(during(all, project, now, "no-such-item").map((i) => i.id)).toContain(SELF);
+  });
+  it("includes a sibling project built at the same time", () => {
+    expect(during(all, project, now, SELF).map((i) => i.id)).toContain("other-project");
   });
   it("runs an open-ended span to now", () => {
     const openProject = { start: d("2026-06-01") };
     const recent = item({ id: "recent", lane: "writing", start: d("2026-08-01"), kind: "moment" });
     const future = item({ id: "future", lane: "writing", start: d("2026-10-01"), kind: "moment" });
-    const ids = during([recent, future], openProject, now, "building").map((i) => i.id);
+    const ids = during([recent, future], openProject, now, SELF).map((i) => i.id);
     expect(ids).toEqual(["recent"]);
   });
-  it("orders by lane in timeline order with the excluded lane dropped, then start, then id", () => {
-    const ids = during(all, project, now, "building").map((i) => i.id);
+  it("orders by lane in timeline order, then start, then id", () => {
+    const ids = during(all, project, now, SELF).map((i) => i.id);
     expect(ids).toEqual([
-      "essay-on-start", "essay-inside", "essay-on-end", "thread", "ongoing", "talk",
+      "essay-on-start", "essay-inside", "essay-on-end", "other-project", "thread", "ongoing", "talk",
     ]);
   });
   it("returns an empty list when nothing overlaps", () => {
-    expect(during(all, { start: d("2019-01-01"), end: d("2019-02-01") }, now, "building")).toEqual([]);
+    expect(during(all, { start: d("2019-01-01"), end: d("2019-02-01") }, now, SELF)).toEqual([]);
   });
 });
 

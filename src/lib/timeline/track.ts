@@ -181,22 +181,28 @@ export function writtenWhile(items: readonly TimelineItem[], published: Date, no
 }
 
 /**
- * Spec §5.1: what else was happening across a span. Spans count when they
- * intersect it; moments count when they fall inside it, inclusive. An
+ * Spec §5.1: what else was happening across a span, its own lane included. A
+ * project built alongside this one is the most relevant thing that was going
+ * on, so only the item under the page is dropped, by id. Spans count when they
+ * intersect the span; moments count when they fall inside it, inclusive. An
  * open-ended span (an in-progress project) runs to now. Lanes keep timeline
- * order with `exclude` dropped, then start, then id.
+ * order, then start, then id.
+ *
+ * `excludeId` is not validated: an id the timeline does not know excludes
+ * nothing. The one caller runs `segmentRows` on the same slug a line earlier
+ * and that throws on an unknown id, so a slug that drifts out of step with the
+ * timeline fails the build there rather than twice.
  */
 export function during(
   items: readonly TimelineItem[],
   span: DateSpan,
   now: Date,
-  exclude: Lane,
+  excludeId: string,
 ): TimelineItem[] {
   const from = span.start.getTime();
   const to = (span.end ?? now).getTime();
-  const lanes = LANES.filter((l) => l !== exclude);
   const overlaps = (item: TimelineItem): boolean => {
-    if (!lanes.includes(item.lane)) return false;
+    if (item.id === excludeId) return false;
     if (item.kind === "span") return spanTouches(item, from, to, now);
     const t = item.start.getTime();
     return t >= from && t <= to;
@@ -205,7 +211,7 @@ export function during(
     .filter(overlaps)
     .sort(
       (a, b) =>
-        lanes.indexOf(a.lane) - lanes.indexOf(b.lane) ||
+        LANES.indexOf(a.lane) - LANES.indexOf(b.lane) ||
         a.start.getTime() - b.start.getTime() ||
         a.id.localeCompare(b.id),
     );
