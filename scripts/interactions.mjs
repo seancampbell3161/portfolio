@@ -816,6 +816,31 @@ check(
 check("roadmap/now: the outside-the-plan line stays hidden inside a phase", rmOutsideShown === 0);
 check("roadmap: the week label in /roadmap's link to /roadmap/now recomputes too", rmFutureLinkLabel === rmExpectedLabel);
 
+// ---- roadmap/now: a stale visit after the plan ends shows the outside line ----
+// The stale-visit check above always lands inside a phase, so it never runs the
+// other branch of roadmap-schedule.ts: past the capstone nowShowing() is
+// { phase: null, milestone: null }, and the script must hide every phase and
+// build block and reveal the outside-the-plan line. The last phase's Monday plus
+// its own week count is the Monday after the plan's last Saturday; two more days
+// sit solidly past it.
+const rmLast = rmPhases[rmPhases.length - 1];
+const rmLastWeeks = rmParseWeeks(rmLast.span);
+const rmAfter = watch(await browser.newPage({ viewport: { width: 1280, height: 900 } }));
+await rmAfter.route("**/api/progress", mockProgress);
+await rmAfter.clock.setFixedTime(
+  new Date(Date.parse(rmLast.start) + ((rmLastWeeks.to - rmLastWeeks.from + 1) * 7 + 2) * DAY),
+);
+await rmAfter.goto(`${BASE}/roadmap/now`, { waitUntil: "networkidle" });
+const rmAfterLabel = await rmAfter.locator("[data-week-label]").textContent();
+const rmAfterPhases = await rmAfter.locator("[data-now-phase]:not([hidden])").count();
+const rmAfterBuilds = await rmAfter.locator("[data-now-milestone]:not([hidden])").count();
+const rmAfterOutside = await rmAfter.locator("[data-now-outside]:not([hidden])").count();
+await rmAfter.close();
+check(
+  "roadmap/now: after the plan ends, a stale visit hides every phase and build block and shows the outside line",
+  rmAfterLabel === "The plan is finished" && rmAfterPhases === 0 && rmAfterBuilds === 0 && rmAfterOutside === 1,
+);
+
 // ---- roadmap: the now marker links to /roadmap/now ----
 // The playhead's "now" chip at desktop width, and the phone graph's "now" row
 // below 900px, are the timeline's way into the current phase (roadmap-now spec

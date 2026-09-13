@@ -9,7 +9,8 @@
 // first. roadmap-contract.test.ts fails whenever /roadmap is built and this
 // page is not, so this suite cannot skip itself silently.
 import { describe, it, expect } from "vitest";
-import { existsSync, readFileSync } from "node:fs";
+import { existsSync, readdirSync, readFileSync } from "node:fs";
+import { join } from "node:path";
 import { build, phases, logIds } from "../data/roadmap";
 import { phaseSpanText } from "../lib/roadmap/schedule";
 import { weekStart } from "../lib/roadmap/weeks";
@@ -129,6 +130,25 @@ describe.skipIf(!built)("roadmap/now client contract (dist/roadmap/now/index.htm
     }
     for (const id of logIds) {
       expect(countOf(new RegExp(`<details\\b[^>]*\\bdata-log-id="${escapeRe(id)}"`, "g")), `log ${id}`).toBe(1);
+    }
+  });
+
+  it("ships roadmap.ts in exactly one script file, inlined into neither roadmap page", () => {
+    // Both roadmap pages run src/scripts/roadmap.ts, whose module state (the
+    // completed set, the save timer, pendingFlush) only works as ONE instance:
+    // two copies would each register onPage(initRoadmap), and one toggle would
+    // save twice (roadmap-now spec §9). Rollup puts a module that two page
+    // entries import into a shared chunk; this pins that in `npm run check`,
+    // where the e2e does not run. The needle is a string only roadmap.ts
+    // contains, and string literals survive minification.
+    const needle = "your last change was undone";
+    const dir = "dist/_astro";
+    const holders = readdirSync(dir).filter(
+      (f) => f.endsWith(".js") && readFileSync(join(dir, f), "utf8").includes(needle),
+    );
+    expect(holders, "roadmap.ts must live in exactly one script file").toHaveLength(1);
+    for (const page of ["dist/roadmap/index.html", PAGE]) {
+      expect(readFileSync(page, "utf8"), `${page} inlines roadmap.ts`).not.toContain(needle);
     }
   });
 
