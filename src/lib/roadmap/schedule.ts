@@ -37,6 +37,17 @@ export function currentPhase(now: Date): Phase | null {
 }
 
 /**
+ * What /roadmap/now shows for `now`: the phase covering the week, and the build
+ * milestone that phase drives. The ramp has no milestone, and outside the plan
+ * there is neither. Pure, like weekLabel, so the page's server render and
+ * src/scripts/roadmap-schedule.ts cannot disagree about which blocks show.
+ */
+export function nowShowing(now: Date): { phase: string | null; milestone: string | null } {
+  const p = currentPhase(now);
+  return { phase: p?.id ?? null, milestone: p?.milestone ?? null };
+}
+
+/**
  * The band's heading for `now`. Pure so the component and the client script
  * cannot drift: they call this, rather than each spelling out the five states.
  */

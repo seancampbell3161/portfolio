@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { weekOf, currentPhase, weekLabel, phaseSpanText } from "../schedule.js";
+import { weekOf, currentPhase, weekLabel, phaseSpanText, nowShowing } from "../schedule.js";
 import { phases } from "../../../data/roadmap.js";
 import { weekStart, weekEnd } from "../weeks.js";
 
@@ -46,6 +46,25 @@ describe("currentPhase", () => {
   });
   it("is null outside the plan", () => {
     expect(currentPhase(at("2027-06-01"))).toBeNull();
+  });
+});
+
+describe("nowShowing", () => {
+  it("shows a phase and the milestone it builds", () => {
+    expect(nowShowing(at("2026-09-09"))).toEqual({ phase: "m1", milestone: "redis" }); // W1
+  });
+  it("shows the ramp with no build, because the ramp has no milestone", () => {
+    expect(nowShowing(at("2026-09-02"))).toEqual({ phase: "ramp", milestone: null });
+  });
+  it("shows Kafka's build for both M5 and the Capstone, which share it", () => {
+    // Phases and milestones are not one to one. This is why /roadmap/now renders
+    // build blocks per milestone rather than per phase (roadmap-now spec §6).
+    expect(nowShowing(at("2026-12-16"))).toEqual({ phase: "m5", milestone: "kafka" }); // W15
+    expect(nowShowing(at("2027-01-20"))).toEqual({ phase: "capstone", milestone: "kafka" }); // W20
+  });
+  it("shows nothing outside the plan", () => {
+    expect(nowShowing(at("2026-08-20"))).toEqual({ phase: null, milestone: null });
+    expect(nowShowing(at("2027-02-08"))).toEqual({ phase: null, milestone: null });
   });
 });
 
