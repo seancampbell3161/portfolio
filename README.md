@@ -25,7 +25,7 @@ scrolls with the page.
 | `npm run build` | Production build into `dist/` |
 | `npm run preview` | Serve the production build locally |
 | `npm test` | Vitest unit suite |
-| `npm run check` | Build, then the full suite (includes the roadmap contract test) |
+| `npm run check` | Build, then the full suite (includes the roadmap contract tests) |
 | `npm run shots` | Review screenshots of the main pages at two widths, into `screenshots/` (needs `npm run preview` running) |
 | `npm run e2e` | Playwright pass over the home timeline's scrub and pan interactions, the hero readout's links and pruning, and the reader frame's reading line and sticky sidebar, at two widths (needs `npm run preview` running) |
 | `npm run og` | Regenerate the Open Graph share images against the live site |
@@ -40,7 +40,8 @@ Node 20.
 | `/` | The arrangement: four lanes on one time axis, with an inspector panel per clip |
 | `/blog` | The Writing lane played vertically; `/blog/<slug>` for each essay |
 | `/building` | The Building lane played vertically; `/building/<slug>` for each case study |
-| `/roadmap` | The learning roadmap as an arrangement, with live progress and a review deck |
+| `/roadmap` | The learning roadmap as an arrangement, with live progress |
+| `/roadmap/now` | The roadmap's current phase: its build, reading and routine, with live progress and the review deck |
 
 ## Adding content
 
@@ -94,12 +95,12 @@ built page still carries every id the client scripts look for.
 
 ## Roadmap operations
 
-`/roadmap` has a shared, persisted progress state and a spaced-repetition review deck.
+`/roadmap` and `/roadmap/now` share one persisted progress state, and `/roadmap/now` carries the spaced-repetition review deck.
 
 - **Content** lives in `src/data/roadmap.ts`.
 - **Progress** is stored in Netlify Blobs (store `roadmap`, key `progress`) through
   `netlify/functions/progress.ts`. `GET /api/progress` is public; `POST` needs a bearer token.
-- **Edit mode**: click **Edit** on the page and enter `ROADMAP_ADMIN_TOKEN`. The token is
+- **Edit mode**: click **Edit** on either page and enter `ROADMAP_ADMIN_TOKEN`. The token is
   kept in `sessionStorage` and sent only to the API; it never ships in the client bundle.
 
 Set `ROADMAP_ADMIN_TOKEN` (a long random secret) in the Netlify site environment
