@@ -1,6 +1,7 @@
 // src/lib/roadmap/pairings.ts
 // Turns a phase's flat Pairing[] into the rows a list renders. Pure — no Astro,
-// no DOM — so Vitest holds every wording rule the band and the inspector print.
+// no DOM — so Vitest holds every wording rule /roadmap/now (RoadmapNow.astro)
+// and the inspector print.
 //
 // Why this exists: PairingList used to build one lossy string per pairing
 // ("Book — 3. Chapter"), which repeated a book's title on every one of its
@@ -76,10 +77,11 @@ export function resolvePairing(p: Pairing): { group: string; row: PairingRow } {
 /**
  * The pairings as groups, so a book's title is printed once rather than once
  * per chapter. Groups appear in the order they first appear, and a book the
- * schedule returns to later merges back into its first group: the band is a
- * phase overview, not a running order, and one entry per book reads more like
- * a shelf than a repeated heading does. Each row keeps its own note, which is
- * where the schedule's sequencing ("alongside RDB/AOF") actually lives.
+ * schedule returns to later merges back into its first group: /roadmap/now's
+ * phase pairings are a phase overview, not a running order, and one entry per
+ * book reads more like a shelf than a repeated heading does. Each row keeps
+ * its own note, which is where the schedule's sequencing ("alongside
+ * RDB/AOF") actually lives.
  */
 export function groupPairings(items: readonly Pairing[]): PairingGroup[] {
   const groups = new Map<string, PairingGroup>();

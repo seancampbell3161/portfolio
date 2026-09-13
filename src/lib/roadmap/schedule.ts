@@ -1,7 +1,8 @@
 // src/lib/roadmap/schedule.ts
-// "What week is it" for the roadmap's this-week band. Pure — no Astro, no DOM —
-// so Vitest loads it and both the page and src/scripts/roadmap-schedule.ts call
-// it, the same shape as src/lib/timeline/now.ts.
+// "What week is it" for /roadmap/now (RoadmapNow.astro) and the week label in
+// /roadmap's link to it. Pure — no Astro, no DOM — so Vitest loads it and both
+// the page and src/scripts/roadmap-schedule.ts call it, the same shape as
+// src/lib/timeline/now.ts.
 import { phases, type Phase } from "../../data/roadmap.js";
 import { weekStart, weekEnd, shiftDays, WEEK_ONE } from "./weeks.js";
 import { longDate, monthDayYear } from "../dates.js";
@@ -48,8 +49,9 @@ export function nowShowing(now: Date): { phase: string | null; milestone: string
 }
 
 /**
- * The band's heading for `now`. Pure so the component and the client script
- * cannot drift: they call this, rather than each spelling out the five states.
+ * The week label on /roadmap/now and inside /roadmap's link to it, for `now`.
+ * Pure so the component and the client script cannot drift: they call this,
+ * rather than each spelling out the five states.
  */
 export function weekLabel(now: Date): string {
   const w = weekOf(now);
@@ -63,9 +65,9 @@ export function weekLabel(now: Date): string {
 
 /**
  * A phase's scope, in the form roadmap/roadmap-schedule.html has always
- * printed: "Weeks 1–7 · Sep 7 – Oct 24". The band needs this because its
- * heading counts a single week while its lists cover the whole phase — without
- * it, seven weeks of reading looks like one week's.
+ * printed: "Weeks 1–7 · Sep 7 – Oct 24". Each phase header on /roadmap/now
+ * needs this because its heading counts a single week while its lists cover
+ * the whole phase — without it, seven weeks of reading looks like one week's.
  *
  * The year appears on an end date only once the span leaves the plan's opening
  * year, which keeps the common case short and the ambiguous one honest.

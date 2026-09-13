@@ -740,9 +740,10 @@ await vt7.close();
 // phaseSpanText's unit-tested format, which is what lets this pick a target
 // phase and its expected blocks without importing the TS phase table into this
 // plain Node script.
-// roadmap.ts and review.ts each unconditionally GET /api/progress on load,
-// same as vt3/vt4 above; this preview server has no Netlify Functions, so an
-// unmocked GET here 404s and watch() would flag it.
+// roadmap.ts unconditionally GETs /api/progress on load, same as vt3/vt4
+// above; review.ts no longer runs on /roadmap, but on /roadmap/now both
+// roadmap.ts and review.ts GET it; this preview server has no Netlify
+// Functions, so an unmocked GET here 404s and watch() would flag it.
 const mockProgress = async (route) =>
   route.fulfill({ status: 200, contentType: "application/json", body: "{}" });
 const rmBase = watch(await browser.newPage({ viewport: { width: 1280, height: 900 } }));

@@ -18,7 +18,8 @@ describe("the schedule mockup still agrees with the derived plan", () => {
   const dated = phases.filter((p) => p.id !== "ramp");
 
   it.each(dated.map((p) => [p.id, p] as const))("phase %s prints its derived dates", (_id, p) => {
-    // phaseSpanText is the one definition of this form — the band prints it too.
+    // phaseSpanText is the one definition of this form — /roadmap/now's phase
+    // headers print it too.
     const expected = phaseSpanText(p);
     expect(html, `mockup is missing: ${expected}`).toContain(expected);
   });

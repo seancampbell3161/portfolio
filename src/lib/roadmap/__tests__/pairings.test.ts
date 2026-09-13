@@ -69,9 +69,9 @@ describe("groupPairings", () => {
   });
 
   it("merges a book's later run back into its first group", () => {
-    // M1 reads DDIA ch3, then all of OSTEP, then DDIA ch5. The band is a phase
-    // overview, not a running order, so one bookshelf entry per book reads
-    // easier than the same title heading two groups.
+    // M1 reads DDIA ch3, then all of OSTEP, then DDIA ch5. /roadmap/now's phase
+    // pairings are a phase overview, not a running order, so one bookshelf
+    // entry per book reads easier than the same title heading two groups.
     const groups = groupPairings([
       { ref: "ddia.ch3", note: "a" },
       { ref: "ostep.p1", note: "b" },
