@@ -1,0 +1,48 @@
+---
+import Layout from "../../layouts/Layout.astro";
+import TransportBar from "../../components/TransportBar.astro";
+import Footer from "../../components/Footer.astro";
+import RoadmapToolbar from "../../components/roadmap/RoadmapToolbar.astro";
+import RoadmapNow from "../../components/roadmap/RoadmapNow.astro";
+import RoadmapPractice from "../../components/roadmap/RoadmapPractice.astro";
+import RetentionSection from "../../components/roadmap/RetentionSection.astro";
+import { ogImagePath } from "../../lib/og.mjs";
+---
+
+<Layout
+  title="Now — Learning Roadmap | Sean Campbell"
+  description="What I'm building, reading and drilling in this phase of my public learning roadmap, with live progress."
+  image={ogImagePath("roadmap-now")}
+>
+  <TransportBar active="learning" />
+
+  <main class="roadmap-page">
+    <div class="rm-wrap">
+      <p class="rm-eyebrow">A learning roadmap · right now</p>
+      <h1 class="rm-title">What I'm working on <em>now</em></h1>
+      <p class="rm-now-link"><a href="/roadmap">← The whole roadmap</a></p>
+
+      <RoadmapToolbar />
+      <RoadmapNow />
+      <RoadmapPractice />
+      <RetentionSection />
+
+      <p class="rm-note">
+        Progress is shared — what you see is the live, saved state. The owner can unlock edit
+        mode to check items off.
+      </p>
+    </div>
+  </main>
+
+  <Footer />
+</Layout>
+
+<script>
+  import "../../scripts/roadmap.ts";
+  import "../../scripts/review.ts";
+  import "../../scripts/roadmap-schedule.ts";
+</script>
+
+<style is:global>
+  @import "../../styles/roadmap.css";
+</style>

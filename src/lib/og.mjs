@@ -9,6 +9,7 @@ export const DEFAULT_BASE_URL = "https://seanthedeveloper.com";
 export const OG_SHOTS = [
   { route: "/", name: "home" },
   { route: "/roadmap", name: "roadmap" },
+  { route: "/roadmap/now", name: "roadmap-now" },
   { route: "/blog", name: "blog" },
   { route: "/building", name: "building" },
 ];

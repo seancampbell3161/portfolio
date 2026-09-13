@@ -2,13 +2,9 @@
 import Layout from "../layouts/Layout.astro";
 import TransportBar from "../components/TransportBar.astro";
 import Footer from "../components/Footer.astro";
-import ThisWeek from "../components/roadmap/ThisWeek.astro";
-import RoadmapArc from "../components/roadmap/RoadmapArc.astro";
 import RoadmapMeters from "../components/roadmap/RoadmapMeters.astro";
 import RoadmapArrangement from "../components/roadmap/RoadmapArrangement.astro";
 import RoadmapInspector from "../components/roadmap/RoadmapInspector.astro";
-import RetentionSection from "../components/roadmap/RetentionSection.astro";
-import RoadmapPractice from "../components/roadmap/RoadmapPractice.astro";
 import { ogImagePath } from "../lib/og.mjs";
 ---
 
@@ -29,19 +25,14 @@ import { ogImagePath } from "../lib/og.mjs";
         the open for anyone to see.
       </p>
 
-      <ThisWeek />
-      <RoadmapArc />
       <RoadmapMeters />
       <RoadmapArrangement />
       <RoadmapInspector />
-      <RetentionSection />
 
       <p class="rm-note">
         Progress is shared — what you see is the live, saved state. The owner can unlock edit
         mode to check items off.
       </p>
-
-      <RoadmapPractice />
     </div>
   </main>
 
@@ -51,7 +42,6 @@ import { ogImagePath } from "../lib/og.mjs";
 <script>
   import "../scripts/roadmap.ts";
   import "../scripts/roadmap-arrangement.ts";
-  import "../scripts/review.ts";
 </script>
 
 <style is:global>

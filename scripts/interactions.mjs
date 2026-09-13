@@ -556,16 +556,6 @@ await vt3.route("**/api/progress", async (route) => {
   if (route.request().method() === "POST") vt3PostAt = Date.now();
   await route.fulfill({ status: 200, contentType: "application/json", body: "{}" });
 });
-// review.ts's own initReview() also runs on /roadmap and, once a token is
-// present, fetches /api/review -- unmocked, that 404s against this
-// functions-less preview server too, and a fetch() 404 is a genuine console
-// error (Chromium logs "Failed to load resource" for it), which the
-// strengthened watch() below now catches. Routing it is completing the mock
-// to match what a deployed Netlify Function would actually return, not
-// silencing a real failure.
-await vt3.route("**/api/review", async (route) => {
-  await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ schedules: {}, streak: 0, lastReviewDate: null }) });
-});
 await vt3.goto(`${BASE}/roadmap`, { waitUntil: "networkidle" });
 check("roadmap: a stored admin token turns editing on", (await vt3.locator(".roadmap-page.rm-editing").count()) === 1);
 // The checkboxes live in the roadmap's own :target-gated panels (spec §6),
@@ -603,11 +593,6 @@ let vt4Posts = 0;
 await vt4.route("**/api/progress", async (route) => {
   if (route.request().method() === "POST") vt4Posts++;
   await route.fulfill({ status: 200, contentType: "application/json", body: "{}" });
-});
-// See vt3 above: the #rm-edit click below hands review.ts a token too, and its
-// own loadReview() fetches /api/review.
-await vt4.route("**/api/review", async (route) => {
-  await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ schedules: {}, streak: 0, lastReviewDate: null }) });
 });
 await vt4.goto(`${BASE}/roadmap`, { waitUntil: "networkidle" });
 await vt4.locator(".tb-link", { hasText: "Writing" }).click();
@@ -743,84 +728,88 @@ check(
 );
 await vt7.close();
 
-// ---- roadmap: the this-week band recomputes on a stale visit ----
-// src/scripts/roadmap-schedule.ts is this branch's headline guarantee: a build
-// made in one week and visited weeks later must still recompute the label AND
-// reveal the matching phase panel, so the heading can never sit above another
-// phase's reading list. Unlike the home timeline (data-timeline/data-now),
-// nothing stamps the roadmap's build day on the page, so this reads the real
-// "now" state first (a normal load) rather than hardcoding a date that would
-// eventually roll past the plan's end. RoadmapArc.astro renders every phase's
-// absolute week range as plain dates, independent of the clock, which is what
-// lets this pick a target phase and its expected label without importing the
-// TS phase table into this plain Node script.
+// ---- roadmap/now: the current phase recomputes on a stale visit ----
+// src/scripts/roadmap-schedule.ts must keep a stale deploy honest: a build made
+// in one week and visited weeks later has to recompute the label AND reveal the
+// matching phase and build blocks, so a heading never sits above another phase's
+// work. Nothing stamps the build day on the page, so this reads the real "now"
+// state first (a normal load) rather than hardcoding a date that would
+// eventually roll past the plan's end. Every phase header is server-rendered
+// with its first Monday (data-phase-start) and its milestone
+// (data-phase-milestone, absent for the ramp), and prints its weeks in
+// phaseSpanText's unit-tested format, which is what lets this pick a target
+// phase and its expected blocks without importing the TS phase table into this
+// plain Node script.
 // roadmap.ts and review.ts each unconditionally GET /api/progress on load,
 // same as vt3/vt4 above; this preview server has no Netlify Functions, so an
-// unmocked GET here 404s and the strengthened watch() below would flag it.
+// unmocked GET here 404s and watch() would flag it.
 const mockProgress = async (route) =>
   route.fulfill({ status: 200, contentType: "application/json", body: "{}" });
 const rmBase = watch(await browser.newPage({ viewport: { width: 1280, height: 900 } }));
 await rmBase.route("**/api/progress", mockProgress);
-await rmBase.goto(`${BASE}/roadmap`, { waitUntil: "networkidle" });
+await rmBase.goto(`${BASE}/roadmap/now`, { waitUntil: "networkidle" });
 const rmBaseLabel = await rmBase.locator("[data-week-label]").textContent();
-// All seven panels are always server-rendered (only some `hidden`), so this
-// map holds every phase's heading text regardless of which one is showing.
-const rmPanels = await rmBase.$$eval("[data-week-panel]", (els) =>
+// Every header is always server-rendered (only some `hidden`), so this holds
+// every phase whichever one is showing.
+const rmPhases = await rmBase.$$eval("[data-phase-start]", (els) =>
   els.map((el) => ({
-    id: el.getAttribute("data-week-panel"),
-    name: el.querySelector("[data-week-phase]")?.textContent ?? "",
+    id: el.getAttribute("data-now-phase"),
+    start: el.getAttribute("data-phase-start"),
+    milestone: el.getAttribute("data-phase-milestone"),
+    span: el.querySelector(".rm-week-span")?.textContent ?? "",
+    name: el.querySelector("h2")?.textContent ?? "",
     hidden: el.hidden,
-  })),
-);
-const rmArc = await rmBase.$$eval("[data-arc-phase]", (els) =>
-  els.map((el) => ({
-    id: el.getAttribute("data-arc-phase"),
-    wk: el.querySelector(".rm-arc-wk")?.textContent ?? "",
-    start: el.querySelector("time")?.getAttribute("datetime") ?? "",
   })),
 );
 await rmBase.close();
 
-// "W1" or "W15–19" (any dash) -> { from: 1, to: 1 } / { from: 15, to: 19 }.
-const rmParseWk = (wk) => {
-  const m = /^W(\d+)(?:\D+(\d+))?$/.exec(wk.trim());
+// "Weeks 15–19 · Dec 14 – Jan 16, 2027" -> { from: 15, to: 19 }; "Week 0 · …" -> { from: 0, to: 0 }.
+const rmParseWeeks = (span) => {
+  const m = /^Weeks? (\d+)(?:\D(\d+))?/.exec(span.trim());
   const from = Number(m[1]);
   return { from, to: m[2] !== undefined ? Number(m[2]) : from };
 };
 
-const rmBaseActiveId = rmPanels.find((p) => !p.hidden)?.id ?? null;
+const rmBaseActiveId = rmPhases.find((p) => !p.hidden)?.id ?? null;
 // The last phase chronologically, unless the build day already sits inside it
 // -- then fall back to the first, which is still guaranteed different.
-const rmTargetArc = rmArc[rmArc.length - 1].id !== rmBaseActiveId ? rmArc[rmArc.length - 1] : rmArc[0];
-const rmLastWeek = Math.max(...rmArc.map((p) => rmParseWk(p.wk).to));
-const rmTargetFromWeek = rmParseWk(rmTargetArc.wk).from;
+const rmTarget = rmPhases[rmPhases.length - 1].id !== rmBaseActiveId ? rmPhases[rmPhases.length - 1] : rmPhases[0];
+const rmLastWeek = Math.max(...rmPhases.map((p) => rmParseWeeks(p.span).to));
+const rmTargetFromWeek = rmParseWeeks(rmTarget.span).from;
 const rmExpectedLabel = rmTargetFromWeek === 0 ? "Ramp week" : `Week ${rmTargetFromWeek} of ${rmLastWeek}`;
-const rmExpectedName = rmPanels.find((p) => p.id === rmTargetArc.id)?.name ?? null;
 
 // The target phase's own Monday, plus a couple of days so the fixed time sits
 // solidly inside it rather than exactly on the boundary.
 const rmFuture = watch(await browser.newPage({ viewport: { width: 1280, height: 900 } }));
 await rmFuture.route("**/api/progress", mockProgress);
-await rmFuture.clock.setFixedTime(new Date(Date.parse(rmTargetArc.start) + 2 * DAY));
-await rmFuture.goto(`${BASE}/roadmap`, { waitUntil: "networkidle" });
+await rmFuture.clock.setFixedTime(new Date(Date.parse(rmTarget.start) + 2 * DAY));
+await rmFuture.goto(`${BASE}/roadmap/now`, { waitUntil: "networkidle" });
 const rmFutureLabel = await rmFuture.locator("[data-week-label]").textContent();
-const rmVisiblePanels = rmFuture.locator("[data-week-panel]:not([hidden])");
-const rmVisibleCount = await rmVisiblePanels.count();
-const rmVisibleId = rmVisibleCount === 1 ? await rmVisiblePanels.first().getAttribute("data-week-panel") : null;
-const rmVisibleName =
-  rmVisibleCount === 1 ? await rmVisiblePanels.first().locator("[data-week-phase]").textContent() : null;
+const rmShownPhases = await rmFuture.$$eval("[data-now-phase]:not([hidden])", (els) =>
+  els.map((el) => el.getAttribute("data-now-phase")),
+);
+const rmShownHeader = rmFuture.locator("[data-phase-start]:not([hidden])");
+const rmShownName = (await rmShownHeader.count()) === 1 ? await rmShownHeader.locator("h2").textContent() : null;
+const rmShownBuilds = await rmFuture.$$eval("[data-now-milestone]:not([hidden])", (els) =>
+  els.map((el) => el.getAttribute("data-now-milestone")),
+);
+const rmOutsideShown = await rmFuture.locator("[data-now-outside]:not([hidden])").count();
 await rmFuture.close();
 
 check(
-  "roadmap: a stale visit recomputes the week label instead of keeping the build day's",
+  "roadmap/now: a stale visit recomputes the week label instead of keeping the build day's",
   rmFutureLabel === rmExpectedLabel && rmFutureLabel !== rmBaseLabel,
 );
-check("roadmap: exactly one phase panel is revealed after the recompute", rmVisibleCount === 1);
 check(
-  "roadmap: the revealed panel is the phase whose weeks contain the fixed date",
-  rmVisibleId === rmTargetArc.id,
+  "roadmap/now: the recompute reveals the fixed date's phase, header and pairings both, and no other",
+  rmShownPhases.length === 2 && rmShownPhases.every((id) => id === rmTarget.id),
 );
-check("roadmap: the revealed panel's heading matches that phase's name", rmVisibleName === rmExpectedName);
+check("roadmap/now: the revealed header is that phase's", rmShownName === rmTarget.name);
+check(
+  "roadmap/now: the revealed build block is that phase's milestone, or none for the ramp",
+  JSON.stringify(rmShownBuilds) === JSON.stringify(rmTarget.milestone ? [rmTarget.milestone] : []),
+);
+check("roadmap/now: the outside-the-plan line stays hidden inside a phase", rmOutsideShown === 0);
 
 // ---- roadmap: saved progress reaches the arrangement, not just the meters ----
 // Every clip is server-rendered from an EMPTY completed set, so the built page
@@ -833,9 +822,6 @@ check("roadmap: the revealed panel's heading matches that phase's name", rmVisib
 // in an empty set), so seeing it proves the client rewrite actually ran.
 const rmProg = watch(await browser.newPage({ viewport: { width: 1280, height: 900 } }));
 await rmProg.addInitScript(() => sessionStorage.setItem("roadmap-admin-token", "e2e-dummy-token"));
-await rmProg.route("**/api/review", async (route) =>
-  route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ schedules: {}, streak: 0, lastReviewDate: null }) }),
-);
 // Reassigned between loads; the handler reads it at request time, so one route
 // serves both the empty page below and the nearly-complete one after the reload.
 let rmSaved = [];

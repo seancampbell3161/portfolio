@@ -27,6 +27,7 @@ const PAGES: Record<string, string | null> = {
   writing: "dist/blog/index.html",
   building: "dist/building/index.html",
   roadmap: "dist/roadmap/index.html",
+  "roadmap now": "dist/roadmap/now/index.html",
   essay: firstPage("dist/blog"),
   "case study": firstPage("dist/building", true),
 };

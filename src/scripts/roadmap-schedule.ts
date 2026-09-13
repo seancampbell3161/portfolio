@@ -1,23 +1,30 @@
 // src/scripts/roadmap-schedule.ts
-// Keeps the this-week band honest when a deploy goes stale. Every phase's panel
-// is already in the page, so this only re-picks which one is shown and rewrites
-// the heading — it never builds DOM, and the panel it reveals always matches
-// the label above it.
+// Keeps the roadmap's week honest when a deploy goes stale. Every block is
+// already in the page, so this only rewrites each week label and re-picks which
+// phase and build blocks show (roadmap-now spec §6). It never builds DOM, so a
+// revealed block always matches the label above it. On /roadmap/now it drives
+// RoadmapNow.astro; pages without those hooks are left alone.
 import { onPage } from "./lifecycle";
-import { currentPhase, weekLabel } from "../lib/roadmap/schedule";
+import { nowShowing, weekLabel } from "../lib/roadmap/schedule";
 
-export function initThisWeek(): void {
-  const band = document.querySelector<HTMLElement>("[data-this-week]");
-  if (!band) return;
-
+export function initSchedule(): void {
   const now = new Date();
-  const label = band.querySelector<HTMLElement>("[data-week-label]");
-  if (label) label.textContent = weekLabel(now);
 
-  const activeId = currentPhase(now)?.id;
-  for (const panel of band.querySelectorAll<HTMLElement>("[data-week-panel]")) {
-    panel.hidden = panel.dataset.weekPanel !== activeId;
+  const label = weekLabel(now);
+  for (const el of document.querySelectorAll<HTMLElement>("[data-week-label]")) {
+    el.textContent = label;
+  }
+
+  const { phase, milestone } = nowShowing(now);
+  for (const el of document.querySelectorAll<HTMLElement>("[data-now-phase]")) {
+    el.hidden = el.dataset.nowPhase !== phase;
+  }
+  for (const el of document.querySelectorAll<HTMLElement>("[data-now-milestone]")) {
+    el.hidden = el.dataset.nowMilestone !== milestone;
+  }
+  for (const el of document.querySelectorAll<HTMLElement>("[data-now-outside]")) {
+    el.hidden = phase !== null;
   }
 }
 
-onPage(initThisWeek);
+onPage(initSchedule);

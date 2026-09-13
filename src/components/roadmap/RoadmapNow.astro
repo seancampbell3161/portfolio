@@ -1,0 +1,73 @@
+---
+// The current phase in depth, for /roadmap/now (roadmap-now spec §4–§6).
+// Everything is server-rendered: a header and a pairings block for every phase,
+// and a build block for every milestone. All but nowShowing(build day) are
+// `hidden`, and src/scripts/roadmap-schedule.ts re-picks them on load, so a
+// deploy that goes stale never shows one phase's heading over another's work.
+//
+// Phase blocks hold no form controls. Build blocks hold every checkbox and log
+// input, once each: M5 and the Capstone share Kafka, so a build block per phase
+// would repeat its ids. The reveal matches by attribute, which is what lets a
+// phase's header and its pairings sit on either side of the build.
+//
+// data-phase-start and data-phase-milestone exist for the stale-visit check in
+// scripts/interactions.mjs, which cannot import the TypeScript phase table.
+import { phases, build } from "../../data/roadmap";
+import { nowShowing, weekLabel, phaseSpanText } from "../../lib/roadmap/schedule";
+import { weekStart } from "../../lib/roadmap/weeks";
+import { isoDay } from "../../lib/dates";
+import MilestoneBuild from "./MilestoneBuild.astro";
+import PairingList from "./PairingList.astro";
+
+const now = new Date();
+const showing = nowShowing(now);
+---
+
+<section class="rm-now" aria-labelledby="rm-week-label">
+  <p class="rm-week-label" id="rm-week-label" data-week-label>{weekLabel(now)}</p>
+
+  {phases.map((p) => (
+    <header
+      class="rm-now-phase"
+      data-now-phase={p.id}
+      data-phase-start={isoDay(weekStart(p.fromWeek))}
+      data-phase-milestone={p.milestone}
+      hidden={p.id !== showing.phase}
+    >
+      <h2 class="rm-week-phase">{p.name}</h2>
+      {/* The label counts one week; the phase covers several. Saying so is what
+          stops seven weeks of work reading as one week's. */}
+      <p class="rm-week-scope">
+        <span class="rm-week-chip">{p.label}</span>
+        <span class="rm-week-span">{phaseSpanText(p)}</span>
+      </p>
+    </header>
+  ))}
+
+  {build.map((m) => (
+    <section
+      class="rm-now-build"
+      data-now-milestone={m.id}
+      hidden={m.id !== showing.milestone}
+      style="--c: var(--track-build)"
+      aria-labelledby={`rm-now-build-${m.id}`}
+    >
+      <p class="rm-insp-k"><i></i>Build · {m.no}</p>
+      <h3 class="rm-now-build-title" id={`rm-now-build-${m.id}`}>{m.course}</h3>
+      <MilestoneBuild milestone={m} />
+    </section>
+  ))}
+
+  {/* A wrapper for every phase, even one with empty lists, so each phase always
+      has exactly one pairings block. */}
+  {phases.map((p) => (
+    <div class="rm-week-lists" data-now-phase={p.id} hidden={p.id !== showing.phase}>
+      <PairingList label="Reading" items={p.reading} />
+      <PairingList label="Foundations" items={p.foundations} />
+    </div>
+  ))}
+
+  <p class="rm-now-outside" data-now-outside hidden={showing.phase !== null}>
+    Nothing on the plan is running right now. <a href="/roadmap">See the whole roadmap</a>.
+  </p>
+</section>
