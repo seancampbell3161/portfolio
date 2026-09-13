@@ -794,6 +794,9 @@ const rmShownBuilds = await rmFuture.$$eval("[data-now-milestone]:not([hidden])"
   els.map((el) => el.getAttribute("data-now-milestone")),
 );
 const rmOutsideShown = await rmFuture.locator("[data-now-outside]:not([hidden])").count();
+// /roadmap's link to this page names the week too, from the same script and clock.
+await rmFuture.goto(`${BASE}/roadmap`, { waitUntil: "networkidle" });
+const rmFutureLinkLabel = await rmFuture.locator(".rm-now-link [data-week-label]").textContent();
 await rmFuture.close();
 
 check(
@@ -810,6 +813,25 @@ check(
   JSON.stringify(rmShownBuilds) === JSON.stringify(rmTarget.milestone ? [rmTarget.milestone] : []),
 );
 check("roadmap/now: the outside-the-plan line stays hidden inside a phase", rmOutsideShown === 0);
+check("roadmap: the week label in /roadmap's link to /roadmap/now recomputes too", rmFutureLinkLabel === rmExpectedLabel);
+
+// ---- roadmap: the now marker links to /roadmap/now ----
+// The playhead's "now" chip at desktop width, and the phone graph's "now" row
+// below 900px, are the timeline's way into the current phase (roadmap-now spec
+// §8). The chip sits on a pointer-events:none playhead, so this also proves the
+// chip itself takes the click.
+for (const [label, width, selector] of [
+  ["the timeline's now chip", 1280, ".rm-playhead .rm-now-chip"],
+  ["the phone graph's now row", 400, ".rm-graph-now .rm-now-chip"],
+]) {
+  const p = watch(await browser.newPage({ viewport: { width, height: 900 } }));
+  await p.route("**/api/progress", mockProgress);
+  await p.goto(`${BASE}/roadmap`, { waitUntil: "networkidle" });
+  await p.locator(selector).click();
+  const landed = await p.waitForURL(/\/roadmap\/now\/?$/, { timeout: 5000 }).then(() => true, () => false);
+  await p.close();
+  check(`roadmap: ${label} opens /roadmap/now`, landed);
+}
 
 // ---- roadmap: saved progress reaches the arrangement, not just the meters ----
 // Every clip is server-rendered from an EMPTY completed set, so the built page

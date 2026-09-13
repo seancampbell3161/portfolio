@@ -323,7 +323,13 @@
   pointer-events: none;
   z-index: 2;
 }
-.rm-playhead span {
+/* The "now" chip links to /roadmap/now (roadmap-now spec §8). The playhead line
+   stays pointer-events:none so it never blocks a clip; the chip alone takes
+   clicks. Targeted by class rather than `span`, so the sr-only text inside it is
+   not styled as a second chip. */
+.rm-playhead .rm-now-chip {
+  pointer-events: auto;
+  text-decoration: none;
   position: absolute;
   /* Below the ruler line: at top:7px the chip sat on top of a quarter label. */
   top: calc(var(--ruler-h) + 7px);
@@ -339,6 +345,7 @@
   font-size: 11px;
   line-height: 1.4;
 }
+.rm-playhead .rm-now-chip:focus-visible { outline: 2px solid var(--color-text-primary); outline-offset: 2px; }
 
 /* ---- legend ---- */
 .rm-legend {
@@ -878,8 +885,9 @@
     border-radius: 50%;
     background: var(--color-text-primary);
   }
-  .rm-graph-now span {
+  .rm-graph-now .rm-now-chip {
     display: inline-block;
+    text-decoration: none;
     font-family: var(--font-mono);
     font-size: 10.5px;
     line-height: 1.7;

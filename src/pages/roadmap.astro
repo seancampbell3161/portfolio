@@ -6,6 +6,7 @@ import RoadmapMeters from "../components/roadmap/RoadmapMeters.astro";
 import RoadmapArrangement from "../components/roadmap/RoadmapArrangement.astro";
 import RoadmapInspector from "../components/roadmap/RoadmapInspector.astro";
 import { ogImagePath } from "../lib/og.mjs";
+import { weekLabel } from "../lib/roadmap/schedule";
 ---
 
 <Layout
@@ -23,6 +24,9 @@ import { ogImagePath } from "../lib/og.mjs";
         Follow along with what I'm doing and the resources I'm using to become better at
         decision making &amp; problem solving as a Software Engineer. Building everything out in
         the open for anyone to see.
+      </p>
+      <p class="rm-now-link">
+        <a href="/roadmap/now"><span data-week-label>{weekLabel(new Date())}</span> · What I'm working on now →</a>
       </p>
 
       <RoadmapMeters />
@@ -42,6 +46,7 @@ import { ogImagePath } from "../lib/og.mjs";
 <script>
   import "../scripts/roadmap.ts";
   import "../scripts/roadmap-arrangement.ts";
+  import "../scripts/roadmap-schedule.ts";
 </script>
 
 <style is:global>

@@ -148,4 +148,17 @@ describe.skipIf(!built)("roadmap client contract (dist/roadmap/index.html)", () 
     // Otherwise roadmap-now-contract.test.ts skips itself and passes silently.
     expect(existsSync("dist/roadmap/now/index.html")).toBe(true);
   });
+
+  it("links to /roadmap/now under the heading, with a week label the script rewrites", () => {
+    expect(html).toMatch(/<a\b[^>]*href="\/roadmap\/now"[^>]*>\s*<span\b[^>]*data-week-label/);
+  });
+
+  it("links the timeline's now chip and the phone graph's now row to /roadmap/now", () => {
+    const playheadAt = html.indexOf("data-rm-playhead");
+    const playhead = html.slice(playheadAt, html.indexOf("</div>", playheadAt));
+    expect(playhead, "the now chip").toMatch(/<a\b[^>]*href="\/roadmap\/now"/);
+    const rowAt = html.indexOf('class="rm-graph-now"');
+    const row = html.slice(rowAt, html.indexOf("</li>", rowAt));
+    expect(row, "the phone now row").toMatch(/<a\b[^>]*href="\/roadmap\/now"/);
+  });
 });
