@@ -1,0 +1,32 @@
+---
+// A build milestone's work: its goal, dates and percent, its checkpoint rows and
+// its decision logs (roadmap-now spec §7). The timeline's Build panel
+// (RoadmapInspector) and /roadmap/now (RoadmapNow) both render it, so the
+// checkpoint wording has one definition. The default slot sits between the
+// checkpoints and the logs: the Build panel passes its phase pairings there;
+// /roadmap/now passes nothing and prints its pairings after the build.
+//
+// Every input here carries a real id, so a page must render a given milestone's
+// MilestoneBuild at most once.
+import type { BuildMilestone } from "../../data/roadmap";
+import CheckItem from "./CheckItem.astro";
+import DecisionLog from "./DecisionLog.astro";
+import { longDate, isoDay } from "../../lib/dates";
+
+interface Props {
+  milestone: BuildMilestone;
+}
+const { milestone: m } = Astro.props;
+---
+
+<p class="rm-insp-goal">{m.goal}</p>
+<p class="rm-insp-facts">
+  <time datetime={isoDay(m.start)}>{longDate(m.start)}</time> – <time datetime={isoDay(m.end)}>{longDate(m.end)}</time> · <span data-milestone-pct={m.id}>0%</span>
+</p>
+<div class="rm-insp-checks">
+  {m.groups.map((g) => (
+    <CheckItem id={g.id} label={g.label} meta={`${g.stages} stages${g.hours ? ` · ~${g.hours}h` : ""}`} />
+  ))}
+</div>
+<slot />
+{(m.logs ?? []).map((log) => <DecisionLog log={log} />)}

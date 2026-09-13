@@ -1,13 +1,13 @@
 ---
 // One inspector panel per clip (spec §6), server-rendered whether or not it is
 // the :target so a deep link (/roadmap#clip-redis) opens the right one with no
-// JavaScript. The checkpoint rows and decision logs are the existing
-// CheckItem/DecisionLog components, rehoused here from the retired
-// Milestone/BookCard/FoundationsSection bodies. data-milestone-pct/data-book-pct
-// keep src/scripts/roadmap.ts's per-clip percent updates working.
+// JavaScript. The checkpoint rows are CheckItem; a Build panel's goal,
+// checkpoints and decision logs come from MilestoneBuild, which /roadmap/now
+// renders too. data-milestone-pct/data-book-pct keep src/scripts/roadmap.ts's
+// per-clip percent updates working.
 import { build, reading, foundations, phases } from "../../data/roadmap";
 import CheckItem from "./CheckItem.astro";
-import DecisionLog from "./DecisionLog.astro";
+import MilestoneBuild from "./MilestoneBuild.astro";
 import PairingList from "./PairingList.astro";
 import { longDate, isoDay } from "../../lib/dates";
 import { roadmapClips, STATUS_WORDS } from "../../lib/roadmap/arrange";
@@ -29,22 +29,14 @@ const statusOf = (id: string) => STATUS_WORDS[statusById.get(id) ?? "planned"];
     <section class="rm-insp" id={`clip-${m.id}`} style="--c: var(--track-build)">
       <p class="rm-insp-k"><i></i>Build, <span data-clip-status={m.id}>{statusOf(m.id)}</span> · {m.no}</p>
       <h2 class="rm-insp-title">{m.course}</h2>
-      <p class="rm-insp-goal">{m.goal}</p>
-      <p class="rm-insp-facts">
-        <time datetime={isoDay(m.start)}>{longDate(m.start)}</time> – <time datetime={isoDay(m.end)}>{longDate(m.end)}</time> · <span data-milestone-pct={m.id}>0%</span>
-      </p>
-      <div class="rm-insp-checks">
-        {m.groups.map((g) => (
-          <CheckItem id={g.id} label={g.label} meta={`${g.stages} stages${g.hours ? ` · ~${g.hours}h` : ""}`} />
+      <MilestoneBuild milestone={m}>
+        {phases.filter((p) => p.milestone === m.id).map((p) => (
+          <>
+            <PairingList label={`Reading · ${p.label}`} items={p.reading} />
+            <PairingList label={`Foundations · ${p.label}`} items={p.foundations} />
+          </>
         ))}
-      </div>
-      {phases.filter((p) => p.milestone === m.id).map((p) => (
-        <>
-          <PairingList label={`Reading · ${p.label}`} items={p.reading} />
-          <PairingList label={`Foundations · ${p.label}`} items={p.foundations} />
-        </>
-      ))}
-      {(m.logs ?? []).map((log) => <DecisionLog log={log} />)}
+      </MilestoneBuild>
       <p class="rm-insp-close"><a href="#" data-inspector-close>Close</a></p>
     </section>
   ))}

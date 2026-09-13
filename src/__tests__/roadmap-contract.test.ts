@@ -122,6 +122,14 @@ describe.skipIf(!built)("roadmap client contract (dist/roadmap/index.html)", () 
     expect(html).toContain("data-log-status");
   });
 
+  it("never repeats an element id", () => {
+    // CheckItem and DecisionLog put real ids on their inputs, matched by <label for>
+    // and aria-labelledby. A milestone rendered twice on one page would repeat
+    // them, and a label would quietly tick the wrong checkbox (roadmap-now spec §6).
+    const ids = [...html.matchAll(/\sid="([^"]+)"/g)].map((m) => m[1]);
+    expect(ids.filter((id, i) => ids.indexOf(id) !== i)).toEqual([]);
+  });
+
   it("keeps the review deck's rating buttons and per-thread counters", () => {
     for (const rating of [0, 1, 2, 3]) {
       expect(html, `missing rating ${rating}`).toContain(`data-rv-rate="${rating}"`);
