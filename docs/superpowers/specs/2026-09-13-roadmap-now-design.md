@@ -170,6 +170,7 @@ show.
 | `data-week-label` | the week label on `/roadmap/now`; the link's label on `/roadmap` | rewritten to `weekLabel(now)` |
 | `data-now-phase="m1"` | each phase header and each pairings block | shown when it equals `nowShowing(now).phase` |
 | `data-phase-start="2026-09-07"` | each phase header only | the Monday of the phase's first week (§10's e2e reads it) |
+| `data-phase-milestone="redis"` | each phase header that has a milestone; absent on the ramp | the phase's build milestone (§10's e2e reads it; a plain Node script cannot import the phase table to learn that the Capstone builds Kafka) |
 | `data-now-milestone="redis"` | each build block | shown when it equals `nowShowing(now).milestone` |
 | `data-now-outside` | the outside line | shown when `phase` is null |
 
@@ -288,9 +289,9 @@ reads `dist/roadmap/now/index.html`, skipped without a build:
 **E2E.** In `scripts/interactions.mjs`:
 
 - **The stale-visit block moves to `/roadmap/now`.** It reads each phase header's
-  `data-now-phase`, its `data-phase-start`, and its week numbers from the span
-  text (`phaseSpanText`'s unit-tested format), replacing the ribbon it read
-  before. It keeps its checks (the label recomputes, exactly one phase shows,
+  `data-now-phase`, `data-phase-start` and `data-phase-milestone`, and its week
+  numbers from the span text (`phaseSpanText`'s unit-tested format), replacing
+  the ribbon it read before. It keeps its checks (the label recomputes, exactly one phase shows,
   it is the right phase, its heading matches) and adds two: the revealed build
   block is that phase's milestone, and `/roadmap`'s link label recomputes under
   the same fixed clock.
