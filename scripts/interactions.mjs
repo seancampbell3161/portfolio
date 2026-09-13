@@ -902,6 +902,81 @@ check(
 );
 await rmProg.close();
 
+// ---- roadmap: two editable pages share one progress state ----
+// /roadmap and /roadmap/now both run src/scripts/roadmap.ts (roadmap-now spec
+// §9). Two things must hold. A save still pending when the owner leaves one page
+// for the other is flushed, not dropped, and the page arrived at shows it. And
+// the browser holds ONE instance of the module: Rollup shares a module imported
+// by two page entries, but if a build ever inlined roadmap.ts into each page's
+// bundle, two instances would each register onPage(initRoadmap) and one toggle
+// would schedule two saves. The fixed clock puts both checks inside a phase
+// that has a build block, so there is a checkpoint to tick whatever the date.
+const rmBuildPhase = rmPhases.find((p) => p.milestone);
+const rmEditPage = async () => {
+  const p = watch(await browser.newPage({ viewport: { width: 1280, height: 900 } }));
+  await p.addInitScript(() => sessionStorage.setItem("roadmap-admin-token", "e2e-dummy-token"));
+  await p.clock.setFixedTime(new Date(Date.parse(rmBuildPhase.start) + 2 * DAY));
+  // review.ts runs on /roadmap/now and, with a token present, fetches /api/review.
+  await p.route("**/api/review", async (route) =>
+    route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ schedules: {}, streak: 0, lastReviewDate: null }) }),
+  );
+  return p;
+};
+const rmBuildBlock = `[data-now-milestone="${rmBuildPhase.milestone}"]`;
+
+// A save crosses pages: tick on /roadmap/now, leave for /roadmap inside the debounce.
+const rmCross = await rmEditPage();
+let rmCrossSaved = [];
+let rmCrossPostAt = null;
+await rmCross.route("**/api/progress", async (route) => {
+  if (route.request().method() === "POST") {
+    rmCrossPostAt = Date.now();
+    rmCrossSaved = JSON.parse(route.request().postData() ?? "{}").completed ?? [];
+  }
+  await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ completed: rmCrossSaved }) });
+});
+await rmCross.goto(`${BASE}/roadmap/now`, { waitUntil: "networkidle" });
+await rmCross.waitForSelector(".roadmap-page.rm-editing");
+// The group's own stage count ("7 stages · ~11h"): ticking the group adds exactly
+// that many stages to /roadmap's build meter (deriveStats).
+const rmCrossStages = Number.parseInt(
+  (await rmCross.locator(`${rmBuildBlock} .rm-insp-checks .rm-check-meta`).first().textContent()) ?? "",
+  10,
+);
+// Recorded BEFORE the click, as in vt3: toggleAt + 500 stays a true lower bound
+// on when the ordinary debounce could fire.
+const rmCrossToggleAt = Date.now();
+await rmCross.locator(`${rmBuildBlock} .rm-insp-checks input[data-id]`).first().click();
+await rmCross.waitForTimeout(200); // leave well inside the 500ms debounce
+await rmCross.locator('.rm-now-link a[href="/roadmap"]').click();
+await rmCross.waitForURL(/\/roadmap\/?$/);
+const rmCrossMeter = await rmCross
+  .waitForFunction((n) => document.getElementById("rm-build-stages")?.textContent === String(n), rmCrossStages, { timeout: 3000 })
+  .then(() => true, () => false);
+await rmCross.close();
+check(
+  "roadmap: a save pending on /roadmap/now is flushed by the navigation to /roadmap",
+  rmCrossPostAt !== null && rmCrossPostAt < rmCrossToggleAt + 500,
+);
+check("roadmap: /roadmap's build meter shows the checkpoint ticked on /roadmap/now", rmCrossMeter);
+
+// One instance: arrive at /roadmap/now by navigating from /roadmap, then one toggle is one save.
+const rmOne = await rmEditPage();
+let rmOnePosts = 0;
+await rmOne.route("**/api/progress", async (route) => {
+  if (route.request().method() === "POST") rmOnePosts++;
+  await route.fulfill({ status: 200, contentType: "application/json", body: "{}" });
+});
+await rmOne.goto(`${BASE}/roadmap`, { waitUntil: "networkidle" });
+await rmOne.locator('.rm-now-link a[href="/roadmap/now"]').click();
+await rmOne.waitForURL(/\/roadmap\/now\/?$/);
+// Only /roadmap/now has build blocks, and the click waits for this checkbox to
+// be enabled, which happens once the arriving page's init turns edit mode on.
+await rmOne.locator(`${rmBuildBlock} .rm-insp-checks input[data-id]`).first().click();
+await rmOne.waitForTimeout(700); // past the 500ms debounce
+await rmOne.close();
+check("roadmap: one toggle after navigating from /roadmap to /roadmap/now saves exactly once", rmOnePosts === 1);
+
 // ---- nothing threw anywhere ----
 check(`no uncaught page errors${errors.length ? `: ${errors.join(" | ")}` : ""}`, errors.length === 0);
 
