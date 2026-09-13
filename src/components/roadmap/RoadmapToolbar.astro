@@ -1,0 +1,23 @@
+---
+// The owner's controls (roadmap-now spec §7): the save state, the Edit button,
+// the message line, and the live region that speaks each edit. /roadmap renders
+// it through RoadmapArrangement, which passes its zoom group into the slot;
+// /roadmap/now renders it with an empty slot. The ids are a contract with
+// src/scripts/roadmap.ts and src/scripts/review.ts — do not rename them.
+---
+
+<div class="rm-toolbar">
+  <slot />
+  <span id="rm-save-state" class="rm-save-state" role="status" aria-live="polite"></span>
+  <button id="rm-edit" type="button" class="rm-edit-btn">Edit</button>
+</div>
+<p id="rm-message" class="rm-message" role="alert" aria-live="assertive" hidden></p>
+
+{/* Ticking a checkbox silently rewrites counts and status fills that a sighted
+    reader watches change and a screen-reader user cannot. This is the spoken
+    half of that repaint (the sentence itself is progressAnnouncement in
+    src/lib/roadmap/arrange.ts). It is server-rendered empty so the region is
+    already in the accessibility tree when the first edit writes into it. On
+    /roadmap it sits outside .rm-arr, which is display:none below 900px: edit
+    mode works at every width, so its announcements must too. */}
+<p id="rm-clip-live" class="sr-only" role="status" aria-live="polite"></p>
