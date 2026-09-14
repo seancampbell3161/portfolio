@@ -9,7 +9,8 @@
 // first and then runs the suite; plain `npm test` still works on its own.
 import { describe, it, expect } from "vitest";
 import { existsSync, readFileSync } from "node:fs";
-import { allIds, logIds, build, reading } from "../data/roadmap";
+import { allIds, logIds, build, reading, phases } from "../data/roadmap";
+import { phaseShortName } from "../lib/roadmap/schedule";
 import { roadmapClips } from "../lib/roadmap/arrange";
 
 const PAGE = "dist/roadmap/index.html";
@@ -137,10 +138,13 @@ describe.skipIf(!built)("roadmap client contract (dist/roadmap/index.html)", () 
     // would put the band's hooks, or the review deck's ids, on two pages. Matched
     // as attributes on a tag, not as bare text, because /roadmap also loads
     // roadmap-schedule.ts (Task 6), whose selector strings name these hooks; a
-    // build that inlined that script must not fail this test.
+    // build that inlined that script must not fail this test. /roadmap's own
+    // link to /roadmap/now carries data-now-phase spans, so the new page's
+    // phase headers and build blocks are matched by their own hooks instead.
     expect(html).not.toMatch(/\sdata-roadmap-arc\b/);
     expect(html).not.toMatch(/\sdata-this-week\b/);
-    expect(html).not.toMatch(/\sdata-now-phase="/);
+    expect(html).not.toMatch(/\sdata-phase-start="/);
+    expect(html).not.toMatch(/\sdata-now-milestone="/);
     expect(html).not.toContain('id="rv-runner"');
   });
 
@@ -153,6 +157,22 @@ describe.skipIf(!built)("roadmap client contract (dist/roadmap/index.html)", () 
     expect(html).toMatch(/<a\b[^>]*href="\/roadmap\/now"[^>]*>\s*<span\b[^>]*data-week-label/);
   });
 
+  it("names the current phase in that link, one short name per phase for the script to reveal", () => {
+    // The link labels itself from the plan ("Week 2 of 22 · Redis →"). Every
+    // phase's short name is server-rendered and all but the build day's hidden,
+    // so the schedule script re-picks it on a stale visit, and outside the plan
+    // none shows ("The plan is finished →").
+    const linkAt = html.search(/<a\b[^>]*href="\/roadmap\/now"[^>]*>\s*<span\b[^>]*data-week-label/);
+    const link = html.slice(linkAt, html.indexOf("</a>", linkAt));
+    const names = [...link.matchAll(/<span\b[^>]*\sdata-now-phase="([^"]+)"[^>]*>([^<]*)<\/span>/g)];
+    expect(names.map((n) => n[1])).toEqual(phases.map((p) => p.id));
+    for (const [, id, text] of names) {
+      const phase = phases.find((p) => p.id === id)!;
+      expect(text.replace(/&amp;/g, "&"), id).toBe(` · ${phaseShortName(phase)}`);
+    }
+    expect(names.filter((n) => !/\shidden[\s>]/.test(n[0])).length, "more than one phase named").toBeLessThanOrEqual(1);
+  });
+
   it("links the timeline's now chip and the phone graph's now row to /roadmap/now", () => {
     const playheadAt = html.indexOf("data-rm-playhead");
     const playhead = html.slice(playheadAt, html.indexOf("</div>", playheadAt));
@@ -160,5 +180,16 @@ describe.skipIf(!built)("roadmap client contract (dist/roadmap/index.html)", () 
     const rowAt = html.indexOf('class="rm-graph-now"');
     const row = html.slice(rowAt, html.indexOf("</li>", rowAt));
     expect(row, "the phone now row").toMatch(/<a\b[^>]*href="\/roadmap\/now"/);
+  });
+
+  it("says the live week in both now links' screen-reader text", () => {
+    // "now" alone says nothing about where the link goes; each chip's hidden
+    // text carries the week label the schedule script keeps current.
+    const playheadAt = html.indexOf("data-rm-playhead");
+    const playhead = html.slice(playheadAt, html.indexOf("</div>", playheadAt));
+    expect(playhead, "the now chip").toMatch(/class="sr-only"[^>]*>[^<]*<span\b[^>]*data-week-label/);
+    const rowAt = html.indexOf('class="rm-graph-now"');
+    const row = html.slice(rowAt, html.indexOf("</li>", rowAt));
+    expect(row, "the phone now row").toMatch(/class="sr-only"[^>]*>[^<]*<span\b[^>]*data-week-label/);
   });
 });

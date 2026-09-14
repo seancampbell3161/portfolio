@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { weekOf, currentPhase, weekLabel, phaseSpanText, nowShowing } from "../schedule.js";
+import { weekOf, currentPhase, weekLabel, phaseSpanText, nowShowing, phaseShortName, nowTitle } from "../schedule.js";
 import { phases } from "../../../data/roadmap.js";
 import { weekStart, weekEnd } from "../weeks.js";
 
@@ -110,5 +110,40 @@ describe("phaseSpanText", () => {
       if (p.id === "ramp") continue;
       expect(phaseSpanText(p)).toContain(`Weeks ${p.fromWeek}–${p.toWeek}`);
     }
+  });
+});
+
+describe("phaseShortName", () => {
+  const byId = (id: string) => phases.find((p) => p.id === id)!;
+
+  it("is the part of a phase's name before its dash", () => {
+    expect(phaseShortName(byId("m1"))).toBe("Redis");
+    expect(phaseShortName(byId("m3"))).toBe("HTTP server");
+    expect(phaseShortName(byId("ramp"))).toBe("Foundations ramp");
+    expect(phaseShortName(byId("capstone"))).toBe("Systems in the wild");
+  });
+
+  it("is never a phase's whole name", () => {
+    // /roadmap's link and /roadmap/now's tab title print it beside the week
+    // label. A phase named without the " — " convention must fail here rather
+    // than print its whole name there.
+    for (const p of phases) {
+      expect(phaseShortName(p), p.id).not.toBe(p.name);
+      expect(phaseShortName(p).length, p.id).toBeGreaterThan(0);
+    }
+  });
+});
+
+describe("nowTitle", () => {
+  it("names the week and the phase's short name inside a phase", () => {
+    expect(nowTitle(at("2026-09-09"))).toBe("Week 1 of 22 · Redis");
+    expect(nowTitle(at("2027-01-20"))).toBe("Week 20 of 22 · Systems in the wild");
+  });
+  it("names the ramp week and the ramp", () => {
+    expect(nowTitle(at("2026-09-02"))).toBe("Ramp week · Foundations ramp");
+  });
+  it("is the week label alone outside the plan", () => {
+    expect(nowTitle(at("2026-08-20"))).toBe("The plan starts 31 August 2026");
+    expect(nowTitle(at("2027-02-08"))).toBe("The plan is finished");
   });
 });

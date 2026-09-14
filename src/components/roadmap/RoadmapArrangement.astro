@@ -9,6 +9,7 @@ import { roadmapClips, roadmapWindow, quarterTicks, STATUS_WORDS, type RoadmapCl
 import { positionIn, packRows, estimateLabelWidth, fraction } from "../../lib/timeline/layout";
 import { monthDayYear, monthYear } from "../../lib/dates";
 import RoadmapToolbar from "./RoadmapToolbar.astro";
+import { weekLabel } from "../../lib/roadmap/schedule";
 
 const now = new Date();
 // Zeroed: the saved progress lives behind /api/progress and is not available at
@@ -125,7 +126,7 @@ const clipData = clips.map((c) => ({
     ))}
 
     <div class="rm-playhead" style={`--ph:${nowX}`} data-rm-playhead>
-      <a class="rm-now-chip" href="/roadmap/now">now<span class="sr-only"> · what I'm working on</span></a>
+      <a class="rm-now-chip" href="/roadmap/now">now<span class="sr-only"> · <span data-week-label>{weekLabel(now)}</span></span></a>
     </div>
   </div>
 </div>
@@ -134,7 +135,7 @@ const clipData = clips.map((c) => ({
 <ol class="rm-graph" role="list" aria-label="Roadmap, by date">
   {graphEntries.map((e) =>
     e.kind === "now" ? (
-      <li class="rm-graph-now"><a class="rm-now-chip" href="/roadmap/now">now · {monthDayYear(now)}<span class="sr-only"> · what I'm working on</span></a></li>
+      <li class="rm-graph-now"><a class="rm-now-chip" href="/roadmap/now">now · {monthDayYear(now)}<span class="sr-only"> · <span data-week-label>{weekLabel(now)}</span></span></a></li>
     ) : (
       <li class:list={["rm-graph-row", `t-${e.clip.track}`, `is-${e.clip.status}`]} data-clip-id={e.clip.id}>
         <a href={e.clip.href}>

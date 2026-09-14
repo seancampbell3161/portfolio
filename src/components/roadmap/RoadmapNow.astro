@@ -1,9 +1,13 @@
 ---
-// The current phase in depth, for /roadmap/now (roadmap-now spec §4–§6).
-// Everything is server-rendered: a header and a pairings block for every phase,
-// and a build block for every milestone. All but nowShowing(build day) are
-// `hidden`, and src/scripts/roadmap-schedule.ts re-picks them on load, so a
-// deploy that goes stale never shows one phase's heading over another's work.
+// The current phase in depth, for /roadmap/now (roadmap-now spec §4–§6). The
+// page labels itself from the plan: each phase header is the page's eyebrow
+// (the week label) and <h1> (the phase name), and outside the plan a lone <h1>
+// carries the week label instead. Everything is server-rendered: a header and
+// a pairings block for every phase, and a build block for every milestone. All
+// but nowShowing(build day) are `hidden`, and src/scripts/roadmap-schedule.ts
+// re-picks them on load, so a deploy that goes stale never shows one phase's
+// heading over another's work. data-now-title tells that script to retitle the
+// tab from nowTitle() as well.
 //
 // Phase blocks hold no form controls. Build blocks hold every checkbox and log
 // input, once each: M5 and the Capstone share Kafka, so a build block per phase
@@ -18,14 +22,14 @@ import { weekStart } from "../../lib/roadmap/weeks";
 import { isoDay } from "../../lib/dates";
 import MilestoneBuild from "./MilestoneBuild.astro";
 import PairingList from "./PairingList.astro";
+import RoadmapToolbar from "./RoadmapToolbar.astro";
 
 const now = new Date();
 const showing = nowShowing(now);
+const label = weekLabel(now);
 ---
 
-<section class="rm-now" aria-labelledby="rm-week-label">
-  <p class="rm-week-label" id="rm-week-label" data-week-label>{weekLabel(now)}</p>
-
+<div class="rm-now" data-now-title>
   {phases.map((p) => (
     <header
       class="rm-now-phase"
@@ -34,7 +38,8 @@ const showing = nowShowing(now);
       data-phase-milestone={p.milestone}
       hidden={p.id !== showing.phase}
     >
-      <h2 class="rm-week-phase">{p.name}</h2>
+      <p class="rm-eyebrow" data-week-label>{label}</p>
+      <h1 class="rm-title">{p.name}</h1>
       {/* The label counts one week; the phase covers several. Saying so is what
           stops seven weeks of work reading as one week's. */}
       <p class="rm-week-scope">
@@ -43,6 +48,14 @@ const showing = nowShowing(now);
       </p>
     </header>
   ))}
+
+  {/* Before Week 0 or after the capstone there is no phase to name, so the week
+      label ("The plan is finished") heads the page on its own. */}
+  <header class="rm-now-outside" data-now-outside hidden={showing.phase !== null}>
+    <h1 class="rm-title" data-week-label>{label}</h1>
+  </header>
+
+  <RoadmapToolbar />
 
   {build.map((m) => (
     <section
@@ -53,7 +66,7 @@ const showing = nowShowing(now);
       aria-labelledby={`rm-now-build-${m.id}`}
     >
       <p class="rm-insp-k"><i></i>Build · {m.no}</p>
-      <h3 class="rm-now-build-title" id={`rm-now-build-${m.id}`}>{m.course}</h3>
+      <h2 class="rm-now-build-title" id={`rm-now-build-${m.id}`}>{m.course}</h2>
       <MilestoneBuild milestone={m} />
     </section>
   ))}
@@ -66,8 +79,4 @@ const showing = nowShowing(now);
       <PairingList label="Foundations" items={p.foundations} />
     </div>
   ))}
-
-  <p class="rm-now-outside" data-now-outside hidden={showing.phase !== null}>
-    Nothing on the plan is running right now. <a href="/roadmap">See the whole roadmap</a>.
-  </p>
-</section>
+</div>

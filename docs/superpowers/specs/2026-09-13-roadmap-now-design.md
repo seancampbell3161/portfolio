@@ -365,3 +365,14 @@ creates `public/og/roadmap-now.png` and refreshes `roadmap.png`, which still
 shows the ribbon and band. Until then the new page's share image is missing.
 Shooting the local preview instead would bake zeroed progress into every image,
 because the preview server has no progress API.
+
+## 15. Amendment: the page labels itself
+
+Added 2026-09-13, after the merge. The owner ruled that the roadmap should document itself, with no hand-written framing copy around it. That supersedes §3.8 (a static `<h1>`), §4's placeholder copy (eyebrow, heading, back link, and `/roadmap`'s "What I'm working on now →"), §5's outside-the-plan sentence, and §8's screen-reader text.
+
+- Each phase header on `/roadmap/now` is the page's eyebrow (`weekLabel`) and `<h1>` (the phase name). Before Week 0 and after the capstone, a lone `<h1>` carries the week label (`data-now-outside`). All of them are server-rendered and exactly one is visible.
+- The tab title is `nowTitle(now)` followed by ` | Sean Campbell`: "Week 2 of 22 · Redis", or the week label alone outside the plan. `phaseShortName` is the part of a phase name before " — ". `roadmap-schedule.ts` rewrites `document.title` on a page carrying `data-now-title`, so a stale deploy's tab stays current.
+- The back link is gone; the transport bar's Learning link already leads to `/roadmap`. The toolbar sits below the header.
+- `/roadmap`'s link reads "{week label} · {short name} →". It carries one `data-now-phase` span per phase, the current one revealed, and none outside the plan ("The plan is finished →").
+- The "now" chip's and the phone row's screen-reader text is the week label (`data-week-label`).
+- The meta description stays hand-written. It is factual and is not shown on the page.

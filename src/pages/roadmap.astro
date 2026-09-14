@@ -6,7 +6,11 @@ import RoadmapMeters from "../components/roadmap/RoadmapMeters.astro";
 import RoadmapArrangement from "../components/roadmap/RoadmapArrangement.astro";
 import RoadmapInspector from "../components/roadmap/RoadmapInspector.astro";
 import { ogImagePath } from "../lib/og.mjs";
-import { weekLabel } from "../lib/roadmap/schedule";
+import { phases } from "../data/roadmap";
+import { nowShowing, phaseShortName, weekLabel } from "../lib/roadmap/schedule";
+
+const now = new Date();
+const showing = nowShowing(now);
 ---
 
 <Layout
@@ -26,7 +30,7 @@ import { weekLabel } from "../lib/roadmap/schedule";
         the open for anyone to see.
       </p>
       <p class="rm-now-link">
-        <a href="/roadmap/now"><span data-week-label>{weekLabel(new Date())}</span> · What I'm working on now →</a>
+        <a href="/roadmap/now"><span data-week-label>{weekLabel(now)}</span>{phases.map((p) => <span data-now-phase={p.id} hidden={p.id !== showing.phase}>{` · ${phaseShortName(p)}`}</span>)} →</a>
       </p>
 
       <RoadmapMeters />

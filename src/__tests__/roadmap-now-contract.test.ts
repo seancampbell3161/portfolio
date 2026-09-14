@@ -12,7 +12,7 @@ import { describe, it, expect } from "vitest";
 import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { build, phases, logIds } from "../data/roadmap";
-import { phaseSpanText } from "../lib/roadmap/schedule";
+import { phaseSpanText, phaseShortName } from "../lib/roadmap/schedule";
 import { weekStart } from "../lib/roadmap/weeks";
 import { isoDay } from "../lib/dates";
 
@@ -113,7 +113,36 @@ describe.skipIf(!built)("roadmap/now client contract (dist/roadmap/now/index.htm
     }
   });
 
-  it("shows the outside-the-plan line exactly when no phase is showing", () => {
+  /** Astro escapes `&` in text; the phase names carry it ("encoding & the wire"). */
+  const unescape = (s: string) => s.replace(/&amp;/g, "&");
+
+  it("heads the page with the visible phase's name, or the week label outside the plan", () => {
+    // The page labels itself from the plan: each phase header's <h1> is the
+    // phase name, and outside the plan a lone <h1> carries the week label. All
+    // are server-rendered and all but one hidden, so exactly one heads the page.
+    const visibleHeadings = [...html.matchAll(/<header\b[^>]*>[\s\S]*?<\/header>/g)]
+      .filter((m) => !/^<header\b[^>]*\shidden[\s>]/.test(m[0]))
+      .map((m) => m[0].match(/<h1\b[^>]*>([^<]*)<\/h1>/)?.[1])
+      .filter((text): text is string => text !== undefined)
+      .map(unescape);
+    expect(visibleHeadings, "exactly one visible page heading").toHaveLength(1);
+    const phase = phases.find((p) => p.id === shownHeaders[0]?.phase);
+    expect(visibleHeadings[0]).toBe(phase ? phase.name : label);
+  });
+
+  it("titles the page with the week and the visible phase's short name", () => {
+    const title = unescape(html.match(/<title>([^<]*)<\/title>/)?.[1] ?? "");
+    const phase = phases.find((p) => p.id === shownHeaders[0]?.phase);
+    expect(title).toBe(phase ? `${label} · ${phaseShortName(phase)} | Sean Campbell` : `${label} | Sean Campbell`);
+  });
+
+  it("keeps the hook the schedule script retitles the page by", () => {
+    // A stale deploy's <title> names the build day's phase; roadmap-schedule.ts
+    // rewrites document.title on any page carrying this hook, and only there.
+    expect(html).toMatch(/\sdata-now-title\b/);
+  });
+
+  it("shows the outside-the-plan heading exactly when no phase is showing", () => {
     const outside = html.match(/<[a-z]+\b[^>]*\sdata-now-outside\b[^>]*>/)?.[0];
     expect(outside, "missing data-now-outside").toBeDefined();
     expect(/\shidden[\s>]/.test(outside!)).toBe(shownHeaders.length === 1);
@@ -168,10 +197,10 @@ describe.skipIf(!built)("roadmap/now client contract (dist/roadmap/now/index.htm
     expect(markup).toContain(phase.label);
   });
 
-  /** One phase's pairings block, up to the next pairings block or the outside line. */
+  /** One phase's pairings block, up to the next pairings block or the practice section after the last. */
   const pairingsOf = (id: string): string => {
     const i = pairings.findIndex((b) => b.value === id);
-    const next = pairings[i + 1]?.index ?? html.indexOf("data-now-outside", pairings[i].index);
+    const next = pairings[i + 1]?.index ?? html.indexOf("data-roadmap-practice", pairings[i].index);
     return html.slice(pairings[i].index, next);
   };
 

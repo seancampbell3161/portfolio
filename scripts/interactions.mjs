@@ -749,7 +749,8 @@ const mockProgress = async (route) =>
 const rmBase = watch(await browser.newPage({ viewport: { width: 1280, height: 900 } }));
 await rmBase.route("**/api/progress", mockProgress);
 await rmBase.goto(`${BASE}/roadmap/now`, { waitUntil: "networkidle" });
-const rmBaseLabel = await rmBase.locator("[data-week-label]").textContent();
+// Every phase header carries the week label as its eyebrow, so read the first.
+const rmBaseLabel = await rmBase.locator("[data-week-label]").first().textContent();
 // Every header is always server-rendered (only some `hidden`), so this holds
 // every phase whichever one is showing.
 const rmPhases = await rmBase.$$eval("[data-phase-start]", (els) =>
@@ -758,7 +759,7 @@ const rmPhases = await rmBase.$$eval("[data-phase-start]", (els) =>
     start: el.getAttribute("data-phase-start"),
     milestone: el.getAttribute("data-phase-milestone"),
     span: el.querySelector(".rm-week-span")?.textContent ?? "",
-    name: el.querySelector("h2")?.textContent ?? "",
+    name: el.querySelector("h1")?.textContent ?? "",
     hidden: el.hidden,
   })),
 );
@@ -785,20 +786,27 @@ const rmFuture = watch(await browser.newPage({ viewport: { width: 1280, height: 
 await rmFuture.route("**/api/progress", mockProgress);
 await rmFuture.clock.setFixedTime(new Date(Date.parse(rmTarget.start) + 2 * DAY));
 await rmFuture.goto(`${BASE}/roadmap/now`, { waitUntil: "networkidle" });
-const rmFutureLabel = await rmFuture.locator("[data-week-label]").textContent();
+const rmFutureLabel = await rmFuture.locator("[data-week-label]").first().textContent();
 const rmShownPhases = await rmFuture.$$eval("[data-now-phase]:not([hidden])", (els) =>
   els.map((el) => el.getAttribute("data-now-phase")),
 );
 const rmShownHeader = rmFuture.locator("[data-phase-start]:not([hidden])");
-const rmShownName = (await rmShownHeader.count()) === 1 ? await rmShownHeader.locator("h2").textContent() : null;
+const rmShownName = (await rmShownHeader.count()) === 1 ? await rmShownHeader.locator("h1").textContent() : null;
 const rmShownBuilds = await rmFuture.$$eval("[data-now-milestone]:not([hidden])", (els) =>
   els.map((el) => el.getAttribute("data-now-milestone")),
 );
 const rmOutsideShown = await rmFuture.locator("[data-now-outside]:not([hidden])").count();
-// /roadmap's link to this page names the week too, from the same script and clock.
+const rmFutureTitle = await rmFuture.title();
+// /roadmap's link to this page names the week and the phase too, from the same
+// script and clock.
 await rmFuture.goto(`${BASE}/roadmap`, { waitUntil: "networkidle" });
 const rmFutureLinkLabel = await rmFuture.locator(".rm-now-link [data-week-label]").textContent();
+const rmFutureLinkNames = await rmFuture.$$eval(".rm-now-link [data-now-phase]:not([hidden])", (els) =>
+  els.map((el) => el.textContent),
+);
 await rmFuture.close();
+// The part of a phase name before its dash, as phaseShortName() takes it.
+const rmTargetShort = rmTarget.name.split(" — ")[0];
 
 check(
   "roadmap/now: a stale visit recomputes the week label instead of keeping the build day's",
@@ -814,13 +822,21 @@ check(
   JSON.stringify(rmShownBuilds) === JSON.stringify(rmTarget.milestone ? [rmTarget.milestone] : []),
 );
 check("roadmap/now: the outside-the-plan line stays hidden inside a phase", rmOutsideShown === 0);
+check(
+  "roadmap/now: a stale visit retitles the tab with that week and phase",
+  rmFutureTitle === `${rmExpectedLabel} · ${rmTargetShort} | Sean Campbell`,
+);
 check("roadmap: the week label in /roadmap's link to /roadmap/now recomputes too", rmFutureLinkLabel === rmExpectedLabel);
+check(
+  "roadmap: /roadmap's link names that phase, and only that phase",
+  JSON.stringify(rmFutureLinkNames) === JSON.stringify([` · ${rmTargetShort}`]),
+);
 
-// ---- roadmap/now: a stale visit after the plan ends shows the outside line ----
+// ---- roadmap/now: a stale visit after the plan ends heads the page with the week label ----
 // The stale-visit check above always lands inside a phase, so it never runs the
 // other branch of roadmap-schedule.ts: past the capstone nowShowing() is
 // { phase: null, milestone: null }, and the script must hide every phase and
-// build block and reveal the outside-the-plan line. The last phase's Monday plus
+// build block and head the page with the week label alone. The last phase's Monday plus
 // its own week count is the Monday after the plan's last Saturday; two more days
 // sit solidly past it.
 const rmLast = rmPhases[rmPhases.length - 1];
@@ -831,15 +847,17 @@ await rmAfter.clock.setFixedTime(
   new Date(Date.parse(rmLast.start) + ((rmLastWeeks.to - rmLastWeeks.from + 1) * 7 + 2) * DAY),
 );
 await rmAfter.goto(`${BASE}/roadmap/now`, { waitUntil: "networkidle" });
-const rmAfterLabel = await rmAfter.locator("[data-week-label]").textContent();
+const rmAfterHeading = await rmAfter.locator(".rm-now h1:visible").textContent();
+const rmAfterTitle = await rmAfter.title();
 const rmAfterPhases = await rmAfter.locator("[data-now-phase]:not([hidden])").count();
 const rmAfterBuilds = await rmAfter.locator("[data-now-milestone]:not([hidden])").count();
 const rmAfterOutside = await rmAfter.locator("[data-now-outside]:not([hidden])").count();
 await rmAfter.close();
 check(
-  "roadmap/now: after the plan ends, a stale visit hides every phase and build block and shows the outside line",
-  rmAfterLabel === "The plan is finished" && rmAfterPhases === 0 && rmAfterBuilds === 0 && rmAfterOutside === 1,
+  "roadmap/now: after the plan ends, a stale visit hides every phase and build block and heads the page with the week label",
+  rmAfterHeading === "The plan is finished" && rmAfterPhases === 0 && rmAfterBuilds === 0 && rmAfterOutside === 1,
 );
+check("roadmap/now: after the plan ends, the tab title is the week label alone", rmAfterTitle === "The plan is finished | Sean Campbell");
 
 // ---- roadmap: the now marker links to /roadmap/now ----
 // The playhead's "now" chip at desktop width, and the phone graph's "now" row
@@ -974,7 +992,8 @@ const rmCrossStages = Number.parseInt(
 const rmCrossToggleAt = Date.now();
 await rmCross.locator(`${rmBuildBlock} .rm-insp-checks input[data-id]`).first().click();
 await rmCross.waitForTimeout(200); // leave well inside the 500ms debounce
-await rmCross.locator('.rm-now-link a[href="/roadmap"]').click();
+// /roadmap/now has no back link of its own; the transport bar's Learning link is the way back.
+await rmCross.locator(".tb-link", { hasText: "Learning" }).click();
 await rmCross.waitForURL(/\/roadmap\/?$/);
 const rmCrossMeter = await rmCross
   .waitForFunction((n) => document.getElementById("rm-build-stages")?.textContent === String(n), rmCrossStages, { timeout: 3000 })

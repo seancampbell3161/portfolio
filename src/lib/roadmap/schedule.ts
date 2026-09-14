@@ -81,3 +81,23 @@ export function phaseSpanText(p: Phase): string {
   const endText = end.getUTCFullYear() === WEEK_ONE.getUTCFullYear() ? bare(end) : monthDayYear(end);
   return `Weeks ${p.fromWeek}–${p.toWeek} · ${bare(start)} – ${endText}`;
 }
+
+/**
+ * A phase's short name: the part of its name before " — ", so "Redis — how
+ * bytes become a database" is "Redis". /roadmap's link to /roadmap/now and that
+ * page's tab title print it beside the week label, where the full name is too
+ * long.
+ */
+export function phaseShortName(p: Phase): string {
+  return p.name.split(" — ")[0];
+}
+
+/**
+ * /roadmap/now's tab title for `now`, before the site name: the week and the
+ * phase's short name, or the week label alone outside the plan. Pure so the
+ * page's server render and src/scripts/roadmap-schedule.ts title it alike.
+ */
+export function nowTitle(now: Date): string {
+  const p = currentPhase(now);
+  return p ? `${weekLabel(now)} · ${phaseShortName(p)}` : weekLabel(now);
+}

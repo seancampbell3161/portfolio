@@ -914,10 +914,11 @@
 }
 
 /* ---- /roadmap/now: the current phase (roadmap-now spec §4) ----
-   The week label, phase header and pairings keep the retired band's .rm-week-*
-   names. The band's bordered card is gone, because on /roadmap/now the phase
-   opens the page rather than sitting in a card inside it. The build block
-   borrows the clip panel's look (.rm-insp) without its :target display rule. */
+   The page labels itself from the plan: the week label and the phase name use
+   /roadmap's eyebrow and title styles, while the scope line and the pairings
+   keep the retired band's .rm-week-* names. The build block borrows the clip
+   panel's look (.rm-insp) without its :target display rule. .rm-now-link is
+   /roadmap's link to this page. */
 .rm-now-link {
   margin: 18px 0 0;
   font-family: var(--font-mono);
@@ -926,12 +927,9 @@
 }
 .rm-now-link a { color: var(--lane-learning); text-decoration: none; }
 .rm-now-link a:hover { text-decoration: underline; }
-.rm-now { margin-top: 36px; }
-.rm-now .rm-week-phase {
-  font-size: clamp(22px, 4vw, 30px);
-  line-height: 1.1;
-  margin-top: 8px;
-}
+/* Phase names run long ("Foundations ramp — get fluent before the first
+   socket"), so the heading sits a step below /roadmap's title size. */
+.rm-now .rm-title { font-size: clamp(28px, 4.6vw, 44px); line-height: 1.08; margin-bottom: 14px; }
 .rm-now-build {
   margin-top: var(--space-xl);
   border: 1px solid var(--color-border);
@@ -941,22 +939,6 @@
   padding: 22px 24px 24px;
 }
 .rm-now-build-title { margin: 0 0 10px; font-size: 20px; line-height: 1.2; }
-.rm-now-outside { margin: var(--space-lg) 0 0; font-size: 14px; color: var(--color-text-secondary); }
-.rm-week-label {
-  font-family: var(--font-mono);
-  font-size: 12px;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: var(--lane-learning);
-  margin: 0;
-}
-.rm-week-phase {
-  font-family: var(--font-display);
-  font-size: 20px;
-  font-weight: 600;
-  line-height: 1.3;
-  margin: 6px 0 0;
-}
 /* The scope line: which phase this is, and the weeks its lists actually
    cover. Without it the week number above reads as the lists' scope. */
 .rm-week-scope {
